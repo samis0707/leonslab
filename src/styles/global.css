@@ -39,6 +39,19 @@
     min-height: 100vh;
   }
 
+  /* Mobile menu drawer pushes the page down. Main is shifted by the menu's
+     measured height (--menu-offset, set by the Header script) when the body
+     gets is-menu-open. The hero on the landing has its own negative-margin
+     pull-under that still works during this transform — when the drawer is
+     open the menu visually covers the small overlap region. */
+  main {
+    transition: transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    will-change: transform;
+  }
+  body.is-menu-open main {
+    transform: translateY(var(--menu-offset, 0px));
+  }
+
   ::selection {
     background: var(--color-park-yellow);
     color: var(--color-concrete-900);
@@ -67,6 +80,9 @@
     .js [data-reveal] {
       opacity: 1 !important;
       transform: none !important;
+      transition: none !important;
+    }
+    main {
       transition: none !important;
     }
   }
