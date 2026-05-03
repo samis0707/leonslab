@@ -1,0 +1,206 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+---
+<BaseLayout title={t('contact.eyebrow')} description={t('contact.lead')}>
+  <article class="max-w-2xl mx-auto px-6 pt-20 md:pt-28 pb-32">
+    <p class="eyebrow">{t('contact.eyebrow')}</p>
+    <h1 class="display text-[clamp(2rem,4.5vw,3.5rem)] mt-4 mb-5 text-[color:var(--color-concrete-900)]">
+      {t('contact.title')}
+    </h1>
+    <p class="text-[color:var(--color-concrete-600)] mb-12 leading-relaxed">
+      {t('contact.lead')}
+    </p>
+
+    <form
+      class="contact-form"
+      data-contact-form
+      action="https://formsubmit.co/ajax/Leon.roesch28@gmail.com"
+      method="POST"
+      data-lang={lang}
+    >
+      <!-- Formsubmit configuration (hidden inputs) -->
+      <input type="hidden" name="_subject" value="LeonsLab — neue Nachricht" />
+      <input type="hidden" name="_template" value="table" />
+      <input type="hidden" name="_captcha" value="false" />
+      <!-- Honeypot for bots: real users won't fill this -->
+      <input type="text" name="_honey" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+      <div class="field">
+        <label for="contact-name">{t('contact.field.name')}</label>
+        <input type="text" id="contact-name" name="name" required autocomplete="name" />
+      </div>
+
+      <div class="field">
+        <label for="contact-email">{t('contact.field.email')}</label>
+        <input type="email" id="contact-email" name="email" required autocomplete="email" />
+      </div>
+
+      <div class="field">
+        <label for="contact-subject">{t('contact.field.subject')}</label>
+        <input type="text" id="contact-subject" name="subject" required />
+      </div>
+
+      <div class="field">
+        <label for="contact-message">{t('contact.field.message')}</label>
+        <textarea id="contact-message" name="message" rows="7" required></textarea>
+      </div>
+
+      <button type="submit" class="btn-primary contact-submit">
+        <span data-submit-label>{t('contact.submit')}</span>
+      </button>
+
+      <p class="form-feedback" data-form-feedback role="status" aria-live="polite"></p>
+
+      <!-- i18n strings the script needs -->
+      <span hidden data-i18n-sending>{t('contact.submit.sending')}</span>
+      <span hidden data-i18n-again>{t('contact.submit.again')}</span>
+      <span hidden data-i18n-success>{t('contact.success')}</span>
+      <span hidden data-i18n-error>{t('contact.error')}</span>
+    </form>
+  </article>
+</BaseLayout>
+
+<script>
+  const form = document.querySelector('[data-contact-form]') as HTMLFormElement | null;
+  if (form) {
+    const feedback = form.querySelector('[data-form-feedback]') as HTMLElement;
+    const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    const submitLabel = form.querySelector('[data-submit-label]') as HTMLElement;
+
+    const txt = (sel: string) => (form.querySelector(sel)?.textContent ?? '').trim();
+    const i18n = {
+      sending: txt('[data-i18n-sending]'),
+      again: txt('[data-i18n-again]'),
+      success: txt('[data-i18n-success]'),
+      error: txt('[data-i18n-error]'),
+    };
+    const originalLabel = submitLabel.textContent ?? '';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Honeypot: bots tend to fill every input. Silently swallow.
+      const honey = (form.elements.namedItem('_honey') as HTMLInputElement | null)?.value;
+      if (honey) return;
+
+      submitBtn.disabled = true;
+      submitLabel.textContent = i18n.sending;
+      feedback.textContent = '';
+      feedback.className = 'form-feedback';
+
+      const formData = new FormData(form);
+      const payload: Record<string, string> = {};
+      formData.forEach((value, key) => {
+        if (typeof value === 'string') payload[key] = value;
+      });
+
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.success === 'true' || data.success === true)) {
+          feedback.classList.add('is-success');
+          feedback.textContent = i18n.success;
+          form.reset();
+          submitLabel.textContent = i18n.again;
+        } else {
+          throw new Error(data.message || 'Submission failed');
+        }
+      } catch {
+        feedback.classList.add('is-error');
+        feedback.textContent = i18n.error;
+        submitLabel.textContent = originalLabel;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  }
+</script>
+
+<style>
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .field label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-concrete-500);
+  }
+  .field input,
+  .field textarea {
+    background: white;
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--color-concrete-900);
+    transition: border-color 200ms ease, box-shadow 200ms ease;
+  }
+  .field input:focus,
+  .field textarea:focus {
+    outline: none;
+    border-color: var(--color-park-green);
+    box-shadow: 0 0 0 3px rgba(12, 94, 59, 0.18);
+  }
+  .field textarea {
+    resize: vertical;
+    min-height: 9rem;
+    line-height: 1.55;
+  }
+
+  /* Honeypot — visible only to bots that ignore display:none */
+  .honeypot {
+    position: absolute !important;
+    left: -10000px !important;
+    top: auto !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+  }
+
+  .contact-submit {
+    align-self: flex-start;
+    cursor: pointer;
+    border: none;
+    margin-top: 0.5rem;
+  }
+  .contact-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  .form-feedback {
+    font-size: 0.95rem;
+    margin: 0;
+    min-height: 1.5em;
+    line-height: 1.5;
+  }
+  .form-feedback.is-success {
+    color: var(--color-park-green);
+    font-weight: 500;
+  }
+  .form-feedback.is-error {
+    color: #b91c1c;
+  }
+</style>

@@ -18,8 +18,8 @@ const year = new Date().getFullYear();
       <p class="eyebrow mb-3">{t('footer.contact')}</p>
       <ul class="space-y-2 text-sm">
         <li>
-          <a href="mailto:Leon.roesch28@gmail.com" class="text-[color:var(--color-concrete-700)] hover:text-[color:var(--color-concrete-900)] underline-offset-4 hover:underline">
-            E-Mail
+          <a href={localizedPath(lang, '/kontakt/')} class="text-[color:var(--color-concrete-700)] hover:text-[color:var(--color-concrete-900)] underline-offset-4 hover:underline">
+            {t('footer.contactForm')}
           </a>
         </li>
         <li>
