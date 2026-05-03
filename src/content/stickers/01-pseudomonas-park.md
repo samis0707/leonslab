@@ -9,6 +9,6 @@ imageContext: "/images/stickers/01-pseudomonas-park-context.jpg"
 alt: "Pseudomonas Park sticker — Jurassic Park parody with a biohazard warning sign instead of a fence."
 altContext: "The Pseudomonas Park sticker placed on a raw exposed concrete wall."
 aspect: "1/1"
-storyEn: "A bow to Jurassic Park — with a biohazard sign instead of a fence. The first sticker, and the visual identity of my creative space: Pseudomonas, opportunistic biofilm king and one of my favourite organisms, finally gets its own park."
-storyDe: "Eine Verbeugung vor Jurassic Park — mit Biohazard-Schild statt Zaun. Der erste Sticker und gleichzeitig die visuelle Identität meines Creative Space: Pseudomonas, opportunistischer Biofilm-König und einer meiner Lieblingsorganismen, bekommt endlich seinen eigenen Park."
+storyEn: "Welcome to Pseudomonas Park. This little lab joke has become the foundation for a whole series of new ideas and the logo for my brand."
+storyDe: "Willkommen in Pseudomonas Park. Der kleine Laborwitz wird zum Grundstein einer ganzen Entwicklungsreihe neuer Ideen und zum Logo meiner Identität."
 ---
