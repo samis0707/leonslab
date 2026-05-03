@@ -38,8 +38,8 @@ export const ui = {
 
     'park.eyebrow': 'Creative Space',
     'park.title': 'Pseudomonas Park',
-    'park.tagline': 'Der Ort, an dem ich als Künstler arbeite.',
-    'park.body': 'Pseudomonas Park ist mehr als ein Sticker. Es ist die Welt, in der meine kreativen Projekte zuhause sind — ein Studio, ein Labor, ein Spielfeld.',
+    'park.tagline': 'Safespace for opportunities.',
+    'park.body': 'Pseudomonas Park ist mehr als ein Sticker. Es ist die Welt, in der meine kreativen Projekte zuhause sind — ein Studio, ein Labor, ein Spielplatz.',
 
     'footer.contact': 'Kontakt',
     'footer.colophon': 'Gebaut mit Astro · System-Schrift',
@@ -48,7 +48,7 @@ export const ui = {
     'lang.switch.aria': 'Sprache wechseln zu Englisch',
 
     'page.cartoons.title': 'Cartoons',
-    'page.cartoons.subtitle': 'Eine wachsende Sammlung mikrobiologischer Zeichnungen.',
+    'page.cartoons.subtitle': 'Mehr als nur Wissenschaft — Blicke hinter die Kulissen.',
     'page.cartoons.empty': 'Bilder folgen in Kürze.',
     'gallery.filter.all': 'Alle',
     'gallery.tag.lab-life': 'Lab Life',
@@ -109,7 +109,7 @@ export const ui = {
 
     'park.eyebrow': 'Creative Space',
     'park.title': 'Pseudomonas Park',
-    'park.tagline': 'The place where I work as an artist.',
+    'park.tagline': 'Safespace for opportunities.',
     'park.body': "Pseudomonas Park is more than a sticker. It's the world my creative projects live in — a studio, a lab, a playground.",
 
     'footer.contact': 'Contact',
@@ -119,7 +119,7 @@ export const ui = {
     'lang.switch.aria': 'Switch language to German',
 
     'page.cartoons.title': 'Cartoons',
-    'page.cartoons.subtitle': 'A growing collection of microbiology drawings.',
+    'page.cartoons.subtitle': 'More Than Just Science — The Behind the Scenes.',
     'page.cartoons.empty': 'Images coming soon.',
     'gallery.filter.all': 'All',
     'gallery.tag.lab-life': 'Lab Life',
