@@ -93,7 +93,7 @@ export const ui = {
     'page.park.title': 'Pseudomonas Park',
     'page.park.subtitle': 'Der Creative Space.',
     'page.ideas.title': 'Ideen',
-    'page.ideas.subtitle': 'Halbfertiges, Wildes, Brauendes.',
+    'page.ideas.subtitle': 'Neue Ideen brauchen Platz.',
   },
   en: {
     'nav.cartoons': 'Cartoons',
@@ -181,7 +181,7 @@ export const ui = {
     'page.park.title': 'Pseudomonas Park',
     'page.park.subtitle': 'The creative space.',
     'page.ideas.title': 'Ideas',
-    'page.ideas.subtitle': 'Half-finished, wild, brewing.',
+    'page.ideas.subtitle': 'New ideas need space.',
   },
 } as const;
 
