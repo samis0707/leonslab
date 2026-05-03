@@ -40,8 +40,8 @@ const heroExists = imageExists(heroImagePath);
     </div>
   </section>
 
-  <section class="max-w-6xl mx-auto px-6">
-    {stickers.map((s, i) => (
+  <section class="max-w-5xl mx-auto px-6">
+    {stickers.map((s) => (
       <StickerBlock
         order={s.data.order}
         title={s.data.title}
@@ -51,13 +51,9 @@ const heroExists = imageExists(heroImagePath);
         size={s.data.size}
         material={s.data.material}
         image={s.data.image}
-        imageContext={s.data.imageContext}
         alt={s.data.alt}
-        altContext={s.data.altContext}
         aspect={s.data.aspect}
         hasImage={imageExists(s.data.image)}
-        hasContextImage={s.data.imageContext ? imageExists(s.data.imageContext) : false}
-        mirrored={i % 2 === 1}
       />
     ))}
   </section>
