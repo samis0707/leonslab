@@ -18,8 +18,10 @@
   --color-concrete-800: #1a1917;
   --color-concrete-900: #0d0c0b;
 
-  /* Pseudomonas Park accent — used very sparingly */
-  --color-park-red: #c8202c;
+  /* Pseudomonas Park accent — used very sparingly. Deep saturated green
+     that pairs with the concrete base palette and with the plant-rich
+     photography Leon tends to shoot. */
+  --color-park-green: #0c5e3b;
   --color-park-yellow: #f4c20d;
 }
 
