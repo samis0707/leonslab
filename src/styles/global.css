@@ -123,4 +123,49 @@
     background: var(--color-concrete-100);
     border-color: var(--color-concrete-400);
   }
+
+  /* Long-form legal prose used on Impressum and Datenschutz pages. */
+  .legal-prose {
+    color: var(--color-concrete-700);
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+  .legal-prose .legal-lead {
+    font-size: 1.05rem;
+    color: var(--color-concrete-800);
+    margin: 0 0 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--color-concrete-200);
+  }
+  .legal-prose h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: -0.005em;
+    color: var(--color-concrete-900);
+    margin: 2.5rem 0 0.75rem;
+  }
+  .legal-prose h2:first-child {
+    margin-top: 0;
+  }
+  .legal-prose p {
+    margin: 0 0 1rem;
+  }
+  .legal-prose ul {
+    margin: 0 0 1rem;
+    padding-left: 1.25rem;
+    list-style: disc;
+  }
+  .legal-prose ul li {
+    margin: 0.25rem 0;
+  }
+  .legal-prose a {
+    color: var(--color-park-green);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  .legal-prose a:hover {
+    color: var(--color-concrete-900);
+  }
 }

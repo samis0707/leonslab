@@ -1,13 +1,13 @@
 ---
-import { getLangFromUrl, useTranslations } from '../i18n/utils';
+import { getLangFromUrl, useTranslations, localizedPath } from '../i18n/utils';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const year = new Date().getFullYear();
 ---
 <footer class="border-t border-[color:var(--color-concrete-200)] mt-32">
-  <div class="max-w-7xl mx-auto px-6 py-14 grid gap-10 md:grid-cols-3">
-    <div>
+  <div class="max-w-7xl mx-auto px-6 py-14 grid gap-10 md:grid-cols-4">
+    <div class="md:col-span-2">
       <p class="display text-lg">
         <span class="font-bold">Leons</span><span class="text-[color:var(--color-park-green)]">Lab</span>
       </p>
@@ -30,9 +30,27 @@ const year = new Date().getFullYear();
       </ul>
     </div>
 
-    <div class="md:text-right">
+    <div>
+      <p class="eyebrow mb-3">{t('footer.legal')}</p>
+      <ul class="space-y-2 text-sm">
+        <li>
+          <a href={localizedPath(lang, '/impressum/')} class="text-[color:var(--color-concrete-700)] hover:text-[color:var(--color-concrete-900)] underline-offset-4 hover:underline">
+            {t('footer.imprint')}
+          </a>
+        </li>
+        <li>
+          <a href={localizedPath(lang, '/datenschutz/')} class="text-[color:var(--color-concrete-700)] hover:text-[color:var(--color-concrete-900)] underline-offset-4 hover:underline">
+            {t('footer.privacy')}
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="border-t border-[color:var(--color-concrete-200)]/60">
+    <div class="max-w-7xl mx-auto px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
       <p class="text-xs text-[color:var(--color-concrete-400)]">© {year} Leon Rösch</p>
-      <p class="mt-1 text-xs text-[color:var(--color-concrete-400)]">{t('footer.colophon')}</p>
+      <p class="text-xs text-[color:var(--color-concrete-400)]">{t('footer.colophon')}</p>
     </div>
   </div>
 </footer>

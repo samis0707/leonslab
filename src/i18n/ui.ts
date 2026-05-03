@@ -43,6 +43,9 @@ export const ui = {
 
     'footer.contact': 'Kontakt',
     'footer.colophon': 'Gebaut mit Astro · System-Schrift',
+    'footer.legal': 'Rechtliches',
+    'footer.imprint': 'Impressum',
+    'footer.privacy': 'Datenschutz',
 
     'lang.switch': 'EN',
     'lang.switch.aria': 'Sprache wechseln zu Englisch',
@@ -114,6 +117,9 @@ export const ui = {
 
     'footer.contact': 'Contact',
     'footer.colophon': 'Built with Astro · System type',
+    'footer.legal': 'Legal',
+    'footer.imprint': 'Imprint',
+    'footer.privacy': 'Privacy',
 
     'lang.switch': 'DE',
     'lang.switch.aria': 'Switch language to German',
