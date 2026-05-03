@@ -1,40 +1,101 @@
 ---
+import fs from 'node:fs';
+import path from 'node:path';
 import { getLangFromUrl, useTranslations, localizedPath } from '../i18n/utils';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
----
-<section class="relative min-h-[88vh] flex items-end overflow-hidden">
-  <!--
-    Hero background. Replace /hero-concrete.jpg with the user's Sichtbeton+Sticker photo.
-    The photo lives in /public/images/hero-concrete.jpg once added.
-  -->
-  <div class="absolute inset-0">
-    <div
-      class="absolute inset-0 bg-[color:var(--color-concrete-200)]"
-      style="background-image: url('/images/hero-concrete.jpg'); background-size: cover; background-position: center;"
-      aria-hidden="true"
-    ></div>
-    <!-- subtle gradient for legibility -->
-    <div class="absolute inset-0 bg-gradient-to-t from-[color:var(--color-concrete-50)] via-[color:var(--color-concrete-50)]/30 to-transparent" aria-hidden="true"></div>
-  </div>
 
-  <div class="relative max-w-7xl mx-auto w-full px-6 pb-20 md:pb-28">
-    <p class="eyebrow text-[color:var(--color-concrete-700)]">{t('hero.eyebrow')}</p>
-    <h1 class="display-tight mt-4 text-[clamp(2.6rem,8vw,6.5rem)] text-[color:var(--color-concrete-900)] max-w-5xl">
-      {t('hero.title.line1')}<br />{t('hero.title.line2')}
-    </h1>
-    <p class="mt-6 max-w-xl text-base md:text-lg text-[color:var(--color-concrete-700)] leading-relaxed">
-      {t('hero.subtitle')}
-    </p>
-    <div class="mt-8 flex flex-wrap gap-3">
-      <a href={localizedPath(lang, '/cartoons/')} class="btn-primary">
-        {t('hero.cta.work')}
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8m0 0L7.5 3.5M11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
-      <a href={localizedPath(lang, '/pseudomonas-park/')} class="btn-ghost">
-        {t('hero.cta.park')}
-      </a>
+function imageExists(p: string): boolean {
+  try {
+    return fs.existsSync(path.join(process.cwd(), 'public', p.replace(/^\//, '')));
+  } catch {
+    return false;
+  }
+}
+
+const heroImagePath = '/images/hero-concrete.jpeg';
+const hasHeroImage = imageExists(heroImagePath);
+---
+<section class="hero-section relative">
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 pt-8 lg:pt-12 pb-16 lg:pb-20 lg:min-h-[calc(100vh-3.5rem)] flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
+
+    <!-- Image card (mobile: order 1, on top; desktop: order 2, right) -->
+    <div class="hero-image-col w-full lg:w-[44%] order-1 lg:order-2 shrink-0">
+      <div class:list={["hero-image-wrap", !hasHeroImage && 'is-placeholder']}>
+        {hasHeroImage ? (
+          <img
+            src={heroImagePath}
+            alt="Pseudomonas Park sticker on an exposed concrete wall."
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
+          />
+        ) : (
+          <span class="placeholder-label">Hero-Foto folgt</span>
+        )}
+      </div>
     </div>
+
+    <!-- Text (mobile: order 2, below; desktop: order 1, left) -->
+    <div class="hero-text-col flex-1 min-w-0 order-2 lg:order-1">
+      <p class="eyebrow text-[color:var(--color-concrete-700)]">{t('hero.eyebrow')}</p>
+      <h1 class="display-tight mt-4 text-[clamp(2.4rem,6.5vw,5.25rem)] text-[color:var(--color-concrete-900)]">
+        {t('hero.title.line1')}<br />{t('hero.title.line2')}
+      </h1>
+      <p class="mt-6 max-w-xl text-base md:text-lg text-[color:var(--color-concrete-700)] leading-relaxed">
+        {t('hero.subtitle')}
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href={localizedPath(lang, '/cartoons/')} class="btn-primary">
+          {t('hero.cta.work')}
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M3 7h8m0 0L7.5 3.5M11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <a href={localizedPath(lang, '/pseudomonas-park/')} class="btn-ghost">
+          {t('hero.cta.park')}
+        </a>
+      </div>
+    </div>
+
   </div>
 </section>
+
+<style>
+  .hero-image-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    border-radius: 28px;
+    overflow: hidden;
+    background: var(--color-concrete-200);
+    box-shadow:
+      0 30px 60px -25px rgba(0, 0, 0, 0.22),
+      0 8px 18px -10px rgba(0, 0, 0, 0.14);
+  }
+  @media (min-width: 1024px) {
+    .hero-image-wrap {
+      aspect-ratio: 3 / 4;
+    }
+  }
+  .hero-image-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+  .hero-image-wrap.is-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-concrete-100), var(--color-concrete-200));
+  }
+  .hero-image-wrap .placeholder-label {
+    font-weight: 600;
+    color: var(--color-concrete-500);
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+  }
+</style>

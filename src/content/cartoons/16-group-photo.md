@@ -2,7 +2,7 @@
 order: 16
 title: "Group Photo"
 tag: "lab-life"
-image: "/images/cartoons/16-group-photo.png"
+image: "/images/cartoons/16-group-photo.jpeg"
 alt: "Three panels: a camera asks bacteria to move closer; they huddle; they merge into a glistening biofilm."
 aspect: "1/2"
 captionEn: "Move a little closer together! — Oh, oh!"
