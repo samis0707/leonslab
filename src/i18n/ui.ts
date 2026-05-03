@@ -50,7 +50,7 @@ export const ui = {
 
     'contact.eyebrow': 'Kontakt',
     'contact.title': 'Schreib mir.',
-    'contact.lead': 'Eine Nachricht, eine Idee, ein Projekt — alles willkommen.',
+    'contact.lead': 'Du hast Ideen, Wünsche oder Vorschläge und willst mich so schnell wie möglich erreichen? Dann bist du hier genau richtig!',
     'contact.field.name': 'Name',
     'contact.field.email': 'E-Mail',
     'contact.field.subject': 'Thema',
@@ -138,7 +138,7 @@ export const ui = {
 
     'contact.eyebrow': 'Contact',
     'contact.title': 'Write to me.',
-    'contact.lead': 'A message, an idea, a project — all welcome.',
+    'contact.lead': "Got ideas, wishes or suggestions and want to reach me as fast as possible? Then you're in the right place!",
     'contact.field.name': 'Name',
     'contact.field.email': 'Email',
     'contact.field.subject': 'Subject',
