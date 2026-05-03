@@ -31,7 +31,7 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') + '/';
               href={item.href}
               class:list={["group inline-flex items-center gap-1.5 text-[color:var(--color-concrete-600)] hover:text-[color:var(--color-concrete-900)] transition-colors", isActive && 'is-active text-[color:var(--color-concrete-900)]']}
             >
-              <PetriMarker size={11} />
+              <PetriMarker size={14} />
               <span>{item.label}</span>
             </a>
           </li>
@@ -66,7 +66,7 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') + '/';
       {navItems.map(item => (
         <li>
           <a href={item.href} class="group inline-flex items-center gap-2 text-[color:var(--color-concrete-700)]">
-            <PetriMarker size={12} />
+            <PetriMarker size={16} />
             <span>{item.label}</span>
           </a>
         </li>
