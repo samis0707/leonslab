@@ -1,4 +1,6 @@
 ---
+import fs from 'node:fs';
+import path from 'node:path';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/Hero.astro';
 import SectionHeading from '../components/SectionHeading.astro';
@@ -7,6 +9,16 @@ import { getLangFromUrl, useTranslations, localizedPath } from '../i18n/utils';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
+
+function imageExists(p: string): boolean {
+  try {
+    return fs.existsSync(path.join(process.cwd(), 'public', p.replace(/^\//, '')));
+  } catch {
+    return false;
+  }
+}
+const parkStickerPath = '/images/stickers/01-pseudomonas-park-cutout.jpeg';
+const hasParkSticker = imageExists(parkStickerPath);
 ---
 <BaseLayout>
   <Hero />
@@ -14,14 +26,14 @@ const t = useTranslations(lang);
   <!-- ABOUT -->
   <section class="max-w-7xl mx-auto px-6 py-28 md:py-36">
     <div class="grid md:grid-cols-12 gap-10 items-start">
-      <div class="md:col-span-4">
+      <div class="md:col-span-4" data-reveal>
         <p class="eyebrow">{t('about.eyebrow')}</p>
       </div>
       <div class="md:col-span-8">
-        <h2 class="display text-[clamp(1.75rem,4vw,3.25rem)] text-[color:var(--color-concrete-900)] max-w-3xl">
+        <h2 data-reveal data-reveal-delay="1" class="display text-[clamp(1.75rem,4vw,3.25rem)] text-[color:var(--color-concrete-900)] max-w-3xl">
           {t('about.title')}
         </h2>
-        <p class="mt-6 text-lg text-[color:var(--color-concrete-700)] leading-relaxed max-w-2xl">
+        <p data-reveal data-reveal-delay="2" class="mt-6 text-lg text-[color:var(--color-concrete-700)] leading-relaxed max-w-2xl">
           {t('about.body')}
         </p>
       </div>
@@ -30,27 +42,35 @@ const t = useTranslations(lang);
 
   <!-- WORK GRID -->
   <section class="max-w-7xl mx-auto px-6 pb-28">
-    <SectionHeading eyebrow={t('sections.work')} title={lang === 'de' ? 'Drei Spuren, eine Hand.' : 'Three threads, one hand.'} />
+    <div data-reveal>
+      <SectionHeading eyebrow={t('sections.work')} title={lang === 'de' ? 'Drei Spuren, eine Hand.' : 'Three threads, one hand.'} />
+    </div>
 
     <div class="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      <WorkCard
-        href={localizedPath(lang, '/cartoons/')}
-        title={t('cards.cartoons.title')}
-        description={t('cards.cartoons.desc')}
-        count="01"
-      />
-      <WorkCard
-        href={localizedPath(lang, '/stickers/')}
-        title={t('cards.stickers.title')}
-        description={t('cards.stickers.desc')}
-        count="02"
-      />
-      <WorkCard
-        href={localizedPath(lang, '/lab-solutions/')}
-        title={t('cards.labSolutions.title')}
-        description={t('cards.labSolutions.desc')}
-        count="03"
-      />
+      <div data-reveal data-reveal-delay="1">
+        <WorkCard
+          href={localizedPath(lang, '/cartoons/')}
+          title={t('cards.cartoons.title')}
+          description={t('cards.cartoons.desc')}
+          count="01"
+        />
+      </div>
+      <div data-reveal data-reveal-delay="2">
+        <WorkCard
+          href={localizedPath(lang, '/stickers/')}
+          title={t('cards.stickers.title')}
+          description={t('cards.stickers.desc')}
+          count="02"
+        />
+      </div>
+      <div data-reveal data-reveal-delay="3">
+        <WorkCard
+          href={localizedPath(lang, '/lab-solutions/')}
+          title={t('cards.labSolutions.title')}
+          description={t('cards.labSolutions.desc')}
+          count="03"
+        />
+      </div>
     </div>
   </section>
 
@@ -58,25 +78,59 @@ const t = useTranslations(lang);
   <section class="bg-[color:var(--color-concrete-900)] text-[color:var(--color-concrete-50)]">
     <div class="max-w-7xl mx-auto px-6 py-28 md:py-36 grid md:grid-cols-12 gap-10 items-center">
       <div class="md:col-span-7">
-        <p class="eyebrow text-[color:var(--color-concrete-400)]">{t('park.eyebrow')}</p>
-        <h2 class="display mt-4 text-[clamp(2rem,5vw,4rem)]">
+        <p data-reveal class="eyebrow text-[color:var(--color-concrete-400)]">{t('park.eyebrow')}</p>
+        <h2 data-reveal data-reveal-delay="1" class="display mt-4 text-[clamp(2rem,5vw,4rem)]">
           {t('park.title')}
         </h2>
-        <p class="mt-4 text-xl text-[color:var(--color-concrete-300)]">{t('park.tagline')}</p>
-        <p class="mt-6 max-w-xl text-base text-[color:var(--color-concrete-300)] leading-relaxed">
+        <p data-reveal data-reveal-delay="2" class="mt-4 text-xl text-[color:var(--color-concrete-300)]">{t('park.tagline')}</p>
+        <p data-reveal data-reveal-delay="3" class="mt-6 max-w-xl text-base text-[color:var(--color-concrete-300)] leading-relaxed">
           {t('park.body')}
         </p>
-        <a href={localizedPath(lang, '/pseudomonas-park/')} class="inline-flex items-center gap-2 mt-8 px-6 py-3 rounded-full bg-[color:var(--color-park-yellow)] text-[color:var(--color-concrete-900)] font-medium text-sm transition hover:-translate-y-0.5">
-          {t('hero.cta.park')}
-          <span>→</span>
-        </a>
+        <div data-reveal data-reveal-delay="4">
+          <a href={localizedPath(lang, '/pseudomonas-park/')} class="park-cta inline-flex items-center gap-2 mt-8 px-6 py-3 bg-[color:var(--color-park-yellow)] text-[color:var(--color-concrete-900)] font-medium text-sm transition hover:-translate-y-0.5">
+            {t('hero.cta.park')}
+            <span>→</span>
+          </a>
+        </div>
       </div>
-      <div class="md:col-span-5">
-        <!-- Placeholder area for the Pseudomonas Park sticker render. -->
-        <div class="aspect-square rounded-3xl border border-[color:var(--color-concrete-700)] bg-[color:var(--color-concrete-800)] flex items-center justify-center">
-          <span class="text-xs uppercase tracking-widest text-[color:var(--color-concrete-500)]">Sticker · folgt</span>
+      <div class="md:col-span-5" data-reveal data-reveal-delay="2">
+        <div class="park-sticker-wrap">
+          {hasParkSticker ? (
+            <img
+              src={parkStickerPath}
+              alt="The Pseudomonas Park sticker."
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <span class="text-xs uppercase tracking-widest text-[color:var(--color-concrete-500)]">Sticker · folgt</span>
+          )}
         </div>
       </div>
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  .park-cta {
+    border-radius: 6px;
+  }
+  .park-sticker-wrap {
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    border: 1px solid var(--color-concrete-700);
+    background: var(--color-concrete-800);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 2.5rem;
+  }
+  .park-sticker-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.4));
+  }
+</style>

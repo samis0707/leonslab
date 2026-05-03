@@ -31,7 +31,7 @@ const heroExists = imageExists(heroImagePath);
   </section>
 
   <section class="max-w-6xl mx-auto px-6 pb-8">
-    <div class:list={["stickers-hero rounded-3xl overflow-hidden", !heroExists && 'is-placeholder']}>
+    <div class:list={["stickers-hero rounded-md overflow-hidden", !heroExists && 'is-placeholder']}>
       {heroExists ? (
         <img src={heroImagePath} alt={t('page.stickers.heroAlt')} loading="eager" decoding="async" />
       ) : (
