@@ -105,10 +105,7 @@ const tagLabel = (tag: string) => t(`gallery.tag.${tag}` as UIKey);
       <span class="lightbox-placeholder" data-lightbox-placeholder hidden></span>
     </div>
     <figcaption>
-      <span class="lightbox-tag" data-lightbox-tag></span>
       <h3 class="display lightbox-title" data-lightbox-title></h3>
-      <p class="lightbox-caption" data-lightbox-caption></p>
-      <span class="lightbox-counter" data-lightbox-counter></span>
     </figcaption>
   </figure>
 </div>
@@ -142,9 +139,6 @@ const tagLabel = (tag: string) => t(`gallery.tag.${tag}` as UIKey);
   const lbImage = document.querySelector('[data-lightbox-image]');
   const lbPlaceholder = document.querySelector('[data-lightbox-placeholder]');
   const lbTitle = document.querySelector('[data-lightbox-title]');
-  const lbCaption = document.querySelector('[data-lightbox-caption]');
-  const lbTag = document.querySelector('[data-lightbox-tag]');
-  const lbCounter = document.querySelector('[data-lightbox-counter]');
 
   function showCurrent() {
     const c = visible[currentIndex];
@@ -162,9 +156,6 @@ const tagLabel = (tag: string) => t(`gallery.tag.${tag}` as UIKey);
       lbPlaceholder.textContent = c.title;
     }
     lbTitle.textContent = c.title;
-    lbCaption.textContent = c.caption || '';
-    lbTag.textContent = tagLabels[c.tag] || c.tag;
-    lbCounter.textContent = `${currentIndex + 1} / ${visible.length}`;
   }
 
   function openLightbox(idxInAll) {
@@ -376,32 +367,11 @@ const tagLabel = (tag: string) => t(`gallery.tag.${tag}` as UIKey);
     color: var(--color-concrete-200);
     max-width: 600px;
   }
-  .lightbox-tag {
-    display: inline-block;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    font-size: 0.7rem;
-    color: var(--color-concrete-400);
-    margin-bottom: 0.4rem;
-  }
   .lightbox-title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     color: white;
-    margin: 0 0 0.5rem;
-  }
-  .lightbox-caption {
-    font-size: 0.95rem;
-    color: var(--color-concrete-300);
-    line-height: 1.5;
     margin: 0;
-  }
-  .lightbox-counter {
-    display: block;
-    margin-top: 0.85rem;
-    font-size: 0.72rem;
-    color: var(--color-concrete-500);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.1em;
+    font-weight: 500;
   }
   .lightbox-btn {
     position: absolute;
