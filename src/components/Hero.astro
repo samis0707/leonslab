@@ -38,7 +38,6 @@ const hasHeroImage = imageExists(heroImagePath);
   <!-- Editorial overlay text -->
   <div class="hero-text" data-hero-text>
     <div class="hero-text-inner">
-      <p class="hero-eyebrow">{t('hero.eyebrow')}</p>
       <h1 class="hero-title">
         {t('hero.title.line1')}<br />{t('hero.title.line2')}
       </h1>
@@ -148,12 +147,15 @@ const hasHeroImage = imageExists(heroImagePath);
     position: absolute;
     inset: 0;
     z-index: 2;
+    /* Stronger darkening at the top now that the title sits up there,
+       lighter through the middle so the sticker reads clean, faint
+       darkening at the bottom for the scroll cue. */
     background:
       linear-gradient(180deg,
-        rgba(13, 12, 11, 0.18) 0%,
-        rgba(13, 12, 11, 0) 18%,
-        rgba(13, 12, 11, 0) 50%,
-        rgba(13, 12, 11, 0.55) 100%);
+        rgba(13, 12, 11, 0.55) 0%,
+        rgba(13, 12, 11, 0.18) 28%,
+        rgba(13, 12, 11, 0) 55%,
+        rgba(13, 12, 11, 0.25) 100%);
     pointer-events: none;
   }
 
@@ -163,8 +165,9 @@ const hasHeroImage = imageExists(heroImagePath);
     z-index: 3;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    padding-bottom: 4.5rem;
+    justify-content: flex-start;
+    /* clear the fixed 3.5rem header + breathing room */
+    padding-top: 6rem;
     will-change: transform, opacity;
     pointer-events: none;
   }
@@ -177,11 +180,11 @@ const hasHeroImage = imageExists(heroImagePath);
     pointer-events: auto;
   }
   @media (min-width: 768px) {
-    .hero-text { padding-bottom: 5.5rem; }
+    .hero-text { padding-top: 7rem; }
     .hero-text-inner { padding: 0 2rem; }
   }
   @media (min-width: 1024px) {
-    .hero-text { padding-bottom: 6rem; }
+    .hero-text { padding-top: 8rem; }
     .hero-text-inner { padding: 0 3rem; }
   }
 

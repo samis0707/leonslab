@@ -19,7 +19,7 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') + '/';
 <header class="site-header fixed top-0 inset-x-0 z-50">
   <nav class="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
     <a href={localizedPath(lang, '/')} class="hdr-logo display text-[15px] tracking-tight">
-      <span class="font-bold">Leons</span><span class="hdr-logo-accent">Lab</span>
+      <span class="font-bold">Leons</span><span class="hdr-logo-accent text-[color:var(--color-park-green)]">Lab</span>
     </a>
 
     <ul class="hidden md:flex items-center gap-7 text-[13px]">
@@ -98,7 +98,6 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') + '/';
     transition: color 280ms ease;
   }
   .hdr-logo-accent {
-    color: var(--color-park-green);
     transition: color 280ms ease;
   }
   .hdr-link {
@@ -131,8 +130,8 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') + '/';
     color: rgba(255, 255, 255, 0.98);
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.32);
   }
-  .site-header.is-on-hero .hdr-logo-accent {
-    /* Slightly muted green over photo so the logo reads as a unit */
+  /* Higher specificity than tailwind's color utility so this wins */
+  header.site-header.is-on-hero .hdr-logo-accent {
     color: rgba(255, 255, 255, 0.98);
   }
   .site-header.is-on-hero .hdr-link {

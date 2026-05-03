@@ -2,7 +2,7 @@
 import PetriMarker from './PetriMarker.astro';
 interface Props {
   eyebrow?: string;
-  title: string;
+  title?: string;
 }
 const { eyebrow, title } = Astro.props;
 ---
@@ -13,5 +13,7 @@ const { eyebrow, title } = Astro.props;
       <span>{eyebrow}</span>
     </p>
   )}
-  <h2 class="display text-[clamp(1.75rem,4vw,3rem)] text-[color:var(--color-concrete-900)]">{title}</h2>
+  {title && (
+    <h2 class="display text-[clamp(1.75rem,4vw,3rem)] text-[color:var(--color-concrete-900)]">{title}</h2>
+  )}
 </header>
