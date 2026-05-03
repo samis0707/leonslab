@@ -1,0 +1,449 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+import { getCollection } from 'astro:content';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+import type { UIKey } from '../i18n/ui';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const allCartoons = await getCollection('cartoons');
+const sorted = allCartoons.sort((a, b) => a.data.order - b.data.order);
+
+function imageExists(imagePath: string): boolean {
+  try {
+    return fs.existsSync(path.join(process.cwd(), 'public', imagePath.replace(/^\//, '')));
+  } catch {
+    return false;
+  }
+}
+
+const tags = ['lab-life', 'slice-of-life', 'pop-parody', 'pseudomonas-park'] as const;
+
+const cartoons = sorted.map((c) => ({
+  id: c.id,
+  order: c.data.order,
+  title: c.data.title,
+  tag: c.data.tag,
+  image: c.data.image,
+  alt: c.data.alt,
+  aspect: c.data.aspect,
+  caption: lang === 'de'
+    ? (c.data.captionDe ?? c.data.captionEn ?? '')
+    : (c.data.captionEn ?? ''),
+  hasImage: imageExists(c.data.image),
+}));
+
+const tagLabel = (tag: string) => t(`gallery.tag.${tag}` as UIKey);
+---
+
+<section class="max-w-7xl mx-auto px-6 pb-32">
+  <!-- Filter pills -->
+  <div class="flex flex-wrap gap-2 mb-10" data-cartoon-filters>
+    <button type="button" class="filter-pill is-active" data-filter="all">
+      <span>{t('gallery.filter.all')}</span>
+      <span class="count">{cartoons.length}</span>
+    </button>
+    {tags.map((tag) => {
+      const count = cartoons.filter((c) => c.tag === tag).length;
+      if (count === 0) return null;
+      return (
+        <button type="button" class="filter-pill" data-filter={tag}>
+          <span>{tagLabel(tag)}</span>
+          <span class="count">{count}</span>
+        </button>
+      );
+    })}
+  </div>
+
+  <!-- Masonry grid -->
+  <div class="cartoon-gallery" data-gallery>
+    {cartoons.map((c, i) => (
+      <button
+        type="button"
+        class="gallery-item"
+        data-tag={c.tag}
+        data-index={i}
+        aria-label={c.title}
+      >
+        <span class={`img-wrap ${c.hasImage ? '' : 'is-placeholder'}`} style={`aspect-ratio: ${c.aspect};`}>
+          {c.hasImage && (
+            <img src={c.image} alt={c.alt} loading="lazy" decoding="async" />
+          )}
+          <span class="placeholder-label">{c.title}</span>
+        </span>
+        <span class="meta">
+          <span class="title">{c.title}</span>
+          <span class="tag">{tagLabel(c.tag)}</span>
+        </span>
+      </button>
+    ))}
+  </div>
+
+  <p class="empty-state hidden text-center py-20 text-[color:var(--color-concrete-500)]" data-empty-state>
+    {t('gallery.empty')}
+  </p>
+</section>
+
+<!-- Lightbox -->
+<div class="lightbox" data-lightbox aria-hidden="true" role="dialog" aria-modal="true" aria-label="Cartoon viewer">
+  <button type="button" class="lightbox-btn lightbox-close" data-lightbox-close aria-label={t('lightbox.close')}>
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <button type="button" class="lightbox-btn lightbox-prev" data-lightbox-prev aria-label={t('lightbox.prev')}>
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <button type="button" class="lightbox-btn lightbox-next" data-lightbox-next aria-label={t('lightbox.next')}>
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <figure class="lightbox-content">
+    <div class="lightbox-image-wrap">
+      <img data-lightbox-image alt="" />
+      <span class="lightbox-placeholder" data-lightbox-placeholder hidden></span>
+    </div>
+    <figcaption>
+      <span class="lightbox-tag" data-lightbox-tag></span>
+      <h3 class="display lightbox-title" data-lightbox-title></h3>
+      <p class="lightbox-caption" data-lightbox-caption></p>
+      <span class="lightbox-counter" data-lightbox-counter></span>
+    </figcaption>
+  </figure>
+</div>
+
+<script define:vars={{ cartoons, tagLabels: Object.fromEntries(tags.map((tg) => [tg, tagLabel(tg)])) }}>
+  const filterButtons = document.querySelectorAll('[data-cartoon-filters] [data-filter]');
+  const items = Array.from(document.querySelectorAll('[data-gallery] .gallery-item'));
+  const emptyState = document.querySelector('[data-empty-state]');
+
+  let currentFilter = 'all';
+  let visible = cartoons.slice();
+  let currentIndex = -1;
+
+  function applyFilter(filter) {
+    currentFilter = filter;
+    let count = 0;
+    items.forEach((item) => {
+      const matches = filter === 'all' || item.dataset.tag === filter;
+      item.classList.toggle('is-hidden', !matches);
+      if (matches) count++;
+    });
+    emptyState.classList.toggle('hidden', count > 0);
+    filterButtons.forEach((b) => b.classList.toggle('is-active', b.dataset.filter === filter));
+    visible = filter === 'all' ? cartoons.slice() : cartoons.filter((c) => c.tag === filter);
+  }
+
+  filterButtons.forEach((b) => b.addEventListener('click', () => applyFilter(b.dataset.filter)));
+
+  // Lightbox
+  const lightbox = document.querySelector('[data-lightbox]');
+  const lbImage = document.querySelector('[data-lightbox-image]');
+  const lbPlaceholder = document.querySelector('[data-lightbox-placeholder]');
+  const lbTitle = document.querySelector('[data-lightbox-title]');
+  const lbCaption = document.querySelector('[data-lightbox-caption]');
+  const lbTag = document.querySelector('[data-lightbox-tag]');
+  const lbCounter = document.querySelector('[data-lightbox-counter]');
+
+  function showCurrent() {
+    const c = visible[currentIndex];
+    if (!c) return;
+    if (c.hasImage) {
+      lbImage.src = c.image;
+      lbImage.alt = c.alt;
+      lbImage.style.aspectRatio = c.aspect;
+      lbImage.hidden = false;
+      lbPlaceholder.hidden = true;
+    } else {
+      lbImage.removeAttribute('src');
+      lbImage.hidden = true;
+      lbPlaceholder.hidden = false;
+      lbPlaceholder.textContent = c.title;
+    }
+    lbTitle.textContent = c.title;
+    lbCaption.textContent = c.caption || '';
+    lbTag.textContent = tagLabels[c.tag] || c.tag;
+    lbCounter.textContent = `${currentIndex + 1} / ${visible.length}`;
+  }
+
+  function openLightbox(idxInAll) {
+    const cartoon = cartoons[idxInAll];
+    if (!cartoon) return;
+    const idxInVisible = visible.findIndex((c) => c.id === cartoon.id);
+    if (idxInVisible === -1) return;
+    currentIndex = idxInVisible;
+    showCurrent();
+    lightbox.setAttribute('aria-hidden', 'false');
+    lightbox.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.setAttribute('aria-hidden', 'true');
+    lightbox.classList.remove('is-open');
+    document.body.style.overflow = '';
+    currentIndex = -1;
+  }
+
+  function nav(delta) {
+    if (visible.length === 0) return;
+    currentIndex = (currentIndex + delta + visible.length) % visible.length;
+    showCurrent();
+  }
+
+  items.forEach((item) => {
+    item.addEventListener('click', () => {
+      const idx = parseInt(item.dataset.index, 10);
+      openLightbox(idx);
+    });
+  });
+
+  document.querySelector('[data-lightbox-close]').addEventListener('click', closeLightbox);
+  document.querySelector('[data-lightbox-prev]').addEventListener('click', () => nav(-1));
+  document.querySelector('[data-lightbox-next]').addEventListener('click', () => nav(1));
+
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) closeLightbox();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (lightbox.getAttribute('aria-hidden') === 'true') return;
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'ArrowLeft') nav(-1);
+    else if (e.key === 'ArrowRight') nav(1);
+  });
+
+  // touch swipe
+  let touchStartX = 0;
+  lightbox.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+  lightbox.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].screenX - touchStartX;
+    if (Math.abs(dx) > 60) nav(dx > 0 ? -1 : 1);
+  }, { passive: true });
+</script>
+
+<style>
+  .filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    border: 1px solid var(--color-concrete-200);
+    background: white;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-concrete-600);
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+  .filter-pill:hover {
+    border-color: var(--color-concrete-400);
+    color: var(--color-concrete-900);
+  }
+  .filter-pill.is-active {
+    background: var(--color-concrete-900);
+    border-color: var(--color-concrete-900);
+    color: var(--color-concrete-50);
+  }
+  .filter-pill .count {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cartoon-gallery {
+    columns: 3;
+    column-gap: 1rem;
+  }
+  @media (max-width: 1024px) { .cartoon-gallery { columns: 2; } }
+  @media (max-width: 640px) { .cartoon-gallery { columns: 1; } }
+
+  .gallery-item {
+    display: block;
+    width: 100%;
+    margin: 0 0 1rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    break-inside: avoid;
+  }
+  .gallery-item.is-hidden { display: none; }
+  .gallery-item:hover .img-wrap { box-shadow: 0 12px 36px rgba(0,0,0,0.08); }
+  .gallery-item:hover .img-wrap img { transform: scale(1.025); }
+
+  .img-wrap {
+    position: relative;
+    display: block;
+    background: var(--color-concrete-200);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: box-shadow 220ms ease;
+  }
+  .img-wrap img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .img-wrap.is-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+    background: linear-gradient(135deg, var(--color-concrete-100), var(--color-concrete-200));
+  }
+  .placeholder-label {
+    display: none;
+    text-align: center;
+    font-weight: 600;
+    color: var(--color-concrete-600);
+    font-size: 0.95rem;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+  .img-wrap.is-placeholder .placeholder-label { display: block; }
+
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 0.25rem 0;
+    align-items: baseline;
+  }
+  .meta .title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-concrete-800);
+  }
+  .meta .tag {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-concrete-400);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* Lightbox */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(20, 20, 18, 0.94);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 240ms ease;
+  }
+  .lightbox.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .lightbox-content {
+    max-width: 90vw;
+    max-height: 88vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    align-items: center;
+    text-align: center;
+  }
+  .lightbox-image-wrap {
+    max-width: 100%;
+    max-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .lightbox-content img {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    background: var(--color-concrete-50);
+    display: block;
+  }
+  .lightbox-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(60vw, 480px);
+    height: min(60vw, 480px);
+    background: linear-gradient(135deg, var(--color-concrete-700), var(--color-concrete-800));
+    color: var(--color-concrete-200);
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 2rem;
+    border-radius: 8px;
+  }
+  .lightbox-content figcaption {
+    color: var(--color-concrete-200);
+    max-width: 600px;
+  }
+  .lightbox-tag {
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.7rem;
+    color: var(--color-concrete-400);
+    margin-bottom: 0.4rem;
+  }
+  .lightbox-title {
+    font-size: 1.5rem;
+    color: white;
+    margin: 0 0 0.5rem;
+  }
+  .lightbox-caption {
+    font-size: 0.95rem;
+    color: var(--color-concrete-300);
+    line-height: 1.5;
+    margin: 0;
+  }
+  .lightbox-counter {
+    display: block;
+    margin-top: 0.85rem;
+    font-size: 0.72rem;
+    color: var(--color-concrete-500);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1em;
+  }
+  .lightbox-btn {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: var(--color-concrete-100);
+    cursor: pointer;
+    transition: background 200ms ease;
+  }
+  .lightbox-btn:hover { background: rgba(255,255,255,0.18); }
+  .lightbox-close { top: 1.25rem; right: 1.25rem; }
+  .lightbox-prev { left: 1.25rem; top: 50%; transform: translateY(-50%); }
+  .lightbox-next { right: 1.25rem; top: 50%; transform: translateY(-50%); }
+  @media (max-width: 640px) {
+    .lightbox-prev { left: 0.5rem; }
+    .lightbox-next { right: 0.5rem; }
+    .lightbox-close { top: 0.75rem; right: 0.75rem; }
+  }
+</style>

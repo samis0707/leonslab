@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import CartoonGallery from '../components/CartoonGallery.astro';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+---
+<BaseLayout title={t('page.cartoons.title')} description={t('page.cartoons.subtitle')}>
+  <section class="max-w-7xl mx-auto px-6 pt-20 md:pt-28 pb-12">
+    <SectionHeading eyebrow={t('page.cartoons.title')} title={t('page.cartoons.subtitle')} />
+  </section>
+  <CartoonGallery />
+</BaseLayout>
