@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import WorkCard from '../components/WorkCard.astro';
+import { getLangFromUrl, useTranslations, localizedPath } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+---
+<BaseLayout>
+  <Hero />
+
+  <!-- ABOUT -->
+  <section class="max-w-7xl mx-auto px-6 py-28 md:py-36">
+    <div class="grid md:grid-cols-12 gap-10 items-start">
+      <div class="md:col-span-4">
+        <p class="eyebrow">{t('about.eyebrow')}</p>
+      </div>
+      <div class="md:col-span-8">
+        <h2 class="display text-[clamp(1.75rem,4vw,3.25rem)] text-[color:var(--color-concrete-900)] max-w-3xl">
+          {t('about.title')}
+        </h2>
+        <p class="mt-6 text-lg text-[color:var(--color-concrete-700)] leading-relaxed max-w-2xl">
+          {t('about.body')}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORK GRID -->
+  <section class="max-w-7xl mx-auto px-6 pb-28">
+    <SectionHeading eyebrow={t('sections.work')} title={lang === 'de' ? 'Drei Spuren, eine Hand.' : 'Three threads, one hand.'} />
+
+    <div class="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <WorkCard
+        href={localizedPath(lang, '/cartoons/')}
+        title={t('cards.cartoons.title')}
+        description={t('cards.cartoons.desc')}
+        count="01"
+      />
+      <WorkCard
+        href={localizedPath(lang, '/stickers/')}
+        title={t('cards.stickers.title')}
+        description={t('cards.stickers.desc')}
+        count="02"
+      />
+      <WorkCard
+        href={localizedPath(lang, '/lab-solutions/')}
+        title={t('cards.labSolutions.title')}
+        description={t('cards.labSolutions.desc')}
+        count="03"
+      />
+    </div>
+  </section>
+
+  <!-- PSEUDOMONAS PARK FEATURE -->
+  <section class="bg-[color:var(--color-concrete-900)] text-[color:var(--color-concrete-50)]">
+    <div class="max-w-7xl mx-auto px-6 py-28 md:py-36 grid md:grid-cols-12 gap-10 items-center">
+      <div class="md:col-span-7">
+        <p class="eyebrow text-[color:var(--color-concrete-400)]">{t('park.eyebrow')}</p>
+        <h2 class="display mt-4 text-[clamp(2rem,5vw,4rem)]">
+          {t('park.title')}
+        </h2>
+        <p class="mt-4 text-xl text-[color:var(--color-concrete-300)]">{t('park.tagline')}</p>
+        <p class="mt-6 max-w-xl text-base text-[color:var(--color-concrete-300)] leading-relaxed">
+          {t('park.body')}
+        </p>
+        <a href={localizedPath(lang, '/pseudomonas-park/')} class="inline-flex items-center gap-2 mt-8 px-6 py-3 rounded-full bg-[color:var(--color-park-yellow)] text-[color:var(--color-concrete-900)] font-medium text-sm transition hover:-translate-y-0.5">
+          {t('hero.cta.park')}
+          <span>→</span>
+        </a>
+      </div>
+      <div class="md:col-span-5">
+        <!-- Placeholder area for the Pseudomonas Park sticker render. -->
+        <div class="aspect-square rounded-3xl border border-[color:var(--color-concrete-700)] bg-[color:var(--color-concrete-800)] flex items-center justify-center">
+          <span class="text-xs uppercase tracking-widest text-[color:var(--color-concrete-500)]">Sticker · folgt</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

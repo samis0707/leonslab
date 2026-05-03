@@ -1,0 +1,40 @@
+---
+import { getLangFromUrl, useTranslations, localizedPath } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+---
+<section class="relative min-h-[88vh] flex items-end overflow-hidden">
+  <!--
+    Hero background. Replace /hero-concrete.jpg with the user's Sichtbeton+Sticker photo.
+    The photo lives in /public/images/hero-concrete.jpg once added.
+  -->
+  <div class="absolute inset-0">
+    <div
+      class="absolute inset-0 bg-[color:var(--color-concrete-200)]"
+      style="background-image: url('/images/hero-concrete.jpg'); background-size: cover; background-position: center;"
+      aria-hidden="true"
+    ></div>
+    <!-- subtle gradient for legibility -->
+    <div class="absolute inset-0 bg-gradient-to-t from-[color:var(--color-concrete-50)] via-[color:var(--color-concrete-50)]/30 to-transparent" aria-hidden="true"></div>
+  </div>
+
+  <div class="relative max-w-7xl mx-auto w-full px-6 pb-20 md:pb-28">
+    <p class="eyebrow text-[color:var(--color-concrete-700)]">{t('hero.eyebrow')}</p>
+    <h1 class="display-tight mt-4 text-[clamp(2.6rem,8vw,6.5rem)] text-[color:var(--color-concrete-900)] max-w-5xl">
+      {t('hero.title.line1')}<br />{t('hero.title.line2')}
+    </h1>
+    <p class="mt-6 max-w-xl text-base md:text-lg text-[color:var(--color-concrete-700)] leading-relaxed">
+      {t('hero.subtitle')}
+    </p>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a href={localizedPath(lang, '/cartoons/')} class="btn-primary">
+        {t('hero.cta.work')}
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8m0 0L7.5 3.5M11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href={localizedPath(lang, '/pseudomonas-park/')} class="btn-ghost">
+        {t('hero.cta.park')}
+      </a>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+import type { UIKey } from '../i18n/ui';
+
+interface Props {
+  pageKey: 'cartoons' | 'stickers' | 'labSolutions' | 'park' | 'ideas';
+  eyebrow?: string;
+}
+
+const { pageKey, eyebrow } = Astro.props;
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const title = t(`page.${pageKey}.title` as UIKey);
+const subtitle = t(`page.${pageKey}.subtitle` as UIKey);
+---
+<BaseLayout title={title} description={subtitle}>
+  <section class="max-w-7xl mx-auto px-6 pt-20 md:pt-28 pb-16">
+    <SectionHeading eyebrow={eyebrow ?? title} title={subtitle} />
+  </section>
+
+  <section class="max-w-7xl mx-auto px-6 pb-32">
+    <div class="border border-dashed border-[color:var(--color-concrete-300)] rounded-2xl p-14 text-center">
+      <p class="eyebrow">Work in progress</p>
+      <p class="mt-3 text-[color:var(--color-concrete-600)]">
+        {lang === 'de' ? 'Bilder und Inhalte folgen in Kürze.' : 'Images and content coming soon.'}
+      </p>
+    </div>
+  </section>
+</BaseLayout>

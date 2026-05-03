@@ -1,0 +1,38 @@
+---
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const year = new Date().getFullYear();
+---
+<footer class="border-t border-[color:var(--color-concrete-200)] mt-32">
+  <div class="max-w-7xl mx-auto px-6 py-14 grid gap-10 md:grid-cols-3">
+    <div>
+      <p class="display text-lg">
+        <span class="font-bold">Leons</span><span class="text-[color:var(--color-park-red)]">Lab</span>
+      </p>
+      <p class="mt-2 text-sm text-[color:var(--color-concrete-500)]">Leon Rösch · Microbiology &amp; making.</p>
+    </div>
+
+    <div>
+      <p class="eyebrow mb-3">{t('footer.contact')}</p>
+      <ul class="space-y-2 text-sm">
+        <li>
+          <a href="mailto:Leon.roesch28@gmail.com" class="text-[color:var(--color-concrete-700)] hover:text-[color:var(--color-concrete-900)] underline-offset-4 hover:underline">
+            Leon.roesch28@gmail.com
+          </a>
+        </li>
+        <li>
+          <a href="https://www.linkedin.com/in/leon-roesch-microbiology" target="_blank" rel="noopener" class="text-[color:var(--color-concrete-700)] hover:text-[color:var(--color-concrete-900)] underline-offset-4 hover:underline">
+            LinkedIn
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="md:text-right">
+      <p class="text-xs text-[color:var(--color-concrete-400)]">© {year} Leon Rösch</p>
+      <p class="mt-1 text-xs text-[color:var(--color-concrete-400)]">{t('footer.colophon')}</p>
+    </div>
+  </div>
+</footer>

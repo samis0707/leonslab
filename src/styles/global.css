@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+@theme {
+  /* Apple-inspired font stack: SF Pro on Apple devices, Inter elsewhere */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, monospace;
+
+  /* Concrete (Sichtbeton) palette — base of the site */
+  --color-concrete-50: #f6f5f2;
+  --color-concrete-100: #ecebe6;
+  --color-concrete-200: #d8d6cf;
+  --color-concrete-300: #b9b5ac;
+  --color-concrete-400: #8e8a80;
+  --color-concrete-500: #6c685f;
+  --color-concrete-600: #4a4740;
+  --color-concrete-700: #2f2d29;
+  --color-concrete-800: #1a1917;
+  --color-concrete-900: #0d0c0b;
+
+  /* Pseudomonas Park accent — used very sparingly */
+  --color-park-red: #c8202c;
+  --color-park-yellow: #f4c20d;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-family: var(--font-sans);
+    background: var(--color-concrete-50);
+    color: var(--color-concrete-800);
+  }
+
+  body {
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background: var(--color-park-yellow);
+    color: var(--color-concrete-900);
+  }
+}
+
+@layer components {
+  /* Apple-style display headlines — large, tight, slightly negative tracking */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+  }
+
+  .display-tight {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+    line-height: 1;
+  }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-concrete-500);
+  }
+
+  /* Petri-dish nav marker: minimal outlined circle with hover-revealed colonies */
+  .petri-marker circle.dish {
+    transition: stroke-opacity 200ms ease;
+    stroke-opacity: 0.45;
+  }
+  .petri-marker circle.colony {
+    opacity: 0;
+    transform-origin: center;
+    transition: opacity 280ms ease, transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform: scale(0.4);
+  }
+  .group:hover .petri-marker circle.dish,
+  .is-active .petri-marker circle.dish {
+    stroke-opacity: 1;
+  }
+  .group:hover .petri-marker circle.colony,
+  .is-active .petri-marker circle.colony {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.5rem;
+    border-radius: 9999px;
+    background: var(--color-concrete-900);
+    color: var(--color-concrete-50);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: transform 200ms ease, background 200ms ease;
+  }
+  .btn-primary:hover {
+    background: var(--color-concrete-800);
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.5rem;
+    border-radius: 9999px;
+    border: 1px solid var(--color-concrete-300);
+    color: var(--color-concrete-800);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: border-color 200ms ease, background 200ms ease;
+  }
+  .btn-ghost:hover {
+    background: var(--color-concrete-100);
+    border-color: var(--color-concrete-400);
+  }
+}

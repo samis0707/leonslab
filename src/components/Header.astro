@@ -1,0 +1,84 @@
+---
+import { getLangFromUrl, useTranslations, getOppositeLangPath, localizedPath } from '../i18n/utils';
+import PetriMarker from './PetriMarker.astro';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const altLangHref = getOppositeLangPath(Astro.url);
+
+const navItems = [
+  { href: localizedPath(lang, '/cartoons/'), label: t('nav.cartoons') },
+  { href: localizedPath(lang, '/stickers/'), label: t('nav.stickers') },
+  { href: localizedPath(lang, '/lab-solutions/'), label: t('nav.labSolutions') },
+  { href: localizedPath(lang, '/pseudomonas-park/'), label: t('nav.park') },
+  { href: localizedPath(lang, '/ideas/'), label: t('nav.ideas') },
+];
+
+const currentPath = Astro.url.pathname.replace(/\/$/, '') + '/';
+---
+<header class="fixed top-0 inset-x-0 z-50 backdrop-blur-xl bg-[color:var(--color-concrete-50)]/70 border-b border-[color:var(--color-concrete-200)]/60">
+  <nav class="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+    <a href={localizedPath(lang, '/')} class="display text-[15px] tracking-tight text-[color:var(--color-concrete-900)]">
+      <span class="font-bold">Leons</span><span class="text-[color:var(--color-park-red)]">Lab</span>
+    </a>
+
+    <ul class="hidden md:flex items-center gap-7 text-[13px]">
+      {navItems.map(item => {
+        const isActive = currentPath.startsWith(item.href);
+        return (
+          <li>
+            <a
+              href={item.href}
+              class:list={["group inline-flex items-center gap-1.5 text-[color:var(--color-concrete-600)] hover:text-[color:var(--color-concrete-900)] transition-colors", isActive && 'is-active text-[color:var(--color-concrete-900)]']}
+            >
+              <PetriMarker size={11} />
+              <span>{item.label}</span>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+
+    <div class="flex items-center gap-4">
+      <a
+        href={altLangHref}
+        aria-label={t('lang.switch.aria')}
+        class="text-[11px] font-semibold tracking-[0.16em] text-[color:var(--color-concrete-500)] hover:text-[color:var(--color-concrete-900)] transition-colors"
+      >
+        {t('lang.switch')}
+      </a>
+
+      <button
+        type="button"
+        aria-label="Menu"
+        class="md:hidden p-2 -m-2 text-[color:var(--color-concrete-700)]"
+        data-mobile-menu-toggle
+      >
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <div data-mobile-menu class="md:hidden hidden border-t border-[color:var(--color-concrete-200)]/60 bg-[color:var(--color-concrete-50)]/95 backdrop-blur-xl">
+    <ul class="px-6 py-4 space-y-3 text-sm">
+      {navItems.map(item => (
+        <li>
+          <a href={item.href} class="group inline-flex items-center gap-2 text-[color:var(--color-concrete-700)]">
+            <PetriMarker size={12} />
+            <span>{item.label}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</header>
+
+<script>
+  const toggle = document.querySelector('[data-mobile-menu-toggle]');
+  const menu = document.querySelector('[data-mobile-menu]');
+  toggle?.addEventListener('click', () => {
+    menu?.classList.toggle('hidden');
+  });
+</script>
