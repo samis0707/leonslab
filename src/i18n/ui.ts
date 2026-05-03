@@ -15,15 +15,15 @@ export const ui = {
     'nav.ideas': 'Ideen',
 
     'hero.eyebrow': 'LeonsLab',
-    'hero.title.line1': 'Wo Mikrobiologie',
-    'hero.title.line2': 'auf Gestaltung trifft.',
-    'hero.subtitle': 'Ein Creative Space von Leon Rösch — Forschung, Cartoons, Sticker und Werkstatt-Lösungen aus dem Labor.',
+    'hero.title.line1': 'Creative Space',
+    'hero.title.line2': 'with a Pinch of Science.',
+    'hero.subtitle': 'Mein interaktiver Workspace zur Verbindung von Kreativität und Forschung.',
     'hero.cta.work': 'Arbeiten ansehen',
-    'hero.cta.park': 'Pseudomonas Park betreten',
+    'hero.cta.park': 'Pseudomonas Park erkunden',
 
     'about.eyebrow': 'Über',
     'about.title': 'Naturwissenschaft mit Handschrift.',
-    'about.body': 'Ich bin Leon — Mikrobiologe, Zeichner und Bastler. Hier sammle ich, was zwischen Petrischale und Skizzenblock entsteht: ernsthafte Forschung neben verspielten Cartoons, durchdachten Sticker-Designs und improvisierten Lösungen aus dem Laboralltag.',
+    'about.body': 'Ich bin Leon — Mikrobiologie-Student und Fan von kreativem und nützlichem Design. Hier sammle ich, was zwischen Petrischale und Skizzenblock entsteht — ein kleiner Einblick in meine täglichen Gedankengänge.',
 
     'sections.work': 'Arbeit',
     'sections.exploring': 'In Arbeit',
@@ -86,15 +86,15 @@ export const ui = {
     'nav.ideas': 'Ideas',
 
     'hero.eyebrow': 'LeonsLab',
-    'hero.title.line1': 'Where microbiology',
-    'hero.title.line2': 'meets making.',
-    'hero.subtitle': 'A creative space by Leon Rösch — research, cartoons, stickers and workshop solutions from the lab.',
+    'hero.title.line1': 'Creative Space',
+    'hero.title.line2': 'with a Pinch of Science.',
+    'hero.subtitle': 'My interactive workspace to connect creativity and science.',
     'hero.cta.work': 'See the work',
-    'hero.cta.park': 'Enter Pseudomonas Park',
+    'hero.cta.park': 'Explore Pseudomonas Park',
 
     'about.eyebrow': 'About',
-    'about.title': 'Science with a personal hand.',
-    'about.body': "I'm Leon — microbiologist, illustrator and tinkerer. This is where I collect what happens between petri dish and sketchbook: serious research alongside playful cartoons, considered sticker designs and improvised solutions for everyday lab problems.",
+    'about.title': 'Science with Character.',
+    'about.body': "My name is Leon — I'm a microbiology student and a fan of creative and practical design. Here I share what emerges between petri dishes and sketchbooks — a little glimpse into my daily thoughts.",
 
     'sections.work': 'Work',
     'sections.exploring': 'In progress',
