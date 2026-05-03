@@ -1,0 +1,220 @@
+---
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
+interface Props {
+  order: number;
+  title: string;
+  storyEn: string;
+  storyDe: string;
+  year: number;
+  size: string;
+  material: string;
+  image: string;
+  imageContext?: string;
+  alt: string;
+  altContext?: string;
+  aspect?: string;
+  hasImage?: boolean;
+  hasContextImage?: boolean;
+  mirrored?: boolean;
+}
+
+const {
+  order, title, storyEn, storyDe, year, size, material,
+  image, imageContext, alt, altContext, aspect = '1/1',
+  hasImage = false, hasContextImage = false, mirrored = false,
+} = Astro.props;
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const story = lang === 'de' ? storyDe : storyEn;
+const orderLabel = `${t('stickers.no')} ${String(order).padStart(2, '0')}`;
+---
+<article class:list={["sticker-block", mirrored && 'is-mirrored']}>
+  <div class="sticker-block-grid">
+    <div class="sticker-block-image">
+      <div
+        class:list={["sticker-image-wrap", !hasImage && 'is-placeholder']}
+        style={`aspect-ratio: ${aspect};`}
+      >
+        {hasImage ? (
+          <img src={image} alt={alt} loading="lazy" decoding="async" />
+        ) : (
+          <span class="placeholder-label">{title}</span>
+        )}
+      </div>
+    </div>
+
+    <div class="sticker-block-text">
+      <p class="eyebrow">{orderLabel}</p>
+      <h2 class="display sticker-title">{title}</h2>
+      <p class="sticker-story" set:html={story.replace(/\*([^*]+)\*/g, '<em>$1</em>')}></p>
+
+      <dl class="sticker-specs">
+        <div class="spec">
+          <dt>{t('stickers.specs.year')}</dt>
+          <dd>{year}</dd>
+        </div>
+        <div class="spec">
+          <dt>{t('stickers.specs.size')}</dt>
+          <dd>{size}</dd>
+        </div>
+        <div class="spec">
+          <dt>{t('stickers.specs.material')}</dt>
+          <dd>{material}</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  {imageContext && (
+    <figure class="sticker-context">
+      <div class:list={["sticker-context-wrap", !hasContextImage && 'is-placeholder']}>
+        {hasContextImage ? (
+          <img src={imageContext} alt={altContext ?? alt} loading="lazy" decoding="async" />
+        ) : (
+          <span class="placeholder-label">{title} — {t('stickers.inSitu')}</span>
+        )}
+      </div>
+    </figure>
+  )}
+</article>
+
+<style>
+  .sticker-block {
+    padding: 6rem 0;
+    border-top: 1px solid var(--color-concrete-200);
+  }
+  .sticker-block:first-of-type {
+    border-top: none;
+    padding-top: 2rem;
+  }
+
+  .sticker-block-grid {
+    display: grid;
+    gap: 3rem 5rem;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "image text";
+    align-items: center;
+  }
+  .sticker-block.is-mirrored .sticker-block-grid {
+    grid-template-areas: "text image";
+  }
+  .sticker-block-image { grid-area: image; }
+  .sticker-block-text { grid-area: text; }
+
+  @media (max-width: 768px) {
+    .sticker-block { padding: 4rem 0; }
+    .sticker-block-grid,
+    .sticker-block.is-mirrored .sticker-block-grid {
+      grid-template-columns: 1fr;
+      grid-template-areas: "image" "text";
+      gap: 2.5rem;
+    }
+  }
+
+  .sticker-image-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-concrete-100), #fff 60%, var(--color-concrete-100));
+    border-radius: 28px;
+    padding: 3rem;
+    overflow: hidden;
+  }
+  .sticker-image-wrap img {
+    max-width: 80%;
+    max-height: 80%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.12));
+  }
+  .sticker-image-wrap.is-placeholder {
+    background: linear-gradient(135deg, var(--color-concrete-100), var(--color-concrete-200));
+    min-height: 320px;
+  }
+  .placeholder-label {
+    text-align: center;
+    font-weight: 600;
+    color: var(--color-concrete-500);
+    font-size: 0.95rem;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    padding: 1rem;
+  }
+
+  .sticker-block-text .eyebrow {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.18em;
+  }
+  .sticker-title {
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    margin: 0.75rem 0 1.5rem;
+    color: var(--color-concrete-900);
+  }
+  .sticker-story {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--color-concrete-700);
+    max-width: 38rem;
+    margin: 0;
+  }
+  .sticker-story em {
+    font-style: italic;
+    color: var(--color-concrete-900);
+  }
+
+  .sticker-specs {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    gap: 2.5rem;
+    margin: 2.5rem 0 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-concrete-200);
+    width: max-content;
+    max-width: 100%;
+  }
+  @media (max-width: 480px) {
+    .sticker-specs { grid-template-columns: repeat(3, 1fr); gap: 1rem; width: 100%; }
+  }
+  .sticker-specs .spec dt {
+    font-size: 0.65rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-concrete-400);
+    font-weight: 600;
+    margin: 0;
+  }
+  .sticker-specs .spec dd {
+    font-size: 0.95rem;
+    margin: 0.4rem 0 0;
+    color: var(--color-concrete-800);
+    font-weight: 500;
+  }
+
+  .sticker-context {
+    margin: 4rem 0 0;
+  }
+  .sticker-context-wrap {
+    border-radius: 24px;
+    overflow: hidden;
+    background: var(--color-concrete-100);
+    aspect-ratio: 16/10;
+  }
+  .sticker-context-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .sticker-context-wrap.is-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-concrete-100), var(--color-concrete-200));
+  }
+</style>
