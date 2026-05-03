@@ -35,12 +35,16 @@ const hasHeroImage = imageExists(heroImagePath);
     <div class="hero-gradient" aria-hidden="true"></div>
   </div>
 
-  <!-- Editorial overlay text -->
+  <!-- Editorial overlay text: title pinned to the top, supporting copy
+       and CTAs anchored to the bottom so the sticker in the middle of
+       the photo stays uncovered. -->
   <div class="hero-text" data-hero-text>
-    <div class="hero-text-inner">
+    <div class="hero-text-inner hero-text-top">
       <h1 class="hero-title">
         {t('hero.title.line1')}<br />{t('hero.title.line2')}
       </h1>
+    </div>
+    <div class="hero-text-inner hero-text-bottom">
       <p class="hero-subtitle">{t('hero.subtitle')}</p>
       <div class="hero-ctas">
         <a href={localizedPath(lang, '/cartoons/')} class="btn-primary">
@@ -147,15 +151,16 @@ const hasHeroImage = imageExists(heroImagePath);
     position: absolute;
     inset: 0;
     z-index: 2;
-    /* Stronger darkening at the top now that the title sits up there,
-       lighter through the middle so the sticker reads clean, faint
-       darkening at the bottom for the scroll cue. */
+    /* Darken both ends so the title (top) and the supporting copy +
+       CTAs (bottom) stay legible. The middle stays clear so the
+       sticker in the photo reads clean. */
     background:
       linear-gradient(180deg,
         rgba(13, 12, 11, 0.55) 0%,
-        rgba(13, 12, 11, 0.18) 28%,
-        rgba(13, 12, 11, 0) 55%,
-        rgba(13, 12, 11, 0.25) 100%);
+        rgba(13, 12, 11, 0.18) 22%,
+        rgba(13, 12, 11, 0) 45%,
+        rgba(13, 12, 11, 0) 60%,
+        rgba(13, 12, 11, 0.55) 100%);
     pointer-events: none;
   }
 
@@ -165,9 +170,11 @@ const hasHeroImage = imageExists(heroImagePath);
     z-index: 3;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    /* clear the fixed 3.5rem header + breathing room */
+    justify-content: space-between;
+    /* top clearance for the fixed 3.5rem header,
+       bottom clearance so the supporting copy doesn't crash into the scroll cue */
     padding-top: 6rem;
+    padding-bottom: 5rem;
     will-change: transform, opacity;
     pointer-events: none;
   }
@@ -180,11 +187,17 @@ const hasHeroImage = imageExists(heroImagePath);
     pointer-events: auto;
   }
   @media (min-width: 768px) {
-    .hero-text { padding-top: 7rem; }
+    .hero-text {
+      padding-top: 7rem;
+      padding-bottom: 5.5rem;
+    }
     .hero-text-inner { padding: 0 2rem; }
   }
   @media (min-width: 1024px) {
-    .hero-text { padding-top: 8rem; }
+    .hero-text {
+      padding-top: 8rem;
+      padding-bottom: 6rem;
+    }
     .hero-text-inner { padding: 0 3rem; }
   }
 
@@ -213,7 +226,7 @@ const hasHeroImage = imageExists(heroImagePath);
   }
 
   .hero-subtitle {
-    margin: 1.75rem 0 0;
+    margin: 0;
     max-width: 38rem;
     font-size: 1rem;
     color: rgba(255, 255, 255, 0.94);
@@ -225,7 +238,7 @@ const hasHeroImage = imageExists(heroImagePath);
   }
 
   .hero-ctas {
-    margin-top: 2.25rem;
+    margin-top: 1.5rem;
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
