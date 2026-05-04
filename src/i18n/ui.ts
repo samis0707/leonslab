@@ -13,6 +13,7 @@ export const ui = {
     'nav.labSolutions': 'Lab Solutions',
     'nav.park': 'Pseudomonas Park',
     'nav.ideas': 'Ideen',
+    'nav.primerDesign': 'Primer Design',
 
     'hero.eyebrow': 'LeonsLab',
     'hero.title.line1': 'Creative Space',
@@ -101,6 +102,7 @@ export const ui = {
     'nav.labSolutions': 'Lab Solutions',
     'nav.park': 'Pseudomonas Park',
     'nav.ideas': 'Ideas',
+    'nav.primerDesign': 'Primer Design',
 
     'hero.eyebrow': 'LeonsLab',
     'hero.title.line1': 'Creative Space',
