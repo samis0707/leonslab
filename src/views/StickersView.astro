@@ -21,7 +21,7 @@ function imageExists(imagePath: string): boolean {
 const allStickers = await getCollection('stickers');
 const stickers = allStickers.sort((a, b) => a.data.order - b.data.order);
 
-const heroImagePath = '/images/stickers/hero-plants.jpg';
+const heroImagePath = '/images/stickers/hero-plants.jpeg';
 const heroExists = imageExists(heroImagePath);
 ---
 <BaseLayout title={t('page.stickers.title')} description={t('page.stickers.subtitle')}>
