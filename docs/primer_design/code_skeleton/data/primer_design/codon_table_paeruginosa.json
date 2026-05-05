@@ -1,0 +1,27 @@
+{
+  "_comment": "P. aeruginosa high-frequency codon table. Source: Kazusa codon-usage database, taxon 287 (P. aeruginosa PAO1). Each amino acid maps to its most-frequent codon. Used by the tag-DNA reverse-translator if a user wants codon-optimization of a custom tag in v1.1+. The pre-defined tags in tags.py are already optimized; this table is here for extensibility.",
+  "version": "2026-05-04",
+
+  "A": "GCC",
+  "C": "TGC",
+  "D": "GAC",
+  "E": "GAG",
+  "F": "TTC",
+  "G": "GGC",
+  "H": "CAC",
+  "I": "ATC",
+  "K": "AAG",
+  "L": "CTG",
+  "M": "ATG",
+  "N": "AAC",
+  "P": "CCG",
+  "Q": "CAG",
+  "R": "CGC",
+  "S": "AGC",
+  "T": "ACC",
+  "V": "GTG",
+  "W": "TGG",
+  "Y": "TAC",
+
+  "*": "TAA"
+}

@@ -1,0 +1,38 @@
+{
+  "_comment": "Calibrated tail conventions per (vector, enzyme, application). Adding a new triple = one entry here + (if needed) a new TailRuleFn in lib/primer_design/vectors.py. Keys are formatted as 'vector|enzyme|application'.",
+
+  "pEXG2|HindIII|deletion": {
+    "name": "site_destroyed",
+    "p1_tail_rule": "left_arm_15nt_excl_recognition",
+    "p4_tail_rule": "rc_right_arm_15nt_starting_at_second_nt_of_recognition",
+    "expected_recognition_count_in_final_plasmid": 0,
+    "calibrated_against": "lasB_deletion_pEXG2_LB001 (v1 working primer set, 2026-04)",
+    "expected_p1_tail_for_pEXG2_HindIII": "CATAAATGTAAAGCA"
+  },
+
+  "pEXG2|HindIII|tagging": {
+    "name": "site_destroyed",
+    "p1_tail_rule": "left_arm_15nt_excl_recognition",
+    "p4_tail_rule": "rc_right_arm_15nt_starting_at_second_nt_of_recognition",
+    "expected_recognition_count_in_final_plasmid": 0,
+    "calibrated_against": "shares pEXG2|HindIII|deletion convention; junction overlap differs (see D6.4)"
+  },
+
+  "pBBR1MCS2|HindIII|expression": {
+    "name": "site_partial_AAGCT",
+    "p1_tail_rule": "rc_right_arm_15nt_incl_5nt_recognition",
+    "p4_tail_rule": "left_arm_15nt_incl_5nt_recognition",
+    "expected_recognition_count_in_final_plasmid": 1,
+    "calibrated_against": "PA14 lasR primer #1612 / lasB primer #1573 (working empirical set)",
+    "expected_p1_tail_for_pBBR1MCS2_HindIII": "CGGTATCGATAAGCT",
+    "expected_p4_tail_for_pBBR1MCS2_HindIII": "ATTCGATATCAAGCT"
+  },
+
+  "default|site_destroyed": {
+    "name": "site_destroyed",
+    "p1_tail_rule": "left_arm_15nt_excl_recognition",
+    "p4_tail_rule": "rc_right_arm_15nt_starting_at_second_nt_of_recognition",
+    "expected_recognition_count_in_final_plasmid": 0,
+    "calibrated_against": "FALLBACK ONLY — used for non-calibrated triples; verification will catch mistakes"
+  }
+}
