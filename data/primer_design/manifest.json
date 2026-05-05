@@ -1,5 +1,762 @@
 {
-  "_note": "Populated in Phase 2 with SHA-256 hashes of all curated isolate genomes.",
-  "version": null,
-  "genomes": {}
+  "schema_version": 1,
+  "genomes": [
+    {
+      "isolate_id": "LB001",
+      "filename": "LB001.fna",
+      "sha256": "76ac26b44ce4cafc0cec5c14f299b8b5fea7615630502e6b044e9b61eb398421",
+      "size_bytes": 6767362,
+      "n_contigs": 5
+    },
+    {
+      "isolate_id": "LB002",
+      "filename": "LB002.fna",
+      "sha256": "4a88f7534c89e2406542636adefca493e06aa0b5b44b2d04257b0018f23f243e",
+      "size_bytes": 6598603,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB003",
+      "filename": "LB003.fna",
+      "sha256": "1c29544db1baed18a30467c434ec372c92499c9c7fe92e3a3c88595c59e21f4c",
+      "size_bytes": 6433340,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB004",
+      "filename": "LB004.fna",
+      "sha256": "38c66b1c998eaa486befa66d2b8662e2f90e8be21442282f16e50afb2ce66883",
+      "size_bytes": 6855929,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB005",
+      "filename": "LB005.fna",
+      "sha256": "3cdb78c2fa2525eed853dfb865ec6d03c6f40a83a2ebd945e9d4153061228e34",
+      "size_bytes": 6739409,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB006",
+      "filename": "LB006.fna",
+      "sha256": "e1521c9ada47b780870ec61a91bc10d191c36400718db2cf9bb451dbaa8fc493",
+      "size_bytes": 6899630,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB007",
+      "filename": "LB007.fna",
+      "sha256": "450ca9986ec9b4a36845135b0f4400f34fffdb4858f388312acd1f260816dc36",
+      "size_bytes": 6665139,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB008",
+      "filename": "LB008.fna",
+      "sha256": "d587b44c3c7d449e89dc64d4955f4abeb48b10954b66536de029b6b64db93709",
+      "size_bytes": 6906811,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB009",
+      "filename": "LB009.fna",
+      "sha256": "4f21789f5963bcfa21166e083b48930c15162620a7cc02a006cd50e3f8c84084",
+      "size_bytes": 7394591,
+      "n_contigs": 6
+    },
+    {
+      "isolate_id": "LB010",
+      "filename": "LB010.fna",
+      "sha256": "7536560ec7aad17b362143c78919f157091a648793bcfd0ce96eaa87168e572a",
+      "size_bytes": 7121611,
+      "n_contigs": 3
+    },
+    {
+      "isolate_id": "LB011",
+      "filename": "LB011.fna",
+      "sha256": "f28429004966ffdc680ec2de44faf7e9e3e92168af3bdc4eb3e962337a484b85",
+      "size_bytes": 6508253,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB012",
+      "filename": "LB012.fna",
+      "sha256": "f5b024e09052df278b51efd26fc4dce44a1a9186d7789223236a30266a76601b",
+      "size_bytes": 6508257,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB013",
+      "filename": "LB013.fna",
+      "sha256": "57bb8a8523c331edf5124b818082d879721afa93b5f21dbb80dfcb8e7fff017d",
+      "size_bytes": 6598918,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB014",
+      "filename": "LB014.fna",
+      "sha256": "12c0914fad225a5f79859af1bf05ae84e834cc10492e1938b5d4f11cb036acb7",
+      "size_bytes": 6935186,
+      "n_contigs": 15
+    },
+    {
+      "isolate_id": "LB015",
+      "filename": "LB015.fna",
+      "sha256": "aa6e812ed6a72d9944ab2d017a20f265a5e5eb5b76821e73dbf050ddaf49a257",
+      "size_bytes": 6669230,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB016",
+      "filename": "LB016.fna",
+      "sha256": "0480208c629b3d684c48f7cf669d386e4e55b6d7057e892b4260996446d427ac",
+      "size_bytes": 6681238,
+      "n_contigs": 8
+    },
+    {
+      "isolate_id": "LB017",
+      "filename": "LB017.fna",
+      "sha256": "53eca7c6e70bec93946e8c75e6075aeea6f7a1265326f774959e4c6ccc8462e6",
+      "size_bytes": 6665935,
+      "n_contigs": 4
+    },
+    {
+      "isolate_id": "LB018",
+      "filename": "LB018.fna",
+      "sha256": "05297e3d60ae83448d1e91f8d8034a136b7dded0ae8eff53e16003955cd4b2ae",
+      "size_bytes": 7197458,
+      "n_contigs": 15
+    },
+    {
+      "isolate_id": "LB019",
+      "filename": "LB019.fna",
+      "sha256": "7c4571194c1fa43fe94dde7eed7db9cba99fe6475c9512eecd16778e93895bed",
+      "size_bytes": 6529581,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB020",
+      "filename": "LB020.fna",
+      "sha256": "08fcaace28627395fdc608b3982f2e5d2202dfaaff7f00f3920470afa6fd50d0",
+      "size_bytes": 6561808,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB021",
+      "filename": "LB021.fna",
+      "sha256": "f4e4252064cefd24dc8024d9564afc201cb06a1f7f5afd800d63020a88aae998",
+      "size_bytes": 7181149,
+      "n_contigs": 15
+    },
+    {
+      "isolate_id": "LB022",
+      "filename": "LB022.fna",
+      "sha256": "853dd361acf549af293f30d59f7ada1bf19a3560e0f20688057774fce20c88b5",
+      "size_bytes": 7212636,
+      "n_contigs": 5
+    },
+    {
+      "isolate_id": "LB023",
+      "filename": "LB023.fna",
+      "sha256": "e08eccdf3ddd8fa3a07a633eb2dbc7887e223446477b54f17d819552f16b89f5",
+      "size_bytes": 6478354,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB024",
+      "filename": "LB024.fna",
+      "sha256": "a43309c4e49005674b8e5f7cbabe40d8d09315f6d5db527bdb2451649fe72daf",
+      "size_bytes": 7074005,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB025",
+      "filename": "LB025.fna",
+      "sha256": "06ccda1c0195397ea251b7014f9dac9a3849c00333b7f3d39e80e486347de9ea",
+      "size_bytes": 6949974,
+      "n_contigs": 6
+    },
+    {
+      "isolate_id": "LB026",
+      "filename": "LB026.fna",
+      "sha256": "1a548736df295b4cfd12daf738b3e261c94eb58cc17c240f5dfef1321947ed52",
+      "size_bytes": 7182458,
+      "n_contigs": 5
+    },
+    {
+      "isolate_id": "LB027",
+      "filename": "LB027.fna",
+      "sha256": "dbbdad3770cbb0305f3fe4b1e9d4cc85d22a3ff24537633fe8f29a20e4ccd88c",
+      "size_bytes": 6947998,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB028",
+      "filename": "LB028.fna",
+      "sha256": "90228eb2b23d27cc30ee6ddf65834c9c2b2fd70f32ce5d40b52e4a3af4c528b2",
+      "size_bytes": 6946462,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB029",
+      "filename": "LB029.fna",
+      "sha256": "b8881f7cdb7cb214aaf419914c02f3606a6357a1a322f1a8053a0431b64d29a7",
+      "size_bytes": 6959516,
+      "n_contigs": 3
+    },
+    {
+      "isolate_id": "LB030",
+      "filename": "LB030.fna",
+      "sha256": "87ac5eaa52f87d66159c94d502553b46c48609f502f26e68fc1dc2759952515b",
+      "size_bytes": 6946312,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB031",
+      "filename": "LB031.fna",
+      "sha256": "eb05a05c251b46940ea1547bb9029927b09b535e25e0f16ac7d14d7f48a32523",
+      "size_bytes": 6946538,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB032",
+      "filename": "LB032.fna",
+      "sha256": "5779352b9186d1327e40b750a0241d98d5fca01a77e475af3c707be7e7875f6e",
+      "size_bytes": 6940020,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB033",
+      "filename": "LB033.fna",
+      "sha256": "5dc887faab9cae459b6af9e9cb59fef31bd557f54faa1b80be3fbc3b3bc81648",
+      "size_bytes": 6940535,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB034",
+      "filename": "LB034.fna",
+      "sha256": "9b4b5aff8985e92490106301e94387426cfe3b51e913eb130a0ff56583a607b6",
+      "size_bytes": 6939838,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB035",
+      "filename": "LB035.fna",
+      "sha256": "1d3b905a13f444b5ae16448f8081252d12c5299bfbf590e66587a3d3d51d99e5",
+      "size_bytes": 6691094,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB036",
+      "filename": "LB036.fna",
+      "sha256": "820b3a8ad1962dbc2cafb588e2172136b686b07a8681b4080bf555c7927f0fd7",
+      "size_bytes": 7048161,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB037",
+      "filename": "LB037.fna",
+      "sha256": "542ced04527f3fd2f63b5e0596ededeb0c91ee432455be8892643ebeadc3601b",
+      "size_bytes": 6771611,
+      "n_contigs": 11
+    },
+    {
+      "isolate_id": "LB038",
+      "filename": "LB038.fna",
+      "sha256": "381247ea32e9b7e880d741414703d67d03db72721792f463e208a10c2d860622",
+      "size_bytes": 7033084,
+      "n_contigs": 5
+    },
+    {
+      "isolate_id": "LB039",
+      "filename": "LB039.fna",
+      "sha256": "02ec7530128530a28fb0eb28c493dd010308a5f65ed9124c45736d6e7d40d0bc",
+      "size_bytes": 7014177,
+      "n_contigs": 5
+    },
+    {
+      "isolate_id": "LB040",
+      "filename": "LB040.fna",
+      "sha256": "7d4313e5cdf8f744cc396e675bb7468188d6887d20630358c8df36adcde1f3c3",
+      "size_bytes": 7089501,
+      "n_contigs": 7
+    },
+    {
+      "isolate_id": "LB041",
+      "filename": "LB041.fna",
+      "sha256": "6ed523e1a11e091a0ba0b24b9de4c8692d88d7a00b98d845789f6a457ca05657",
+      "size_bytes": 7224098,
+      "n_contigs": 6
+    },
+    {
+      "isolate_id": "LB042",
+      "filename": "LB042.fna",
+      "sha256": "0b749cfcfaec1e32bca170f0c9323ea097f0c5bfd6dade1606463faf03c28260",
+      "size_bytes": 6995977,
+      "n_contigs": 7
+    },
+    {
+      "isolate_id": "LB043",
+      "filename": "LB043.fna",
+      "sha256": "3348d33818414ce0a44cb00464b116be8b3043f5dbf2bf54f411f5b3f0fa4581",
+      "size_bytes": 6955435,
+      "n_contigs": 5
+    },
+    {
+      "isolate_id": "LB044",
+      "filename": "LB044.fna",
+      "sha256": "3289c9459f7c9833e84121e3c79a2b283ea262001cf0fa8f2f443bc45e4f58f7",
+      "size_bytes": 6947715,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB045",
+      "filename": "LB045.fna",
+      "sha256": "adaee7c1401120205971123b84605e1836674ee11ef8c8ca465aefcae3d68833",
+      "size_bytes": 7240025,
+      "n_contigs": 3
+    },
+    {
+      "isolate_id": "LB046",
+      "filename": "LB046.fna",
+      "sha256": "5716721ed7c2b4dee8a703361254e7bebbeddc74cec86bbfa59be4f26b5707b2",
+      "size_bytes": 6849079,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB047",
+      "filename": "LB047.fna",
+      "sha256": "55cae3684fc84f23bf6c96a5abbb93539232b428b1531f423ad4fa8a5b2baaab",
+      "size_bytes": 6563860,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB048",
+      "filename": "LB048.fna",
+      "sha256": "db5e8df0e39c23a661f56e77e228b20342c1e7ece4da95f0c6f8cedb36ba8261",
+      "size_bytes": 7049189,
+      "n_contigs": 5
+    },
+    {
+      "isolate_id": "LB049",
+      "filename": "LB049.fna",
+      "sha256": "fd114a03ce65a0effb5bb50bed58a2d6d1dc62f1090dc4ef10c022f2aa5d3709",
+      "size_bytes": 7013193,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB050",
+      "filename": "LB050.fna",
+      "sha256": "1ca68e9285af11296f9dcb7dce57b4ed1f1db216fc65c8fd24e5264a8a51c7d9",
+      "size_bytes": 7124017,
+      "n_contigs": 3
+    },
+    {
+      "isolate_id": "LB051",
+      "filename": "LB051.fna",
+      "sha256": "21be57fc96cd1a596e26d4b808ec55ebb2d1341bfa1e4a75a8c3e418b223be4a",
+      "size_bytes": 7124253,
+      "n_contigs": 3
+    },
+    {
+      "isolate_id": "LB052",
+      "filename": "LB052.fna",
+      "sha256": "f919213d58d913cd8b3d061bc2aa7d0c0be3a6cf59a7d395f7e576376c4a068f",
+      "size_bytes": 7022215,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB053",
+      "filename": "LB053.fna",
+      "sha256": "a40594b70fbc7a95298886b418341ef7a414a414897a4f3cb0dcbddcfa4aa94d",
+      "size_bytes": 6563753,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB054",
+      "filename": "LB054.fna",
+      "sha256": "b42436a8b98b45ad8a7d83946f40d9ac299cfc4f400b77198a5cd8cd90e557a6",
+      "size_bytes": 7097196,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB055",
+      "filename": "LB055.fna",
+      "sha256": "ebd35f8479f895c3bd84a960fd8fd684480e0cdb1541d4d9e11565e2c02ed03f",
+      "size_bytes": 6557147,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB056",
+      "filename": "LB056.fna",
+      "sha256": "c5e6f04b3f077ac4d72a8ccb342d09825c74f19226a6f446804512c74d4fe8f4",
+      "size_bytes": 6845461,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB057",
+      "filename": "LB057.fna",
+      "sha256": "b0e13c12b6556b671b727fe7a37bbfeeef85b3daf704f1d6a8ab3166933312a6",
+      "size_bytes": 6529243,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB058",
+      "filename": "LB058.fna",
+      "sha256": "90d59f67a9e4b5d43d228434d4e147e3f3b9a2e0e3f950b6a8d01e400ca1a47f",
+      "size_bytes": 6563854,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB059",
+      "filename": "LB059.fna",
+      "sha256": "423151047838360d1a217b927e04ee058b5dee00e826e66683c2406040ff9946",
+      "size_bytes": 6557151,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB060",
+      "filename": "LB060.fna",
+      "sha256": "a84dac595d393b6c9a787ac985082164e1b715c5b24c6615f4301f778bdc3dab",
+      "size_bytes": 6557147,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB061",
+      "filename": "LB061.fna",
+      "sha256": "0887ad3c9730a16f86c3a1329e14f2308511e4bd11b158cdc3d39c9526d67c7f",
+      "size_bytes": 7013197,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB062",
+      "filename": "LB062.fna",
+      "sha256": "e93a93357e605e61b2bf9583686224c528d0ac233d20c4982f649c331a93f728",
+      "size_bytes": 6991976,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB063",
+      "filename": "LB063.fna",
+      "sha256": "5d684bd4c8c7c850361281f2af02eb21c64bd9c5648e19691e8edb3be4cd76e2",
+      "size_bytes": 6557152,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB064",
+      "filename": "LB064.fna",
+      "sha256": "811f09ecf33cd7f2ea8289a2d7f072ccad0bae3f502a9d6086acfd0b83a502f9",
+      "size_bytes": 6557149,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB065",
+      "filename": "LB065.fna",
+      "sha256": "607b50499a7e54195945ffbd662b62d9852d3da79ec4d51ef3521aac68145aaa",
+      "size_bytes": 6956267,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB066",
+      "filename": "LB066.fna",
+      "sha256": "bddcf8bb4edbb8509eb09f7ba954e5d08e4445dfbee47cfc3fc8bcc76c25f4d9",
+      "size_bytes": 6824360,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB067",
+      "filename": "LB067.fna",
+      "sha256": "13bc64b7e2d7ddf672bb527b60be5835d693e0b128035cfe4e4e58cf6f9fbe7f",
+      "size_bytes": 6393576,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB068",
+      "filename": "LB068.fna",
+      "sha256": "4c4bd9413da56cd1435650c3b5ab8d6ebd16a3418e479fece91406cdd7557ff7",
+      "size_bytes": 6393576,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB069",
+      "filename": "LB069.fna",
+      "sha256": "8b11dbd57477711b2d8fee80468255e6188b5a2c5147aba657aa30095941c2f5",
+      "size_bytes": 6902176,
+      "n_contigs": 4
+    },
+    {
+      "isolate_id": "LB070",
+      "filename": "LB070.fna",
+      "sha256": "0f074361d1b6ee83f0888d88ba47b4f7f3f30bcbb5178f597950dc2b1731d428",
+      "size_bytes": 6393584,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB071",
+      "filename": "LB071.fna",
+      "sha256": "2048def57a35ff66f3e2fd624bae89cc8edd9ac295cbd8a879361242ba0b4e86",
+      "size_bytes": 6761429,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB072",
+      "filename": "LB072.fna",
+      "sha256": "5787898eff77346fd2018e736844e988b630616f1a2248e59e45a0453c6241cb",
+      "size_bytes": 6597173,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB073",
+      "filename": "LB073.fna",
+      "sha256": "2fab4689066f156222d501b675b526e7fac465a1f1b6fbe489f3656ddb5a69c2",
+      "size_bytes": 6865967,
+      "n_contigs": 13
+    },
+    {
+      "isolate_id": "LB074",
+      "filename": "LB074.fna",
+      "sha256": "0717842890b3af3ab55c2967d3a586b7b3e158ee320ac78d97229c9b137ee6f2",
+      "size_bytes": 6571500,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB075",
+      "filename": "LB075.fna",
+      "sha256": "a95f1ad2e94d2bb2bd2716f6d73ee0917b4aa21656de4db3642c9b0c42efbf1d",
+      "size_bytes": 6450315,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB076",
+      "filename": "LB076.fna",
+      "sha256": "c8cbc56bee2b57e008e140a6272da0a923d5107232340ed1f912821642abe0f7",
+      "size_bytes": 6363319,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB077",
+      "filename": "LB077.fna",
+      "sha256": "0ac565bdec62d653adb70d1c2933e86e94846a9c1c4c58121c13c5add18705ae",
+      "size_bytes": 6958103,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB078",
+      "filename": "LB078.fna",
+      "sha256": "0d820483843bca8775ad4fe8afbc1310d80e7f0857b04970df4f60ca646b3209",
+      "size_bytes": 6896800,
+      "n_contigs": 3
+    },
+    {
+      "isolate_id": "LB079",
+      "filename": "LB079.fna",
+      "sha256": "f23776111d367c48f121221dace5fa6a553c78248e101ed5dec9a33ac194ebdf",
+      "size_bytes": 6967255,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB080",
+      "filename": "LB080.fna",
+      "sha256": "5324c56721be82a37fd8907cd9e73c6e2fd35056981fd6064498493de5f44e8d",
+      "size_bytes": 6956639,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB081",
+      "filename": "LB081.fna",
+      "sha256": "b6acc7590cf8607d6a3c58524779c0bdf32a5de9b9e7ef4b05bb65a7b852bd18",
+      "size_bytes": 6956649,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB082",
+      "filename": "LB082.fna",
+      "sha256": "840e4dc3c95835013e4b485f6c93c3eb4fcdd15744bc2414b4d87890d4576811",
+      "size_bytes": 6963347,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB083",
+      "filename": "LB083.fna",
+      "sha256": "2b02d133281ecd2f580cde9bd96f9db0b3f9f081ee0ce92e6c7895cf010a49b9",
+      "size_bytes": 6958196,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB084",
+      "filename": "LB084.fna",
+      "sha256": "a963fb01a5006513a656735268581d05f25ab66f6af316a8ae30c6e7807b72a8",
+      "size_bytes": 6959744,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB085",
+      "filename": "LB085.fna",
+      "sha256": "34545ab355ec2f411c78602b79541909a21f3398f135fae0f58de046e3f94284",
+      "size_bytes": 6957274,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB086",
+      "filename": "LB086.fna",
+      "sha256": "9ced8f2466c5896cd4813a95bc041d7e2f068bb718e03b18d6e3c37a7d5b5896",
+      "size_bytes": 6970792,
+      "n_contigs": 3
+    },
+    {
+      "isolate_id": "LB087",
+      "filename": "LB087.fna",
+      "sha256": "2481768cea206f6df350dc8b9539bdd6449f5ec7f1e90b62ce9984cacf7c58d4",
+      "size_bytes": 6956650,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB088",
+      "filename": "LB088.fna",
+      "sha256": "5e4904e7e574a33b092659d5f8f6ce735c63d9968ec83130be7de7a173b009eb",
+      "size_bytes": 6968227,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB089",
+      "filename": "LB089.fna",
+      "sha256": "2df962b204c74e2c03dc5cdd62ebdbe25793fc7f37eb8072d27c5eabcc8c11b2",
+      "size_bytes": 6606861,
+      "n_contigs": 3
+    },
+    {
+      "isolate_id": "LB090",
+      "filename": "LB090.fna",
+      "sha256": "49c0e3c2337cd3afe9a216dd307a043fcbce0e10bf185029f5e34abb87d03330",
+      "size_bytes": 6962452,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB091",
+      "filename": "LB091.fna",
+      "sha256": "11205483df7cbf8ba3bdcb1f7eccca9838be812c7edd3c24048224bafdf6f175",
+      "size_bytes": 6970384,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB092",
+      "filename": "LB092.fna",
+      "sha256": "27f8f273acb5e219c99f2d77faa5539af2212d22432f14a90398f173bec003fb",
+      "size_bytes": 6966152,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB093",
+      "filename": "LB093.fna",
+      "sha256": "99fddb29b61eba450f489c6697bcad7e6216c03d9a1cba5300b0172e5c657b6a",
+      "size_bytes": 6963663,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB094",
+      "filename": "LB094.fna",
+      "sha256": "5f06492fd527adbdbb3d34accd97effa8f7eac7b5f33a9c7954b56bed3597f31",
+      "size_bytes": 6985735,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB095",
+      "filename": "LB095.fna",
+      "sha256": "4c8e2a7c8d695b5f0fa6e58e701ab69c840645861481a7d2edfcc4d8ec5493a5",
+      "size_bytes": 6574366,
+      "n_contigs": 9
+    },
+    {
+      "isolate_id": "LB102",
+      "filename": "LB102.fna",
+      "sha256": "81b03526d59805a962c5329ab2a256ea9176bc960dedd047c4736ba582c36bd3",
+      "size_bytes": 6947745,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB117",
+      "filename": "LB117.fna",
+      "sha256": "77911a0a18b098f99915a37e76950b08918514322e293142ae23411f6537200c",
+      "size_bytes": 7059304,
+      "n_contigs": 7
+    },
+    {
+      "isolate_id": "LB122",
+      "filename": "LB122.fna",
+      "sha256": "ad8cda0617044afc6b5d2e4da3e377b38159bffd14f1b0886af4b2f60fd9e7e1",
+      "size_bytes": 6557151,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB124",
+      "filename": "LB124.fna",
+      "sha256": "4593678ec0675d98c2ff7fa54411b0dc1a6163e933c6cc8550aa946f1c91d80d",
+      "size_bytes": 6563776,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB128",
+      "filename": "LB128.fna",
+      "sha256": "adee25c840a40e423e89f26e5bda101305b26abdfd7f8bcb9c3e35f441e4f538",
+      "size_bytes": 6649435,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB133",
+      "filename": "LB133.fna",
+      "sha256": "0d27edcb39d1d7f9e7530cf22293dfc19a9ecd4e1bcbf523e4e370330b7f6fff",
+      "size_bytes": 6643610,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB136",
+      "filename": "LB136.fna",
+      "sha256": "034eba3311dd082a1028c7bdd91c1376d3827a19e8edb67ef1475eb0c398d92b",
+      "size_bytes": 6661641,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB148",
+      "filename": "LB148.fna",
+      "sha256": "4ff0afdcb886c23836b8c927669e7ba2eb468a7d51c57b52057cbc4daa2b075e",
+      "size_bytes": 6967705,
+      "n_contigs": 2
+    },
+    {
+      "isolate_id": "LB150",
+      "filename": "LB150.fna",
+      "sha256": "a9938bf6fa54284a7ed16b95c4bfd6a96a8cdc71596cfb4ea4617f9b00f5fdb4",
+      "size_bytes": 6965357,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB151",
+      "filename": "LB151.fna",
+      "sha256": "2248be2d6ee7b67caed963603a5557583862d5c618cc290b9a56fbce632888ee",
+      "size_bytes": 6961001,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB153",
+      "filename": "LB153.fna",
+      "sha256": "8a5d56889aa1dbca545b80fd7c518a0132c37746b22bc0331923edc75ee84b07",
+      "size_bytes": 6963925,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB154",
+      "filename": "LB154.fna",
+      "sha256": "06c2256f30c707b1aed4182a91ef163295b4315db64bdf2978b98615cd6e20e4",
+      "size_bytes": 6932899,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "LB155",
+      "filename": "LB155.fna",
+      "sha256": "de48d84eb2fd9ab4102e3cdaaa3e1ccef069daa4fc579882e9eda23140e9e1e1",
+      "size_bytes": 6735763,
+      "n_contigs": 3
+    }
+  ],
+  "generated": "2026-05-05T14:16:58.132539+00:00"
 }

@@ -189,9 +189,12 @@ def main() -> int:
 # ---------------------------------------------------------------------------
 
 _ISOLATE_ID_PATTERNS = (
-    re.compile(r"^(LB\d+)\b"),
-    re.compile(r"^(PA14)\b"),
-    re.compile(r"^(PAO1)\b"),
+    # \b doesn't fire between a digit and `_` (both are word chars in Python re).
+    # The greedy \d+ already stops at the first non-digit, so an explicit boundary
+    # is unnecessary. Real-world R2 headers look like "LB060_KJCPHN_25825_UniRef90_P25084".
+    re.compile(r"^(LB\d+)"),
+    re.compile(r"^(PA14)"),
+    re.compile(r"^(PAO1)"),
     re.compile(r"\|([A-Z][A-Za-z0-9]+)\|"),    # >X|LB001|... type headers
 )
 
