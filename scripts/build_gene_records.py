@@ -299,29 +299,22 @@ def _strand_normalize(genome_bytes: bytes, hit: GenomeHit, up: int, dn: int, min
         up_start = max(0, hit.start_0based - up)
         dn_end = min(len(seq), hit.end_0based + dn)
         out = seq[up_start:dn_end]
+        actual_up = hit.start_0based - up_start
     else:
-        # On - strand, the genomic "before-gene" piece (up flank in coding orientation) lies
-        # AFTER the gene on the genomic + strand, so we extract a window on + strand and RC it.
+        # On - strand, the genomic "before-gene" piece (up flank in coding orientation)
+        # lies AFTER the gene on the genomic + strand, so we extract a window on +
+        # strand and RC it.
         up_start = max(0, hit.start_0based - dn)
         dn_end = min(len(seq), hit.end_0based + up)
         out = reverse_complement(seq[up_start:dn_end])
+        actual_up = dn_end - hit.end_0based
 
-    # Verify min_flank not breached
-    cds_in_record = out.find(_get_cds_for_assertion(out, up, dn))
-    if cds_in_record < min_flank:
+    if actual_up < min_flank:
         log.warning(
-            "Flank shorter than min_flank=%d for hit at %s:%d-%d (actual_up=%d)",
-            min_flank, hit.contig_id, hit.start_0based, hit.end_0based, cds_in_record,
+            "Up-flank shorter than min_flank=%d for hit at %s:%d-%d (actual_up=%d)",
+            min_flank, hit.contig_id, hit.start_0based, hit.end_0based, actual_up,
         )
     return out
-
-
-def _get_cds_for_assertion(record_seq: str, up: int, dn: int) -> str:
-    """Best-effort: return the inner segment between the configured flank lengths.
-    Used only as a debug sanity check inside _strand_normalize.
-    """
-    # We don't have CDS length here without re-passing; return empty to skip
-    return ""
 
 
 def _find_all(haystack: str, needle: str) -> list[int]:
