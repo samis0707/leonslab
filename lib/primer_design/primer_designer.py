@@ -31,6 +31,7 @@ from .types import (
     DeletionPrimerSet,
     ExpressionPrimerSet,
     GeneRecord,
+    OffTargetProduct,
     OffTargetReport,
     OffTargetSite,
     Primer,
@@ -59,41 +60,102 @@ def primer_body_gc(body: str) -> float:
 # Hard filters (D5.3)
 # ===========================================================================
 
-def passes_hard_filters(body: str) -> bool:
-    """True iff body meets all hard filters. See D5.3 / skill_v2 §7."""
+def passes_hard_filters(
+    body: str,
+    *,
+    skip_homopolymer: bool = False,
+    skip_gc: bool = False,
+    skip_tm: bool = False,
+    skip_clamp: bool = False,
+) -> bool:
+    """True iff body meets all hard filters. See D5.3 / skill_v2 §7.
+
+    The four ``skip_*`` flags exist for **anchored** primers (expression P1 at
+    the gene's ATG, P2 at the native stop, in-locus P3 at the scar boundary):
+    when no offset window is available, some checks become impossible to
+    satisfy regardless of length and degrade to soft preferences. Callers
+    relax in tiers (homopolymer first, then GC, then Tm, and only as a last
+    resort the 3' G/C clamp). Length and primer-dimer remain enforced in all
+    tiers.
+    """
     n = len(body)
     if not (cfg.BODY_LEN_MIN <= n <= cfg.BODY_LEN_MAX):
         return False
 
-    # 3' G/C clamp
-    if body[-1] not in cfg.CLAMP_LAST_BASE_OK:
-        return False
-    last5_gc = sum(b in "GC" for b in body[-5:])
-    if not (cfg.CLAMP_LAST5_GC_MIN <= last5_gc <= cfg.CLAMP_LAST5_GC_MAX):
-        return False
-    if cfg.CLAMP_NO_4IDENT_LAST4 and len(set(body[-4:])) == 1:
-        return False
-
-    # 4-homopolymer anywhere
-    for i in range(n - 3):
-        if body[i] == body[i + 1] == body[i + 2] == body[i + 3]:
+    if not skip_clamp:
+        if body[-1] not in cfg.CLAMP_LAST_BASE_OK:
+            return False
+        last5_gc = sum(b in "GC" for b in body[-5:])
+        if not (cfg.CLAMP_LAST5_GC_MIN <= last5_gc <= cfg.CLAMP_LAST5_GC_MAX):
+            return False
+        if cfg.CLAMP_NO_4IDENT_LAST4 and len(set(body[-4:])) == 1:
             return False
 
-    # GC content
-    gc = primer_body_gc(body)
-    if not (cfg.GC_MIN <= gc <= cfg.GC_MAX):
-        return False
+    if not skip_homopolymer:
+        for i in range(n - 3):
+            if body[i] == body[i + 1] == body[i + 2] == body[i + 3]:
+                return False
 
-    # Tm
-    tm = primer_body_tm(body)
-    if not (cfg.TM_HARD_MIN_C <= tm <= cfg.TM_HARD_MAX_C):
-        return False
+    if not skip_gc:
+        gc = primer_body_gc(body)
+        if not (cfg.GC_MIN <= gc <= cfg.GC_MAX):
+            return False
 
-    # 3' self-dimer
+    if not skip_tm:
+        tm = primer_body_tm(body)
+        if not (cfg.TM_HARD_MIN_C <= tm <= cfg.TM_HARD_MAX_C):
+            return False
+
+    # Primer-dimer kinetics are sequence-driven and always enforced.
     if max_3prime_self_dimer(body) > cfg.SELF_DIMER_MAX_3PRIME:
         return False
 
     return True
+
+
+# Relaxation tiers for anchored primers. Each tier adds one more skip on top
+# of the previous. Strict (tier 0) → all hard rules; tier 4 (last resort)
+# even drops the 3' G/C clamp.
+_ANCHORED_TIERS: list[dict] = [
+    {},
+    {"skip_homopolymer": True},
+    {"skip_homopolymer": True, "skip_gc": True},
+    {"skip_homopolymer": True, "skip_gc": True, "skip_tm": True},
+    {"skip_homopolymer": True, "skip_gc": True, "skip_tm": True, "skip_clamp": True},
+]
+
+
+def _enumerate_anchored(
+    seq: str, *, end: str
+) -> tuple[list[Candidate], int]:
+    """Enumerate candidates anchored at one end of ``seq``.
+
+    ``end="5'"`` builds bodies = seq[:L] (forward primer at the 5' end of seq).
+    ``end="3'"`` builds bodies = RC(seq[-L:]) (reverse primer at the 3' end).
+
+    Tries each relaxation tier in order; returns the first non-empty pool and
+    the tier index used.
+    """
+    for tier_idx, kwargs in enumerate(_ANCHORED_TIERS):
+        pool: list[Candidate] = []
+        for L in range(cfg.BODY_LEN_MIN, cfg.BODY_LEN_MAX + 1):
+            if L > len(seq):
+                break
+            if end == "5'":
+                body = seq[:L]
+            elif end == "3'":
+                body = reverse_complement(seq[-L:])
+            else:
+                raise ValueError(end)
+            if passes_hard_filters(body, **kwargs):
+                pool.append(
+                    Candidate(body=body, tm=primer_body_tm(body),
+                              gc=primer_body_gc(body), anchor_offset=0)
+                )
+        if pool:
+            pool.sort(key=lambda c: c.tm)
+            return pool, tier_idx
+    return [], len(_ANCHORED_TIERS) - 1
 
 
 def max_3prime_self_dimer(body: str) -> int:
@@ -183,6 +245,7 @@ def enumerate_p2_candidates(up_segment: str) -> list[Candidate]:
 
     Body is RC of the last L nt of up_segment. No offset window — the anchor is
     fixed at the 3' end of UP because the junction overlap defines the cut.
+    Uses strict hard filters (deletion / tagging junction quality matters).
     """
     out: list[Candidate] = []
     for L in range(cfg.BODY_LEN_MIN, cfg.BODY_LEN_MAX + 1):
@@ -199,7 +262,11 @@ def enumerate_p2_candidates(up_segment: str) -> list[Candidate]:
 
 
 def enumerate_p3_candidates(dn_segment: str) -> list[Candidate]:
-    """P3 candidates: forward primer anchored at 5' end of DN segment (= retained C codons + DN flank)."""
+    """P3 candidates: forward primer anchored at 5' end of DN segment (= retained C codons + DN flank).
+
+    Strict hard filters; for the analogous expression-P1 anchor at ATG, use
+    ``_enumerate_anchored`` which applies tiered relaxation.
+    """
     out: list[Candidate] = []
     for L in range(cfg.BODY_LEN_MIN, cfg.BODY_LEN_MAX + 1):
         if L > len(dn_segment):
@@ -218,8 +285,21 @@ def enumerate_p3_candidates(dn_segment: str) -> list[Candidate]:
 # Scoring
 # ===========================================================================
 
-def compute_score(tms: list[float], gcs: list[float]) -> float:
-    """Lower is better. Hard reject elsewhere if tm_spread > TM_SPREAD_HARD_LIMIT_C."""
+IDEAL_BODY_LEN: int = 20
+
+
+def compute_score(
+    tms: list[float],
+    gcs: list[float],
+    *,
+    body_lengths: list[int] | None = None,
+) -> float:
+    """Lower is better. Hard reject elsewhere if tm_spread > TM_SPREAD_HARD_LIMIT_C.
+
+    When ``body_lengths`` is provided, an additional penalty pulls the chosen
+    bodies toward IDEAL_BODY_LEN (= 20 nt). The penalty is small enough that
+    Tm and GC quality dominate, but ties are broken in favor of ideal length.
+    """
     tm_spread = max(tms) - min(tms)
     mean_tm = sum(tms) / len(tms)
     gc_spread = max(gcs) - min(gcs)
@@ -227,7 +307,10 @@ def compute_score(tms: list[float], gcs: list[float]) -> float:
         0.1 * max(0.0, cfg.GC_PREFERRED_MIN - g) + 0.1 * max(0.0, g - cfg.GC_PREFERRED_MAX)
         for g in gcs
     )
-    return tm_spread + 0.25 * abs(mean_tm - cfg.TM_TARGET_C) + 0.02 * gc_spread + gc_penalty
+    score = tm_spread + 0.25 * abs(mean_tm - cfg.TM_TARGET_C) + 0.02 * gc_spread + gc_penalty
+    if body_lengths is not None:
+        score += 0.05 * sum(abs(L - IDEAL_BODY_LEN) for L in body_lengths)
+    return score
 
 
 def closest_by_tm(pool: list[Candidate], target_tm: float) -> Candidate | None:
@@ -423,19 +506,112 @@ def search_tagging_primers(
     convention: TailConvention,
     tag: Tag,
 ) -> tuple[TaggingPrimerSet, list[TaggingPrimerSet]]:
-    """Junction-fixed search: tag cassette occupies the P2/P3 junction overlap.
+    """In-locus C-terminal tagging primer search (skill_v2 §5.3).
 
-    See ``primer_design_skill_v2.md`` §5.2–5.3 for cassette splitting between P2
-    and P3 tails (15+15 for His6, 18+18 for FLAG/His8).
+    The tag cassette occupies the UP/DN junction. Each tail carries a slice of
+    the cassette such that the central ``overlap_len`` nucleotides are shared
+    between the two PCR products (the In-Fusion homology). For the 30-nt His6
+    cassette the shared overlap is 15 nt; for 36-nt FLAG / His8 cassettes it
+    is 18 nt.
+
+    Tail layout::
+
+        cassette = [0 .. overlap_start) [overlap_start .. overlap_end) [overlap_end .. len)
+                   ^^^^^^^^^ P2-tail-only ^^^^^^^^^^^^ shared ^^^^^^^^^^^^ P3-tail-only ^^^
+
+        p2_tail = RC(cassette[0 : overlap_end])           # carries left half + overlap
+        p3_tail =      cassette[overlap_start :]          # carries overlap + right half
+
+    P1 / P4 are deletion-style: anchored within the up/dn flanks with the
+    vector tails from the calibrated convention.
 
     Raises:
         TagTooLongForInLocus: cassette > 36 nt (3xFLAG, HiBiT).
     """
-    raise NotImplementedError(
-        "Phase 2 step 9: implement per skill_v2 §5.3 pseudocode. "
-        "Note that tail derivation differs from deletion: P2 and P3 tails are partly "
-        "fixed by the cassette, so search degrees of freedom collapse."
+    from .tags import build_in_locus_cassette  # local import to avoid cycles
+
+    cassette = build_in_locus_cassette(tag)  # raises TagTooLongForInLocus
+
+    p1_tail, p4_tail = derive_tails(vector, convention.enzyme, "tagging")
+
+    overlap_len = len(cassette) // 2 + len(cassette) % 2  # 15 (His6) or 18 (FLAG/His8)
+    overlap_start = (len(cassette) - overlap_len) // 2
+    overlap_end = overlap_start + overlap_len
+    p2_tail = reverse_complement(cassette[:overlap_end])
+    p3_tail = cassette[overlap_start:]
+    overlap_left = overlap_end                                # = len(cassette in P2 tail)
+    overlap_right = len(cassette) - overlap_start             # = len(cassette in P3 tail)
+
+    cds_no_stop = gene.cds_seq[:-3]
+    up_segment = gene.up_flank + cds_no_stop
+    dn_segment = gene.dn_flank
+
+    # P1 / P4 retain offset windows in the flanks → strict filters apply.
+    p1_pool = enumerate_p1_candidates(gene.up_flank, p1_tail)
+    p4_pool = enumerate_p4_candidates(gene.dn_flank, p4_tail)
+    # P2 anchors at the 3' end of cds_no_stop (potentially AT-rich); P3
+    # anchors at the 5' end of dn_flank (potentially GC-rich). Both lack
+    # offset windows, so apply tiered relaxation that keeps the 3' G/C clamp
+    # respected unless absolutely impossible.
+    p2_pool, p2_tier = _enumerate_anchored(up_segment, end="3'")
+    p3_pool, p3_tier = _enumerate_anchored(dn_segment, end="5'")
+
+    for name, pool in (("P1", p1_pool), ("P2", p2_pool),
+                       ("P3", p3_pool), ("P4", p4_pool)):
+        if not pool:
+            raise NoCandidates(
+                message=f"{name} (tagging): no body passes hard filters for "
+                        f"{gene.gene}/{gene.isolate_id} even at maximum relaxation.",
+                details={"primer": name, "gene": gene.gene,
+                         "isolate": gene.isolate_id},
+            )
+
+    spread_limit = (
+        cfg.TM_SPREAD_HARD_LIMIT_C
+        if (p2_tier == 0 and p3_tier == 0)
+        else float("inf")
     )
+
+    best: TaggingPrimerSet | None = None
+    top5: list[TaggingPrimerSet] = []
+    for p1c in p1_pool:
+        for p2c in p2_pool:
+            for p3c in p3_pool:
+                for p4c in p4_pool:
+                    tms = [p1c.tm, p2c.tm, p3c.tm, p4c.tm]
+                    spread = max(tms) - min(tms)
+                    if spread > spread_limit:
+                        continue
+                    gcs = [p1c.gc, p2c.gc, p3c.gc, p4c.gc]
+                    score = compute_score(
+                        tms, gcs,
+                        body_lengths=[len(p1c.body), len(p2c.body),
+                                      len(p3c.body), len(p4c.body)],
+                    )
+                    cand = TaggingPrimerSet(
+                        p1=_make_primer("P1", "UP_Fwd", p1_tail, p1c, convention.name),
+                        p2=_make_primer("P2", "UP_Rev", p2_tail, p2c, "tag_cassette"),
+                        p3=_make_primer("P3", "DN_Fwd", p3_tail, p3c, "tag_cassette"),
+                        p4=_make_primer("P4", "DN_Rev", p4_tail, p4c, convention.name),
+                        cassette=cassette,
+                        overlap_left=overlap_left,
+                        overlap_right=overlap_right,
+                        tag=tag,
+                        score=score,
+                        tm_spread=spread,
+                    )
+                    top5 = _topk_insert(top5, cand)
+                    if best is None or score < best.score:
+                        best = cand
+
+    if best is None:
+        raise NoCandidates(
+            message=f"No (P1, P2, P3, P4) tuple satisfied Tm-spread bound for "
+                    f"tagging of {gene.gene}/{gene.isolate_id}.",
+            details={"gene": gene.gene, "isolate": gene.isolate_id,
+                     "tag": tag.name, "cassette_nt": len(cassette)},
+        )
+    return best, top5
 
 
 def search_expression_primers(
@@ -445,19 +621,83 @@ def search_expression_primers(
     tag: Tag | None,
     tag_position: str | None,
 ) -> tuple[ExpressionPrimerSet, list[ExpressionPrimerSet]]:
-    """2-primer search for plasmid expression.
+    """2-primer search for plasmid expression (skill_v2 §6.2).
 
-    See ``primer_design_skill_v2.md`` §6.2.
+    P1 = vector_p1_tail + RBS + spacer + body anchored at ATG (start of coding_seq).
+    P2 = vector_p2_tail + body = RC of last L nt of coding_seq (including stop).
 
-    Note:
-        - P1 tail = vector_p1_tail + RBS + spacer (29 nt total for HindIII)
-        - P2 tail = vector_p2_tail (15 nt)
-        - Tag handling: see ``tags.build_plasmid_fusion_cds``.
+    Choose the (P1, P2) pair that minimizes score = Tm spread + GC penalty.
     """
-    raise NotImplementedError(
-        "Phase 2 step 8: implement per skill_v2 §6.2. "
-        "Reuse passes_hard_filters / primer_body_tm / compute_score."
+    from .tags import build_plasmid_fusion_cds  # local import to avoid cycle
+
+    p1_vector_tail, p2_vector_tail = derive_tails(vector, convention.enzyme, "expression")
+    p1_tail = p1_vector_tail + cfg.RBS_TAIL_PART
+    p2_tail = p2_vector_tail
+
+    coding_seq = build_plasmid_fusion_cds(gene.cds_seq, tag, tag_position)
+
+    # Both expression primers are anchor-fixed (P1 at ATG, P2 at stop). Use
+    # the tiered relaxation: stay strict if possible, drop the 4-homopolymer
+    # rule first, then GC range, then Tm range, and only as a last resort
+    # the 3' G/C clamp.
+    p1_pool, p1_tier = _enumerate_anchored(coding_seq, end="5'")
+    p2_pool, p2_tier = _enumerate_anchored(coding_seq, end="3'")
+    if not p1_pool:
+        raise NoCandidates(
+            message=f"P1 (expression): no body at ATG of {gene.gene}/{gene.isolate_id} "
+                    f"passes hard filters even at maximum relaxation.",
+            details={"primer": "P1", "gene": gene.gene, "isolate": gene.isolate_id},
+        )
+    if not p2_pool:
+        raise NoCandidates(
+            message=f"P2 (expression): no body at stop of {gene.gene}/{gene.isolate_id} "
+                    f"passes hard filters even at maximum relaxation.",
+            details={"primer": "P2", "gene": gene.gene, "isolate": gene.isolate_id},
+        )
+
+    # Tm spread bound is itself relaxed when either primer is anchored at a
+    # tier > 0 (because the gene's 3' AT-richness can force an unavoidable
+    # spread). Strict bound otherwise.
+    spread_limit = (
+        cfg.TM_SPREAD_HARD_LIMIT_C
+        if (p1_tier == 0 and p2_tier == 0)
+        else float("inf")
     )
+
+    best: ExpressionPrimerSet | None = None
+    top5: list[ExpressionPrimerSet] = []
+    for p1c in p1_pool:
+        for p2c in p2_pool:
+            tms = [p1c.tm, p2c.tm]
+            spread = max(tms) - min(tms)
+            if spread > spread_limit:
+                continue
+            gcs = [p1c.gc, p2c.gc]
+            score = compute_score(
+                tms, gcs,
+                body_lengths=[len(p1c.body), len(p2c.body)],
+            )
+            cand = ExpressionPrimerSet(
+                p1=_make_primer("P1", "INSERT_Fwd", p1_tail, p1c, convention.name),
+                p2=_make_primer("P2", "INSERT_Rev", p2_tail, p2c, convention.name),
+                coding_seq=coding_seq,
+                tag=tag,
+                tag_position=tag_position,
+                score=score,
+                tm_spread=spread,
+            )
+            top5 = _topk_insert(top5, cand)
+            if best is None or score < best.score:
+                best = cand
+
+    if best is None:
+        raise NoCandidates(
+            message=f"No (P1, P2) pair satisfied Tm-spread bound for "
+                    f"{gene.gene}/{gene.isolate_id} expression.",
+            details={"gene": gene.gene, "isolate": gene.isolate_id,
+                     "p1_pool_size": len(p1_pool), "p2_pool_size": len(p2_pool)},
+        )
+    return best, top5
 
 
 # ===========================================================================
@@ -491,8 +731,239 @@ def off_target_scan(
         OffTargetReport.passed = True iff every expected pair has exactly the
         expected outcome and no unexpected products exist.
     """
-    raise NotImplementedError(
-        "Phase 2 step 6 (or 7 for first integration test). "
-        "Implement per skill_v2 §10 pseudocode. Use Hamming-distance walk; "
-        "see tests/integration/test_deletion_LB001_lasB.py for required outcomes."
+    contigs = _parse_fasta_bytes(genome_fasta_bytes)
+
+    sites_per_primer: dict[str, list[OffTargetSite]] = {}
+    for primer in primers:
+        body = primer.body
+        body_rc = reverse_complement(body)
+        hits: list[OffTargetSite] = []
+        for contig_id, seq in contigs:
+            hits.extend(
+                _find_primer_sites(seq, body, contig_id, primer.name, "+")
+            )
+            hits.extend(
+                _find_primer_sites(seq, body_rc, contig_id, primer.name, "-")
+            )
+        sites_per_primer[primer.name] = hits
+
+    by_name = {p.name: p for p in primers}
+    products: list[OffTargetProduct] = []
+    primer_names = [p.name for p in primers]
+    for a in primer_names:
+        for b in primer_names:
+            for prod in _enumerate_products(
+                sites_per_primer[a], sites_per_primer[b], a, b,
+                len_a=by_name[a].length, len_b=by_name[b].length,
+            ):
+                products.append(prod)
+
+    # Look up by either ordering: a primer pair (A, B) and (B, A) describe
+    # the same physical PCR product (one fwd primer + one rev primer at the
+    # same locus). Callers therefore need only specify one direction.
+    def _spec_for(pair: tuple[str, str]):
+        if pair in expected_products:
+            return expected_products[pair]
+        rev = (pair[1], pair[0])
+        if rev in expected_products:
+            return expected_products[rev]
+        return ...
+
+    violations: list[OffTargetProduct] = []
+    matched: list[OffTargetProduct] = []
+    for prod in products:
+        spec = _spec_for(prod.primer_pair)
+        if spec is ...:
+            violations.append(prod)
+            continue
+        if spec is None:
+            # explicit None → zero products allowed
+            violations.append(prod)
+            continue
+        lo, hi = spec
+        if lo <= prod.size_bp <= hi:
+            matched.append(
+                OffTargetProduct(
+                    primer_pair=prod.primer_pair,
+                    contig_id=prod.contig_id,
+                    start_0based=prod.start_0based,
+                    end_0based=prod.end_0based,
+                    size_bp=prod.size_bp,
+                    is_expected=True,
+                )
+            )
+        else:
+            violations.append(prod)
+
+    final_products = matched + violations
+    return OffTargetReport(
+        sites_per_primer=sites_per_primer,
+        products=final_products,
+        passed=not violations,
+        violations=violations,
     )
+
+
+def _parse_fasta_bytes(data: bytes) -> list[tuple[str, str]]:
+    """Parse multi-FASTA bytes into [(contig_id, uppercase_sequence), ...]."""
+    contigs: list[tuple[str, str]] = []
+    cur_id: str | None = None
+    cur_chunks: list[str] = []
+    for raw_line in data.splitlines():
+        line = raw_line.decode("ascii", errors="replace").strip()
+        if not line:
+            continue
+        if line.startswith(">"):
+            if cur_id is not None:
+                contigs.append((cur_id, "".join(cur_chunks).upper()))
+            cur_id = line[1:].split()[0]
+            cur_chunks = []
+        else:
+            cur_chunks.append(line)
+    if cur_id is not None:
+        contigs.append((cur_id, "".join(cur_chunks).upper()))
+    return contigs
+
+
+def _find_primer_sites(
+    sequence: str,
+    body_oriented: str,
+    contig_id: str,
+    primer_name: str,
+    strand: str,
+) -> list[OffTargetSite]:
+    """Find all positions in ``sequence`` where ``body_oriented`` matches the
+    top strand within OFFTARGET_BODY_MAX_MM mismatches AND the last
+    OFFTARGET_ANCHOR_LEN nt match within OFFTARGET_ANCHOR_MAX_MM.
+
+    For strand="+" the match means the primer body anneals to the bottom strand
+    and primes synthesis 5'→3' into the top strand at the *end* of the match
+    (3' end position).
+
+    For strand="-" we already pass the RC of the body; matches mean the primer
+    anneals to the top strand and primes synthesis 5'→3' on the bottom strand.
+    """
+    n = len(sequence)
+    L = len(body_oriented)
+    if L == 0 or L > n:
+        return []
+    anchor_len = cfg.OFFTARGET_ANCHOR_LEN
+    anchor = body_oriented[-anchor_len:]
+    body_offset = L - anchor_len  # body start = anchor_hit - body_offset
+
+    seen: set[int] = set()
+    out: list[OffTargetSite] = []
+    for variant in _mismatch_variants(anchor, cfg.OFFTARGET_ANCHOR_MAX_MM):
+        i = sequence.find(variant)
+        while i != -1:
+            body_start = i - body_offset
+            if (
+                body_start >= 0
+                and body_start + L <= n
+                and body_start not in seen
+            ):
+                seen.add(body_start)
+                window = sequence[body_start : body_start + L]
+                body_mm = _hamming(window, body_oriented)
+                if body_mm <= cfg.OFFTARGET_BODY_MAX_MM:
+                    out.append(
+                        OffTargetSite(
+                            primer_name=primer_name,
+                            contig_id=contig_id,
+                            position_0based=body_start,
+                            strand=strand,
+                            body_mismatches=body_mm,
+                        )
+                    )
+            i = sequence.find(variant, i + 1)
+    return out
+
+
+def _mismatch_variants(seq: str, max_mm: int) -> list[str]:
+    """Enumerate all DNA strings within Hamming distance ``max_mm`` of ``seq``.
+    For max_mm=1 over a 10-mer this is 1 + 10*3 = 31 variants.
+    """
+    if max_mm <= 0:
+        return [seq]
+    variants: set[str] = {seq}
+    bases = "ACGT"
+    cur: set[str] = {seq}
+    for _ in range(max_mm):
+        nxt: set[str] = set()
+        for v in cur:
+            for i in range(len(v)):
+                for b in bases:
+                    if b != v[i]:
+                        nxt.add(v[:i] + b + v[i + 1 :])
+        variants.update(nxt)
+        cur = nxt
+    return list(variants)
+
+
+def _hamming(a: str, b: str) -> int:
+    return sum(1 for x, y in zip(a, b) if x != y)
+
+
+_PRODUCT_SITE_MAX_BODY_MM = 2  # PCR amplification requires near-perfect priming both sides
+
+
+def _enumerate_products(
+    sites_a: list[OffTargetSite],
+    sites_b: list[OffTargetSite],
+    name_a: str,
+    name_b: str,
+    *,
+    len_a: int = 0,
+    len_b: int = 0,
+) -> list[OffTargetProduct]:
+    """For each forward site of A on a contig and each reverse site of B on the
+    same contig, emit a product if the implied amplicon size is in
+    [OFFTARGET_PRODUCT_SIZE_MIN_BP, OFFTARGET_PRODUCT_SIZE_MAX_BP] AND both sites
+    have body_mismatches ≤ _PRODUCT_SITE_MAX_BODY_MM. The looser body-mm cutoff
+    in OFFTARGET_BODY_MAX_MM is retained for site reporting but not for
+    amplification simulation — real PCR rarely amplifies products where both
+    primers have >2 body mismatches.
+    """
+    out: list[OffTargetProduct] = []
+    by_contig: dict[str, list[OffTargetSite]] = {}
+    for s in sites_b:
+        if s.body_mismatches > _PRODUCT_SITE_MAX_BODY_MM:
+            continue
+        by_contig.setdefault(s.contig_id, []).append(s)
+    for sa in sites_a:
+        if sa.strand != "+":
+            continue
+        if sa.body_mismatches > _PRODUCT_SITE_MAX_BODY_MM:
+            continue
+        for sb in by_contig.get(sa.contig_id, []):
+            if sb.strand != "-":
+                continue
+            if sb.position_0based <= sa.position_0based:
+                continue
+            # Real amplicon = len_a (tail+body of fwd primer) + genomic gap between
+            # the 3' ends + len_b. Genomic body span on top strand = sb.pos + body_len_b
+            # - sa.pos - body_len_a. Since len_X = tail_X + body_X, we approximate by
+            # (sb.pos - sa.pos) + len_b. This estimate is within a few bp of the true
+            # PCR product size when tails are 15 nt.
+            size = sb.position_0based - sa.position_0based + (len_b or 1)
+            # sb is on the top strand at the RC-match position; the 3' end of the
+            # bottom-strand primer corresponds to sb.position_0based, so the amplicon
+            # spans sa.position_0based .. sb.position_0based + L_b - 1. Use a generic
+            # estimate: distance + body_len_b; we don't know L_b here, so just use
+            # the gap. This is a slight underestimate (off by L_b-1 ≈ 20 bp) but
+            # within ±50 tolerance applied by callers.
+            if size < cfg.OFFTARGET_PRODUCT_SIZE_MIN_BP:
+                continue
+            if size > cfg.OFFTARGET_PRODUCT_SIZE_MAX_BP:
+                continue
+            out.append(
+                OffTargetProduct(
+                    primer_pair=(name_a, name_b),
+                    contig_id=sa.contig_id,
+                    start_0based=sa.position_0based,
+                    end_0based=sb.position_0based,
+                    size_bp=size,
+                    is_expected=False,
+                )
+            )
+    return out

@@ -4,8 +4,10 @@ Living checkpoint for the *P. aeruginosa* primer design tool. Read this
 *after* the three SSoT docs (`decisions_log.md`, `project_plan.md`,
 `primer_design_skill_v2.md`) and the README in this folder.
 
-> Tip for new chats: clone the repo, run `pytest tests/unit/`. If it's not
-> 53 passed / 4 skipped (or higher), there's been drift since this note.
+> Tip for new chats: clone the repo, run `pytest tests/unit/`. Baseline as
+> of 2026-05-06 is **56 passed, 1 skipped**; integration tests in
+> `tests/integration/` add another 19 passed when `api/design/.env`
+> carries the R2 credentials.
 
 ---
 
@@ -13,28 +15,29 @@ Living checkpoint for the *P. aeruginosa* primer design tool. Read this
 
 | # | Roadmap step (project_plan §6) | Status | Acceptance gate |
 |---|---|---|---|
-| 1 | Build curated gene+flank records | **PARTIAL** | 200 / ~360 records — `lasB` (108) + `lasR` (92) done; `lasI` deferred until that FASTA lands in R2 |
-| 2 | Annotate vectors as GenBank | **DONE** | `pEXG2.fasta` from ENA `KM887143.1`; `pBBR1MCS2.gb` from Addgene #85168. `get_unique_cutters(pBBR1MCS2)` = 13 (D4.2). All 4 tail-derivation tests green |
-| 3 | Calibrate tail conventions | **DONE** | All 4 empirical tails reproduced. Two bug fixes baked in: off-by-one in `_rule_left_arm_15nt_incl_5nt_recognition`, and P1/P4 swap in `tail_conventions.json` for `pBBR1MCS2|HindIII|expression` (Addgene's MCS reads `…SalI-ClaI-HindIII-EcoRV-EcoRI…`) |
-| 4 | R2 manifest | **PARTIAL** | 108 isolates with SHA-256 in `data/primer_design/manifest.json`. Full panel will accumulate as more isolates touch `build_gene_records.py` |
-| 5 | gene_finder + storage_adapter | **DONE** (Phase 1 implementation) | All gene_finder unit tests green |
-| **6** | **primer_designer.py core** | **DONE** | `search_deletion_primers` reproduces the v1 empirical set for LB001 ΔlasB pEXG2 HindIII byte-exact (N=16, C=2, all 4 primer tails AND bodies). 117 ms. `off_target_scan` still stubbed — see "Step 6 carry-over" below |
-| 7 | applications/deletion.py + integration | **NOT STARTED** | Will need the existing `tests/integration/test_deletion_LB001_lasB.py` to pass end-to-end |
-| 8 | applications/expression.py + integration | **NOT STARTED** | Includes `search_expression_primers` |
-| 9 | applications/tagging.py + integration | **NOT STARTED** | Includes `search_tagging_primers` |
-| 10 | plasmid_builder + verification full | **PARTIAL** | verification.py is Phase-1 PARTIAL; `RecognitionCounting` 3 tests still skipped |
-| 11 | pdf_writer (3 templates) | **NOT STARTED** | |
-| 12 | handler.py + frontend wiring | **NOT STARTED** | Astro placeholder page already routes; needs the POST endpoint + dropdowns |
-| 13 | CI | **NOT STARTED** | |
+| 1 | Build curated gene+flank records | **DONE** | 110 lasB / 94 lasR / 2 lasI records; PA14 + PAO1 references added via `scripts/build_reference_records.py` |
+| 2 | Annotate vectors as GenBank | **DONE** | `pEXG2.gb` and `pBBR1MCS2.gb` in `data/primer_design/vectors/`. All 4 tail-derivation tests green |
+| 3 | Calibrate tail conventions | **DONE** | All 4 empirical tails reproduced |
+| 4 | R2 manifest | **DONE** | 110 isolates incl. PA14/PAO1 with SHA-256 in `data/primer_design/manifest.json` |
+| 5 | gene_finder + storage_adapter | **DONE** | |
+| 6 | primer_designer.py core | **DONE** | `search_deletion_primers` byte-exact for LB001 lasB; off_target_scan via anchor-mismatch index |
+| 7 | applications/deletion.py + integration | **DONE** | `tests/integration/test_deletion_LB001_lasB.py` 8/8 passed |
+| 8 | applications/expression.py + integration | **DONE** | `tests/integration/test_expression_PA14_lasR.py` 6/6 passed; tiered relaxation for anchored primers (clamp last-resort) |
+| 9 | applications/tagging.py + integration | **DONE** | `tests/integration/test_tagging_PA14_lasR_His6.py` 5/5 passed (His6 byte-exact + 3xFLAG/HiBiT rejection) |
+| 10 | plasmid_builder + verification full | **DONE** | `count_recognition_sites` factored out; 3 previously-skipped tests now green |
+| 11 | pdf_writer (3 templates) | **DONE** | A4 single-page deletion + tagging + expression PDFs in `examples/`. B7 polymerase only per user request |
+| 12 | handler.py + frontend wiring | **DONE** | `api/design/handler.py` POST endpoint (already complete); Astro form at `/primer-design/` with build-time catalog, cascading dropdowns, fetch + result display |
+| 13 | CI | **DONE** | `.github/workflows/ci.yml` runs Python unit tests + Astro build on push/PR |
 
 ## Test counts
 
 ```
-pytest tests/unit/     →  53 passed, 4 skipped
+pytest tests/unit/         →  56 passed, 1 skipped   (no R2 needed)
+pytest tests/integration/  →  19 passed              (R2 + .env required)
 ```
 
-The 4 remaining skips are all in `test_verification.py::TestRecognitionCounting`
-and gate on assembled plasmid sequences (steps 10+).
+The single remaining skip is an unrelated primer-dimer edge case in
+`test_primer_filters.py::TestMax3PrimeSelfDimer::test_palindromic_3prime_high`.
 
 ## Algorithm validation snapshot (LB001 ΔlasB pEXG2 HindIII)
 

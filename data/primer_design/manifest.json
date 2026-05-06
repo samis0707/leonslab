@@ -756,6 +756,20 @@
       "sha256": "de48d84eb2fd9ab4102e3cdaaa3e1ccef069daa4fc579882e9eda23140e9e1e1",
       "size_bytes": 6735763,
       "n_contigs": 3
+    },
+    {
+      "isolate_id": "PA14",
+      "filename": "PA14.fna",
+      "sha256": "d71e4586eccda2b7ac937c53a3ba551e8fba911c33ccaf59f139ee93ab8a99ce",
+      "size_bytes": 6646560,
+      "n_contigs": 1
+    },
+    {
+      "isolate_id": "PAO1",
+      "filename": "PAO1.fna",
+      "sha256": "545f2bd27cb85ea429c95f3fe9ada4a6653c8548f9cab2c9728fff6750d26aef",
+      "size_bytes": 6368829,
+      "n_contigs": 1
     }
   ],
   "generated": "2026-05-05T20:16:06.445025+00:00"
