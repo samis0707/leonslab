@@ -115,15 +115,11 @@ def render_deletion_pdf(result: DesignResult, output_path: Path) -> None:
 
 
 def render_tagging_pdf(result: DesignResult, output_path: Path) -> None:
-    raise NotImplementedError(
-        "Tagging PDF: pending — sign off on deletion layout first."
-    )
+    _render(result, output_path)
 
 
 def render_expression_pdf(result: DesignResult, output_path: Path) -> None:
-    raise NotImplementedError(
-        "Expression PDF: pending — sign off on deletion layout first."
-    )
+    _render(result, output_path)
 
 
 # ---------------------------------------------------------------------------
