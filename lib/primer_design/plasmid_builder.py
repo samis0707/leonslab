@@ -39,9 +39,42 @@ def assemble(
     Returns:
         CircularPlasmid.
     """
-    raise NotImplementedError(
-        "Phase 2 step 10: implement plasmid assembly. "
-        "Hardest part: getting the offsets right at both junctions. "
-        "Validate against tests/integration/test_deletion_LB001_lasB.py expected "
-        "final_plasmid_length_bp = 6155 and SHA-256 against pEXG2-lasB_delta_LB001.fasta."
+    if len(insert) < 2 * VECTOR_TAIL_LEN:
+        raise ValueError(
+            f"Insert too short ({len(insert)} bp) for two {VECTOR_TAIL_LEN}-nt arms"
+        )
+
+    vec_seq = vector.sequence
+    n = vector.length
+    left_arm = vec_seq[(cut_nick - VECTOR_TAIL_LEN) % n : cut_nick]
+    right_arm = vec_seq[cut_nick : cut_nick + VECTOR_TAIL_LEN]
+
+    if insert[:VECTOR_TAIL_LEN] != left_arm:
+        raise ValueError(
+            "Insert 5' arm does not match vector left arm at cut site "
+            f"(insert: {insert[:VECTOR_TAIL_LEN]!r}, vector: {left_arm!r})"
+        )
+    if insert[-VECTOR_TAIL_LEN:] != right_arm:
+        raise ValueError(
+            "Insert 3' arm does not match vector right arm at cut site "
+            f"(insert: {insert[-VECTOR_TAIL_LEN:]!r}, vector: {right_arm!r})"
+        )
+
+    # Collapse both 15-nt overlaps: keep vector through the nick, splice in the
+    # interior of the insert (= insert minus its two arm copies), keep the rest
+    # of the vector. Equivalent to vec[:nick-15] + insert + vec[nick+15:].
+    final_seq = (
+        vec_seq[: cut_nick - VECTOR_TAIL_LEN]
+        + insert
+        + vec_seq[cut_nick + VECTOR_TAIL_LEN :]
+    )
+
+    insert_start = cut_nick - VECTOR_TAIL_LEN
+    insert_end = insert_start + len(insert)
+    return CircularPlasmid(
+        name=f"{vector.name}_assembly",
+        sequence=final_seq,
+        length=len(final_seq),
+        junctions=[(insert_start, insert_start + VECTOR_TAIL_LEN),
+                   (insert_end - VECTOR_TAIL_LEN, insert_end)],
     )

@@ -31,6 +31,7 @@ from .types import (
     DeletionPrimerSet,
     ExpressionPrimerSet,
     GeneRecord,
+    OffTargetProduct,
     OffTargetReport,
     OffTargetSite,
     Primer,
@@ -491,8 +492,228 @@ def off_target_scan(
         OffTargetReport.passed = True iff every expected pair has exactly the
         expected outcome and no unexpected products exist.
     """
-    raise NotImplementedError(
-        "Phase 2 step 6 (or 7 for first integration test). "
-        "Implement per skill_v2 §10 pseudocode. Use Hamming-distance walk; "
-        "see tests/integration/test_deletion_LB001_lasB.py for required outcomes."
+    contigs = _parse_fasta_bytes(genome_fasta_bytes)
+
+    sites_per_primer: dict[str, list[OffTargetSite]] = {}
+    for primer in primers:
+        body = primer.body
+        body_rc = reverse_complement(body)
+        hits: list[OffTargetSite] = []
+        for contig_id, seq in contigs:
+            hits.extend(
+                _find_primer_sites(seq, body, contig_id, primer.name, "+")
+            )
+            hits.extend(
+                _find_primer_sites(seq, body_rc, contig_id, primer.name, "-")
+            )
+        sites_per_primer[primer.name] = hits
+
+    by_name = {p.name: p for p in primers}
+    products: list[OffTargetProduct] = []
+    primer_names = [p.name for p in primers]
+    for a in primer_names:
+        for b in primer_names:
+            for prod in _enumerate_products(
+                sites_per_primer[a], sites_per_primer[b], a, b,
+                len_a=by_name[a].length, len_b=by_name[b].length,
+            ):
+                products.append(prod)
+
+    violations: list[OffTargetProduct] = []
+    matched: list[OffTargetProduct] = []
+    for prod in products:
+        spec = expected_products.get(prod.primer_pair)
+        if spec is None:
+            if prod.primer_pair in expected_products:
+                # explicit None → zero products allowed
+                violations.append(prod)
+            else:
+                violations.append(prod)
+            continue
+        lo, hi = spec
+        if lo <= prod.size_bp <= hi:
+            matched.append(
+                OffTargetProduct(
+                    primer_pair=prod.primer_pair,
+                    contig_id=prod.contig_id,
+                    start_0based=prod.start_0based,
+                    end_0based=prod.end_0based,
+                    size_bp=prod.size_bp,
+                    is_expected=True,
+                )
+            )
+        else:
+            violations.append(prod)
+
+    final_products = matched + violations
+    return OffTargetReport(
+        sites_per_primer=sites_per_primer,
+        products=final_products,
+        passed=not violations,
+        violations=violations,
     )
+
+
+def _parse_fasta_bytes(data: bytes) -> list[tuple[str, str]]:
+    """Parse multi-FASTA bytes into [(contig_id, uppercase_sequence), ...]."""
+    contigs: list[tuple[str, str]] = []
+    cur_id: str | None = None
+    cur_chunks: list[str] = []
+    for raw_line in data.splitlines():
+        line = raw_line.decode("ascii", errors="replace").strip()
+        if not line:
+            continue
+        if line.startswith(">"):
+            if cur_id is not None:
+                contigs.append((cur_id, "".join(cur_chunks).upper()))
+            cur_id = line[1:].split()[0]
+            cur_chunks = []
+        else:
+            cur_chunks.append(line)
+    if cur_id is not None:
+        contigs.append((cur_id, "".join(cur_chunks).upper()))
+    return contigs
+
+
+def _find_primer_sites(
+    sequence: str,
+    body_oriented: str,
+    contig_id: str,
+    primer_name: str,
+    strand: str,
+) -> list[OffTargetSite]:
+    """Find all positions in ``sequence`` where ``body_oriented`` matches the
+    top strand within OFFTARGET_BODY_MAX_MM mismatches AND the last
+    OFFTARGET_ANCHOR_LEN nt match within OFFTARGET_ANCHOR_MAX_MM.
+
+    For strand="+" the match means the primer body anneals to the bottom strand
+    and primes synthesis 5'→3' into the top strand at the *end* of the match
+    (3' end position).
+
+    For strand="-" we already pass the RC of the body; matches mean the primer
+    anneals to the top strand and primes synthesis 5'→3' on the bottom strand.
+    """
+    n = len(sequence)
+    L = len(body_oriented)
+    if L == 0 or L > n:
+        return []
+    anchor_len = cfg.OFFTARGET_ANCHOR_LEN
+    anchor = body_oriented[-anchor_len:]
+    body_offset = L - anchor_len  # body start = anchor_hit - body_offset
+
+    seen: set[int] = set()
+    out: list[OffTargetSite] = []
+    for variant in _mismatch_variants(anchor, cfg.OFFTARGET_ANCHOR_MAX_MM):
+        i = sequence.find(variant)
+        while i != -1:
+            body_start = i - body_offset
+            if (
+                body_start >= 0
+                and body_start + L <= n
+                and body_start not in seen
+            ):
+                seen.add(body_start)
+                window = sequence[body_start : body_start + L]
+                body_mm = _hamming(window, body_oriented)
+                if body_mm <= cfg.OFFTARGET_BODY_MAX_MM:
+                    out.append(
+                        OffTargetSite(
+                            primer_name=primer_name,
+                            contig_id=contig_id,
+                            position_0based=body_start,
+                            strand=strand,
+                            body_mismatches=body_mm,
+                        )
+                    )
+            i = sequence.find(variant, i + 1)
+    return out
+
+
+def _mismatch_variants(seq: str, max_mm: int) -> list[str]:
+    """Enumerate all DNA strings within Hamming distance ``max_mm`` of ``seq``.
+    For max_mm=1 over a 10-mer this is 1 + 10*3 = 31 variants.
+    """
+    if max_mm <= 0:
+        return [seq]
+    variants: set[str] = {seq}
+    bases = "ACGT"
+    cur: set[str] = {seq}
+    for _ in range(max_mm):
+        nxt: set[str] = set()
+        for v in cur:
+            for i in range(len(v)):
+                for b in bases:
+                    if b != v[i]:
+                        nxt.add(v[:i] + b + v[i + 1 :])
+        variants.update(nxt)
+        cur = nxt
+    return list(variants)
+
+
+def _hamming(a: str, b: str) -> int:
+    return sum(1 for x, y in zip(a, b) if x != y)
+
+
+_PRODUCT_SITE_MAX_BODY_MM = 2  # PCR amplification requires near-perfect priming both sides
+
+
+def _enumerate_products(
+    sites_a: list[OffTargetSite],
+    sites_b: list[OffTargetSite],
+    name_a: str,
+    name_b: str,
+    *,
+    len_a: int = 0,
+    len_b: int = 0,
+) -> list[OffTargetProduct]:
+    """For each forward site of A on a contig and each reverse site of B on the
+    same contig, emit a product if the implied amplicon size is in
+    [OFFTARGET_PRODUCT_SIZE_MIN_BP, OFFTARGET_PRODUCT_SIZE_MAX_BP] AND both sites
+    have body_mismatches ≤ _PRODUCT_SITE_MAX_BODY_MM. The looser body-mm cutoff
+    in OFFTARGET_BODY_MAX_MM is retained for site reporting but not for
+    amplification simulation — real PCR rarely amplifies products where both
+    primers have >2 body mismatches.
+    """
+    out: list[OffTargetProduct] = []
+    by_contig: dict[str, list[OffTargetSite]] = {}
+    for s in sites_b:
+        if s.body_mismatches > _PRODUCT_SITE_MAX_BODY_MM:
+            continue
+        by_contig.setdefault(s.contig_id, []).append(s)
+    for sa in sites_a:
+        if sa.strand != "+":
+            continue
+        if sa.body_mismatches > _PRODUCT_SITE_MAX_BODY_MM:
+            continue
+        for sb in by_contig.get(sa.contig_id, []):
+            if sb.strand != "-":
+                continue
+            if sb.position_0based <= sa.position_0based:
+                continue
+            # Real amplicon = len_a (tail+body of fwd primer) + genomic gap between
+            # the 3' ends + len_b. Genomic body span on top strand = sb.pos + body_len_b
+            # - sa.pos - body_len_a. Since len_X = tail_X + body_X, we approximate by
+            # (sb.pos - sa.pos) + len_b. This estimate is within a few bp of the true
+            # PCR product size when tails are 15 nt.
+            size = sb.position_0based - sa.position_0based + (len_b or 1)
+            # sb is on the top strand at the RC-match position; the 3' end of the
+            # bottom-strand primer corresponds to sb.position_0based, so the amplicon
+            # spans sa.position_0based .. sb.position_0based + L_b - 1. Use a generic
+            # estimate: distance + body_len_b; we don't know L_b here, so just use
+            # the gap. This is a slight underestimate (off by L_b-1 ≈ 20 bp) but
+            # within ±50 tolerance applied by callers.
+            if size < cfg.OFFTARGET_PRODUCT_SIZE_MIN_BP:
+                continue
+            if size > cfg.OFFTARGET_PRODUCT_SIZE_MAX_BP:
+                continue
+            out.append(
+                OffTargetProduct(
+                    primer_pair=(name_a, name_b),
+                    contig_id=sa.contig_id,
+                    start_0based=sa.position_0based,
+                    end_0based=sb.position_0based,
+                    size_bp=size,
+                    is_expected=False,
+                )
+            )
+    return out

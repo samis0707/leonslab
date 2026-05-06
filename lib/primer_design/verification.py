@@ -124,7 +124,7 @@ def _verify_deletion(result: DesignResult) -> None:
             message=f"Scar ORF malformed (stop codons): {scar_protein!r}",
             details={"failed_check": "scar_stop_codon"},
         )
-    expected_len = (ps.N + ps.C) * 3
+    expected_len = (ps.N + ps.C + 1) * 3   # +1 for the stop codon carried in the C-tail
     if len(ps.scar_dna) != expected_len:
         raise VerificationFailure(
             message=f"Scar DNA length {len(ps.scar_dna)} != expected {expected_len}",
