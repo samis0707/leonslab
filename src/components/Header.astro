@@ -9,10 +9,10 @@ const altLangHref = getOppositeLangPath(Astro.url);
 const navItems = [
   { href: localizedPath(lang, '/cartoons/'), label: t('nav.cartoons') },
   { href: localizedPath(lang, '/stickers/'), label: t('nav.stickers') },
+  { href: localizedPath(lang, '/primer-design/'), label: t('nav.primerDesign') },
   { href: localizedPath(lang, '/lab-solutions/'), label: t('nav.labSolutions') },
   { href: localizedPath(lang, '/pseudomonas-park/'), label: t('nav.park') },
   { href: localizedPath(lang, '/ideas/'), label: t('nav.ideas') },
-  { href: localizedPath(lang, '/primer-design/'), label: t('nav.primerDesign') },
 ];
 
 const currentPath = Astro.url.pathname.replace(/\/$/, '') + '/';
