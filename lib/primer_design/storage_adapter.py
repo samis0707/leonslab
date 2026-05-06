@@ -67,31 +67,48 @@ def _bucket_name() -> str:
 
 @functools.lru_cache(maxsize=GENOME_LRU_CACHE_SIZE)
 def fetch_genome(isolate_id: str, manifest_path: Path | None = None) -> bytes:
-    """Fetch a genome FASTA from R2 and verify its SHA-256 against the manifest.
+    """Fetch a genome FASTA, preferring a local cache and falling back to R2.
 
-    Args:
-        isolate_id: e.g. ``"LB001"``. Maps to key ``Whole genome sequences/LB001.fna``.
-        manifest_path: optional override; defaults to bundled manifest.
+    Local cache:
+        ``$GENOME_LOCAL_CACHE_DIR/<isolate_id>.fna`` (env var), or the bundled
+        ``data/primer_design/genomes/<isolate_id>.fna`` directory if it exists.
+        Used so dev / CI without R2 credentials can still exercise the full
+        pipeline by dropping a genome locally.
 
-    Returns:
-        Raw bytes of the .fna file.
+    R2:
+        Bucket key ``Whole genome sequences/<isolate_id>.fna``.
+
+    SHA-256 against the bundled manifest is enforced for both sources.
 
     Raises:
-        GenomeNotFoundInR2: key missing from bucket.
+        GenomeNotFoundInR2: not in local cache and not in R2 (or no R2 credentials).
         GenomeManifestMismatch: SHA-256 disagrees with manifest entry.
     """
-    key = f"{R2_GENOMES_PREFIX}{isolate_id}.fna"
-    log.info("Fetching genome from R2: bucket=%s key=%s", _bucket_name(), key)
-
-    try:
-        resp = _r2_client().get_object(Bucket=_bucket_name(), Key=key)
-    except _r2_client().exceptions.NoSuchKey as exc:
-        raise GenomeNotFoundInR2(
-            message=f"No genome '{isolate_id}' in R2 (key: {key})",
-            details={"isolate_id": isolate_id, "key": key},
-        ) from exc
-
-    data = resp["Body"].read()
+    local = _local_genome_path(isolate_id)
+    if local is not None and local.exists():
+        log.info("Loading genome from local cache: %s", local)
+        data = local.read_bytes()
+    else:
+        key = f"{R2_GENOMES_PREFIX}{isolate_id}.fna"
+        try:
+            client = _r2_client()
+        except KeyError as exc:
+            raise GenomeNotFoundInR2(
+                message=(
+                    f"Genome '{isolate_id}' not in local cache and R2 credentials "
+                    f"are not configured (missing env var {exc.args[0]})."
+                ),
+                details={"isolate_id": isolate_id, "looked_in": str(local)},
+            ) from exc
+        log.info("Fetching genome from R2: bucket=%s key=%s", _bucket_name(), key)
+        try:
+            resp = client.get_object(Bucket=_bucket_name(), Key=key)
+        except client.exceptions.NoSuchKey as exc:
+            raise GenomeNotFoundInR2(
+                message=f"No genome '{isolate_id}' in R2 (key: {key})",
+                details={"isolate_id": isolate_id, "key": key},
+            ) from exc
+        data = resp["Body"].read()
     expected_sha = _expected_sha256(isolate_id, manifest_path)
     if expected_sha is not None:
         actual_sha = hashlib.sha256(data).hexdigest()
@@ -149,6 +166,20 @@ def _expected_sha256(isolate_id: str, manifest_path: Path | None = None) -> str 
 
 def _default_manifest_path() -> Path:
     return Path(__file__).resolve().parents[2] / "data" / "primer_design" / "manifest.json"
+
+
+def _local_genome_path(isolate_id: str) -> Path | None:
+    """Return the local-cache path for ``isolate_id``, or None if no cache dir is set.
+
+    Order of precedence:
+        1. ``$GENOME_LOCAL_CACHE_DIR``
+        2. ``data/primer_design/genomes/`` (bundled, gitignored)
+    """
+    override = os.environ.get("GENOME_LOCAL_CACHE_DIR")
+    if override:
+        return Path(override) / f"{isolate_id}.fna"
+    bundled = Path(__file__).resolve().parents[2] / "data" / "primer_design" / "genomes"
+    return bundled / f"{isolate_id}.fna"
 
 
 # ---------------------------------------------------------------------------

@@ -26,7 +26,7 @@ from Bio.Seq import Seq
 from Bio.SeqUtils.MeltingTemp import Tm_NN
 
 from . import config as cfg
-from .exceptions import NoCandidates, OffTargetDetected
+from .exceptions import NoCandidates, OffTargetDetected, PrimerDesignError
 from .types import (
     DeletionPrimerSet,
     ExpressionPrimerSet,
@@ -461,38 +461,232 @@ def search_expression_primers(
 
 
 # ===========================================================================
-# Off-target scan — STUB
+# Off-target scan
 # ===========================================================================
+
+def _hamming(a: str, b: str) -> int:
+    return sum(1 for x, y in zip(a, b) if x != y)
+
+
+def _parse_fasta_bytes(data: bytes) -> list[tuple[str, str]]:
+    """Tiny FASTA parser. Returns list of (contig_id, sequence_uppercase)."""
+    contigs: list[tuple[str, str]] = []
+    name: str | None = None
+    chunks: list[str] = []
+    for raw in data.splitlines():
+        line = raw.decode("ascii", errors="ignore") if isinstance(raw, bytes) else raw
+        if not line:
+            continue
+        if line.startswith(">"):
+            if name is not None:
+                contigs.append((name, "".join(chunks).upper()))
+            name = line[1:].split()[0]
+            chunks = []
+        else:
+            chunks.append(line.strip())
+    if name is not None:
+        contigs.append((name, "".join(chunks).upper()))
+    return contigs
+
+
+def _scan_primer_sites(
+    body: str, contigs: list[tuple[str, str]], primer_name: str,
+) -> list[OffTargetSite]:
+    """Return all (contig, position, strand) sites where the primer body binds
+    within the configured anchor + body mismatch limits.
+
+    Position semantics: ``position_0based`` is the 0-based start of the body's
+    binding footprint on the top strand. For "+" strand the body matches the top
+    strand directly at [pos, pos+L); for "-" strand the body matches the RC of
+    the top strand at [pos, pos+L) — i.e., the primer would prime extension
+    leftward from pos+L−1.
+    """
+    L = len(body)
+    A = cfg.OFFTARGET_ANCHOR_LEN
+    if L < A:
+        return []
+    anchor_fwd = body[-A:]
+    body_rc = reverse_complement(body)
+    anchor_rev = body_rc[-A:]
+
+    sites: list[OffTargetSite] = []
+    for contig_id, seq in contigs:
+        n = len(seq)
+        # Forward-strand binding: body matches seq directly. Anchor is at the 3' end.
+        # For an extension running 5'→3' on the top strand, the anchor sits at
+        # window_start + L − A. So slide window_start over [0, n − L].
+        for ws in range(0, n - L + 1):
+            window = seq[ws : ws + L]
+            if _hamming(window[-A:], anchor_fwd) > cfg.OFFTARGET_ANCHOR_MAX_MM:
+                continue
+            mm = _hamming(window, body)
+            if mm <= cfg.OFFTARGET_BODY_MAX_MM:
+                sites.append(OffTargetSite(
+                    primer_name=primer_name, contig_id=contig_id,
+                    position_0based=ws, strand="+", body_mismatches=mm,
+                ))
+        # Reverse-strand binding: body matches RC of seq window.
+        for ws in range(0, n - L + 1):
+            window_rc = reverse_complement(seq[ws : ws + L])
+            if _hamming(window_rc[-A:], anchor_fwd) > cfg.OFFTARGET_ANCHOR_MAX_MM:
+                continue
+            mm = _hamming(window_rc, body)
+            if mm <= cfg.OFFTARGET_BODY_MAX_MM:
+                sites.append(OffTargetSite(
+                    primer_name=primer_name, contig_id=contig_id,
+                    position_0based=ws, strand="-", body_mismatches=mm,
+                ))
+    return sites
+
+
+def _enumerate_pcr_products(
+    sites_per_primer: dict[str, list[OffTargetSite]],
+    pairs: list[tuple[str, str]],
+) -> list:
+    """For each primer pair (A, B), enumerate amplicons where A primes on +
+    strand at position p_a and B primes on − strand at position p_b on the same
+    contig with size = (p_b + L_b) − p_a within [SIZE_MIN, SIZE_MAX].
+
+    Returns a list of dicts (we don't bind to the OffTargetProduct dataclass
+    here so we can also report the body lengths used; the DesignResult holds
+    the structured products.)
+    """
+    from .types import OffTargetProduct
+    out: list[OffTargetProduct] = []
+    smin = cfg.OFFTARGET_PRODUCT_SIZE_MIN_BP
+    smax = cfg.OFFTARGET_PRODUCT_SIZE_MAX_BP
+
+    # Group sites by (primer_name, contig_id, strand) for quick lookup
+    by_key: dict[tuple[str, str, str], list[OffTargetSite]] = {}
+    for name, sites in sites_per_primer.items():
+        for s in sites:
+            by_key.setdefault((name, s.contig_id, s.strand), []).append(s)
+
+    seen: set[tuple[str, str, str, int, int]] = set()
+    for a, b in pairs:
+        contigs = {k[1] for k in by_key if k[0] in (a, b)}
+        for contig in contigs:
+            fwd_a = by_key.get((a, contig, "+"), [])
+            rev_b = by_key.get((b, contig, "-"), [])
+            fwd_b = by_key.get((b, contig, "+"), [])
+            rev_a = by_key.get((a, contig, "-"), [])
+            for f in fwd_a:
+                for r in rev_b:
+                    end = r.position_0based + _site_len(r, sites_per_primer, b)
+                    size = end - f.position_0based
+                    if smin <= size <= smax and r.position_0based >= f.position_0based:
+                        key = (a, b, contig, f.position_0based, end)
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        out.append(OffTargetProduct(
+                            primer_pair=(a, b), contig_id=contig,
+                            start_0based=f.position_0based, end_0based=end,
+                            size_bp=size, is_expected=False,
+                        ))
+            # Same pair, swapped roles (B forward, A reverse) — same chemistry, count once.
+            if a != b:
+                for f in fwd_b:
+                    for r in rev_a:
+                        end = r.position_0based + _site_len(r, sites_per_primer, a)
+                        size = end - f.position_0based
+                        if smin <= size <= smax and r.position_0based >= f.position_0based:
+                            key = (a, b, contig, f.position_0based, end)
+                            if key in seen:
+                                continue
+                            seen.add(key)
+                            out.append(OffTargetProduct(
+                                primer_pair=(a, b), contig_id=contig,
+                                start_0based=f.position_0based, end_0based=end,
+                                size_bp=size, is_expected=False,
+                            ))
+    return out
+
+
+def _site_len(site: OffTargetSite, sites_per_primer, primer_name: str) -> int:
+    """Recover the body length the site refers to; the OffTargetSite object
+    does not carry it directly, but every site for one primer uses the same body."""
+    # Find any other site for the same primer to read length, fall back via lookup.
+    return _PRIMER_BODY_LEN_CACHE.get(primer_name, 0)
+
+
+_PRIMER_BODY_LEN_CACHE: dict[str, int] = {}
+
 
 def off_target_scan(
     primers: list[Primer],
     genome_fasta_bytes: bytes,
     expected_products: dict[tuple[str, str], tuple[int, int] | None],
 ) -> OffTargetReport:
-    """Walk-anchor + body-mismatch scan per D5.5 / skill_v2 §10.
-
-    Algorithm:
-        1. For each primer, sliding-window match the last ANCHOR_LEN nt against
-           both strands of all contigs, allowing ANCHOR_MAX_MM mismatches.
-        2. For each anchor hit, extend to full body length and check
-           total mismatches ≤ BODY_MAX_MM.
-        3. Collect all (primer, contig, position, strand) site tuples.
-        4. Enumerate primer-pair products: any forward-strand site of primer A
-           paired with reverse-strand site of primer B at distance 50–6000 bp on
-           the same contig.
-        5. Compare against ``expected_products`` (per skill_v2 §10).
+    """Walk-anchor + body-mismatch scan per skill_v2 §10.
 
     Args:
-        expected_products: keys are primer-pair tuples like ("P1", "P2");
-            values are (size_min_bp, size_max_bp) for the expected product, or
-            None if zero products expected for that pair.
+        primers: list of Primer objects to scan. Body sequences are matched;
+            tails are non-templated and ignored.
+        genome_fasta_bytes: raw FASTA bytes for the isolate's genome.
+        expected_products: keys are primer-pair tuples like ``("P1", "P2")``;
+            value is ``(size_min_bp, size_max_bp)`` for an expected product, or
+            ``None`` if zero products are expected for that pair.
 
     Returns:
-        OffTargetReport.passed = True iff every expected pair has exactly the
-        expected outcome and no unexpected products exist.
+        OffTargetReport with ``passed = True`` iff every expected pair has
+        exactly the expected outcome and no unexpected products exist.
     """
-    raise NotImplementedError(
-        "Phase 2 step 6 (or 7 for first integration test). "
-        "Implement per skill_v2 §10 pseudocode. Use Hamming-distance walk; "
-        "see tests/integration/test_deletion_LB001_lasB.py for required outcomes."
+    contigs = _parse_fasta_bytes(genome_fasta_bytes)
+    if not contigs:
+        raise PrimerDesignError(
+            error_code="empty_genome",
+            message="genome FASTA produced no contigs",
+            details={"bytes_len": len(genome_fasta_bytes)},
+        )
+
+    _PRIMER_BODY_LEN_CACHE.clear()
+    sites_per_primer: dict[str, list[OffTargetSite]] = {}
+    for p in primers:
+        _PRIMER_BODY_LEN_CACHE[p.name] = len(p.body)
+        sites_per_primer[p.name] = _scan_primer_sites(p.body, contigs, p.name)
+
+    pairs_to_check = list(expected_products.keys())
+    products = _enumerate_pcr_products(sites_per_primer, pairs_to_check)
+
+    violations: list = []
+    matched_expected: set[tuple[str, str]] = set()
+    for prod in products:
+        key = prod.primer_pair
+        bounds = expected_products.get(key)
+        if bounds is None:
+            violations.append(prod)
+            continue
+        smin, smax = bounds
+        if smin <= prod.size_bp <= smax:
+            if key in matched_expected:
+                # Multiple products in expected size range → unexpected duplicate
+                violations.append(prod)
+            else:
+                matched_expected.add(key)
+                # Mark as expected by replacing it
+                from .types import OffTargetProduct
+                idx = products.index(prod)
+                products[idx] = OffTargetProduct(
+                    primer_pair=prod.primer_pair, contig_id=prod.contig_id,
+                    start_0based=prod.start_0based, end_0based=prod.end_0based,
+                    size_bp=prod.size_bp, is_expected=True,
+                )
+        else:
+            violations.append(prod)
+
+    # Any expected pair we never matched is also a failure
+    for key, bounds in expected_products.items():
+        if bounds is not None and key not in matched_expected:
+            from .types import OffTargetProduct
+            violations.append(OffTargetProduct(
+                primer_pair=key, contig_id="<missing>",
+                start_0based=0, end_0based=0, size_bp=0, is_expected=False,
+            ))
+
+    return OffTargetReport(
+        sites_per_primer=sites_per_primer,
+        products=products,
+        passed=len(violations) == 0,
+        violations=violations,
     )

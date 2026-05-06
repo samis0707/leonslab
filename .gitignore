@@ -35,3 +35,6 @@ htmlcov/
 .venv/
 venv/
 .python-version
+
+# primer-design local genome cache (large .fna files, fetched lazily from R2)
+data/primer_design/genomes/
