@@ -41,15 +41,33 @@ from .verification import count_recognition_sites
 _FONTS_REGISTERED = False
 
 
+_BUNDLED_FONTS_DIR = Path(__file__).parent / "fonts"
+_SYSTEM_FONTS_DIR = Path("/usr/share/fonts/truetype/dejavu")
+
+
+def _font_path(name: str) -> str:
+    """Resolve a font filename to an absolute path, preferring the bundled
+    copy under ``lib/primer_design/fonts/`` (always present in the Vercel
+    serverless bundle) and falling back to the system DejaVu directory for
+    local Linux development.
+    """
+    bundled = _BUNDLED_FONTS_DIR / name
+    if bundled.exists():
+        return str(bundled)
+    system = _SYSTEM_FONTS_DIR / name
+    if system.exists():
+        return str(system)
+    raise FileNotFoundError(f"Font not found: {name} (looked in {bundled} and {system})")
+
+
 def _register_fonts() -> None:
     global _FONTS_REGISTERED
     if _FONTS_REGISTERED:
         return
-    base = Path("/usr/share/fonts/truetype/dejavu")
-    pdfmetrics.registerFont(TTFont("DejaVu", str(base / "DejaVuSans.ttf")))
-    pdfmetrics.registerFont(TTFont("DejaVu-Bold", str(base / "DejaVuSans-Bold.ttf")))
-    pdfmetrics.registerFont(TTFont("DejaVuMono", str(base / "DejaVuSansMono.ttf")))
-    pdfmetrics.registerFont(TTFont("DejaVuMono-Bold", str(base / "DejaVuSansMono-Bold.ttf")))
+    pdfmetrics.registerFont(TTFont("DejaVu", _font_path("DejaVuSans.ttf")))
+    pdfmetrics.registerFont(TTFont("DejaVu-Bold", _font_path("DejaVuSans-Bold.ttf")))
+    pdfmetrics.registerFont(TTFont("DejaVuMono", _font_path("DejaVuSansMono.ttf")))
+    pdfmetrics.registerFont(TTFont("DejaVuMono-Bold", _font_path("DejaVuSansMono-Bold.ttf")))
     _FONTS_REGISTERED = True
 
 
