@@ -166,6 +166,10 @@ def _make_styles() -> dict[str, ParagraphStyle]:
             "KvVal", parent=base, fontName="DejaVu",
             fontSize=8.5, leading=10.5, textColor=DARK_TEXT,
         ),
+        "th": ParagraphStyle(
+            "Th", parent=base, fontName="DejaVu-Bold",
+            fontSize=8.5, leading=10.5, textColor=colors.whitesmoke,
+        ),
     }
 
 
@@ -322,13 +326,13 @@ def _section_primer_tabelle(story, result, styles):
 
     g = result.gene_record.gene
     header = [
-        Paragraph("<b>Primer</b>", styles["body"]),
+        Paragraph("Primer", styles["th"]),
         Paragraph(
-            "<b>Sequenz 5'→ 3'</b> &nbsp;<font size=7 color='#5A6470'>"
-            "(Tail fett, Body normal)</font>", styles["body"]),
-        Paragraph("<b>nt</b>", styles["body"]),
-        Paragraph("<b>Tm<sub>body</sub></b>", styles["body"]),
-        Paragraph("<b>GC</b>", styles["body"]),
+            "Sequenz 5'→ 3' &nbsp;<font size=7 color='#D6DDE5'>"
+            "(Tail fett, Body normal)</font>", styles["th"]),
+        Paragraph("nt", styles["th"]),
+        Paragraph("Tm<sub>body</sub>", styles["th"]),
+        Paragraph("GC", styles["th"]),
     ]
     rows = [header]
     for p in primers:
