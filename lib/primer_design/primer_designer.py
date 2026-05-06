@@ -242,25 +242,179 @@ def closest_by_tm(pool: list[Candidate], target_tm: float) -> Candidate | None:
 # Search orchestration — STUBS
 # ===========================================================================
 
+# ===========================================================================
+# Scar geometry (deletion application — D5.4 / skill_v2 §4.1)
+# ===========================================================================
+
+def search_scars(cds_len_codons: int, scar_max_total: int = cfg.SCAR_MAX_TOTAL_AA,
+                 scar_min_per_side: int = cfg.SCAR_MIN_PER_SIDE) -> list[tuple[int, int]]:
+    """Yield all (N, C) pairs with N, C ≥ 1 and N + C ≤ scar_max_total.
+
+    N counts retained N-terminal amino-acid codons (start with ATG).
+    C counts retained C-terminal amino-acid codons NOT including the stop codon
+    — the stop is always carried along separately. Smallest scar = 2 aa total
+    (one N + one C) + stop.
+    """
+    pairs: list[tuple[int, int]] = []
+    for total in range(2 * scar_min_per_side, scar_max_total + 1):
+        for N in range(scar_min_per_side, total - scar_min_per_side + 1):
+            C = total - N
+            pairs.append((N, C))
+    return pairs
+
+
+def scar_orf(cds: str, N: int, C: int) -> str:
+    """Return retained N N-terminal codons + retained C C-terminal aa codons + stop.
+
+    ``cds`` is assumed to include the stop codon at its 3' end. Resulting scar has
+    length ``(N + C + 1) * 3`` nucleotides (the +1 is the stop).
+
+    Note on indexing: ``L = len(cds) // 3`` is the codon count *including stop*,
+    so the start of the retained C-terminal slice (which must include the stop)
+    is at codon index ``L - C - 1``, not ``L - C``. The skill_v2 §4.1 worked
+    example ("AL*" for LB001 lasB with C=2) confirms this off-by-one.
+    """
+    L = len(cds) // 3
+    return cds[: 3 * N] + cds[3 * (L - C - 1) :]
+
+
+def assert_scar_valid(scar: str, N: int, C: int) -> bool:
+    """Return True iff ``scar`` is a valid in-frame ORF starting M, single trailing stop,
+    and length matches the expected (N + C + 1) * 3 nucleotides."""
+    if len(scar) != (N + C + 1) * 3:
+        return False
+    prot = str(Seq(scar).translate())
+    if not prot.startswith("M"):
+        return False
+    if not prot.endswith("*"):
+        return False
+    if prot.count("*") != 1:
+        return False
+    return True
+
+
+# ===========================================================================
+# Top-K helper
+# ===========================================================================
+
+def _topk_insert(top: list, candidate, key=lambda x: x.score, k: int = 5) -> list:
+    """Return updated top-k list (lowest score = best)."""
+    merged = top + [candidate]
+    merged.sort(key=key)
+    return merged[:k]
+
+
+# ===========================================================================
+# Primer assembly
+# ===========================================================================
+
+def _make_primer(name: str, role: str, tail: str, candidate: Candidate, tail_kind: str) -> Primer:
+    return Primer(
+        name=name, role=role, tail=tail, body=candidate.body, tail_kind=tail_kind,
+        tm_body_C=candidate.tm, gc_body=candidate.gc,
+        length=len(tail) + len(candidate.body),
+    )
+
+
+# ===========================================================================
+# Search orchestration
+# ===========================================================================
+
 def search_deletion_primers(
     gene: GeneRecord,
     vector: VectorRecord,
     convention: TailConvention,
 ) -> tuple[DeletionPrimerSet, list[DeletionPrimerSet]]:
-    """Exhaustive (N, C) × P1 × P2 × P3 × P4 search.
+    """Exhaustive (N, C) × P1 × P2 × P3 × P4 search per skill_v2 §4.3.
 
-    See ``primer_design_skill_v2.md`` §4.3 for the full pseudocode.
+    P1 and P4 are anchored in the up-/down-flank and don't depend on the (N, C)
+    choice, so their candidate pools are computed once. For each viable (N, C)
+    pair we generate P2 / P3 pools (anchored at the UP/DN segment boundaries)
+    and pick (P1, P4) closest in Tm to the (P2 + P3) average.
 
     Returns:
-        (best_set, top5_alternatives)
+        (best_set, top5_alternatives) — alternatives sorted ascending by score.
 
     Raises:
-        NoCandidates: if no tuple satisfies all hard filters.
+        NoCandidates: if no tuple satisfies all hard filters and Tm-spread bound.
     """
-    raise NotImplementedError(
-        "Phase 2 step 6: implement per skill_v2 §4.3 pseudocode. "
-        "Use enumerate_p1/p2/p3/p4_candidates + closest_by_tm + compute_score."
-    )
+    p1_tail, p4_tail = derive_tails(vector, convention.enzyme, "deletion")
+    cds = gene.cds_seq
+    L = len(cds) // 3                                          # total codons including stop
+
+    p1_pool = enumerate_p1_candidates(gene.up_flank, p1_tail)
+    p4_pool = enumerate_p4_candidates(gene.dn_flank, p4_tail)
+    if not p1_pool:
+        raise NoCandidates(message=f"P1: no body in up-flank passes hard filters "
+                                   f"({gene.gene}/{gene.isolate_id}). Relax GC range or offset window.",
+                           details={"primer": "P1", "gene": gene.gene, "isolate": gene.isolate_id})
+    if not p4_pool:
+        raise NoCandidates(message=f"P4: no body in dn-flank passes hard filters "
+                                   f"({gene.gene}/{gene.isolate_id}). Relax GC range or offset window.",
+                           details={"primer": "P4", "gene": gene.gene, "isolate": gene.isolate_id})
+
+    junction_tail = cfg.JUNCTION_LEN_PER_PRIMER_DEFAULT       # 15 nt per primer
+
+    best: DeletionPrimerSet | None = None
+    top5: list[DeletionPrimerSet] = []
+
+    for N, C in search_scars(L, cfg.SCAR_MAX_TOTAL_AA, cfg.SCAR_MIN_PER_SIDE):
+        # The C-terminal slice must include the stop codon as its last codon.
+        if N >= L or C + 1 >= L:
+            continue
+        scar = scar_orf(cds, N, C)
+        if not assert_scar_valid(scar, N, C):
+            continue
+
+        up_segment = gene.up_flank + cds[: 3 * N]              # part the UP amplicon spans
+        dn_segment = cds[3 * (L - C - 1) :] + gene.dn_flank    # part the DN amplicon spans
+        if len(up_segment) < junction_tail or len(dn_segment) < junction_tail:
+            continue
+
+        # Junction overlap: 30 nt total (15 from P3 tail at end of UP, 15 from P2 tail at start of DN).
+        p3_tail = up_segment[-junction_tail:]                  # last 15 nt of UP segment, fwd strand
+        p2_tail = reverse_complement(dn_segment[:junction_tail])
+
+        p2_pool = enumerate_p2_candidates(up_segment)
+        p3_pool = enumerate_p3_candidates(dn_segment)
+        if not p2_pool or not p3_pool:
+            continue
+
+        for p2c in p2_pool:
+            for p3c in p3_pool:
+                target_tm = (p2c.tm + p3c.tm) / 2.0
+                p1c = closest_by_tm(p1_pool, target_tm)
+                p4c = closest_by_tm(p4_pool, target_tm)
+                if p1c is None or p4c is None:
+                    continue
+                tms = [p1c.tm, p2c.tm, p3c.tm, p4c.tm]
+                spread = max(tms) - min(tms)
+                if spread > cfg.TM_SPREAD_HARD_LIMIT_C:
+                    continue
+                gcs = [p1c.gc, p2c.gc, p3c.gc, p4c.gc]
+                score = compute_score(tms, gcs)
+
+                cand = DeletionPrimerSet(
+                    p1=_make_primer("P1", "UP_Fwd", p1_tail, p1c, convention.name),
+                    p2=_make_primer("P2", "UP_Rev", p2_tail, p2c, "junction_overlap"),
+                    p3=_make_primer("P3", "DN_Fwd", p3_tail, p3c, "junction_overlap"),
+                    p4=_make_primer("P4", "DN_Rev", p4_tail, p4c, convention.name),
+                    N=N, C=C, scar_dna=scar,
+                    score=score, tm_spread=spread,
+                )
+                top5 = _topk_insert(top5, cand)
+                if best is None or score < best.score:
+                    best = cand
+
+    if best is None:
+        raise NoCandidates(
+            message=f"No (N, C, P1-P4) tuple satisfied all hard filters for "
+                    f"{gene.gene}/{gene.isolate_id}. Consider widening tm_spread or "
+                    f"GC bounds; common cause: overly GC-rich up/dn flank in this isolate.",
+            details={"gene": gene.gene, "isolate": gene.isolate_id,
+                     "p1_pool_size": len(p1_pool), "p4_pool_size": len(p4_pool)},
+        )
+    return best, top5
 
 
 def search_tagging_primers(
