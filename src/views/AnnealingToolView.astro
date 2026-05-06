@@ -1,0 +1,227 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const title = t('page.labSolutions.title');
+const subtitle = t('page.labSolutions.subtitle');
+const runLabel = t('anneal.run');
+const emptyLabel = t('anneal.empty');
+const errorEmpty = t('anneal.error.empty');
+const errorSeq = t('anneal.error.sequence');
+---
+<BaseLayout title={title} description={subtitle}>
+  <section class="anneal-page max-w-3xl mx-auto px-6 pt-20 md:pt-28 pb-32">
+    <p class="eyebrow">Tools</p>
+    <h1 class="display text-[clamp(2rem,4.5vw,3.25rem)] mt-4 mb-4 text-[color:var(--color-concrete-900)]">
+      {title}
+    </h1>
+    <p class="text-base text-[color:var(--color-concrete-600)] leading-relaxed mb-10 max-w-xl">
+      {subtitle}
+    </p>
+
+    <form
+      class="anneal-form"
+      id="anneal-form"
+      autocomplete="off"
+      novalidate
+      data-error-empty={errorEmpty}
+      data-error-seq={errorSeq}
+    >
+      {[1, 2, 3, 4].map((i) => (
+        <input
+          type="text"
+          name={`primer${i}`}
+          class="anneal-input"
+          placeholder={`Primer ${i}`}
+          spellcheck={false}
+          autocapitalize="off"
+          autocomplete="off"
+          inputmode="latin"
+        />
+      ))}
+
+      <button type="submit" class="anneal-btn">{runLabel}</button>
+
+      <output class="anneal-output" id="anneal-output" aria-live="polite">{emptyLabel}</output>
+    </form>
+  </section>
+</BaseLayout>
+
+<style>
+  .anneal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    max-width: 28rem;
+  }
+  .anneal-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: white;
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+    color: var(--color-concrete-900);
+    text-transform: uppercase;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .anneal-input::placeholder {
+    color: var(--color-concrete-500);
+    opacity: 0.5;
+    font-family: var(--font-sans);
+    letter-spacing: normal;
+    text-transform: none;
+  }
+  .anneal-input:focus {
+    outline: none;
+    border-color: var(--color-park-green);
+    box-shadow: 0 0 0 3px rgba(12, 94, 59, 0.12);
+  }
+  .anneal-btn {
+    align-self: flex-start;
+    margin-top: 0.4rem;
+    padding: 0.65rem 1.5rem;
+    background: var(--color-concrete-900);
+    color: var(--color-concrete-50);
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 160ms ease, transform 160ms ease;
+  }
+  .anneal-btn:hover {
+    background: var(--color-park-green);
+    transform: translateY(-1px);
+  }
+  .anneal-btn:active {
+    transform: translateY(0);
+  }
+  .anneal-output {
+    align-self: flex-start;
+    margin-top: 0.25rem;
+    padding: 0.7rem 1.1rem;
+    min-width: 9rem;
+    background: var(--color-concrete-50);
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    color: var(--color-concrete-800);
+    text-align: center;
+  }
+  .anneal-output.is-error {
+    color: #8a2a24;
+    border-color: #e9c8c4;
+    background: #faf1f0;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    text-align: left;
+  }
+</style>
+
+<script>
+  // SantaLucia 1998 unified nearest-neighbor parameters.
+  // ΔH in kcal/mol, ΔS in cal/(mol·K). Each pair lists the 5'→3' top strand;
+  // its reverse complement shares the same values.
+  const NN: Record<string, [number, number]> = {
+    AA: [-7.9, -22.2], TT: [-7.9, -22.2],
+    AT: [-7.2, -20.4],
+    TA: [-7.2, -21.3],
+    CA: [-8.5, -22.7], TG: [-8.5, -22.7],
+    GT: [-8.4, -22.4], AC: [-8.4, -22.4],
+    CT: [-7.8, -21.0], AG: [-7.8, -21.0],
+    GA: [-8.2, -22.2], TC: [-8.2, -22.2],
+    CG: [-10.6, -27.2],
+    GC: [-9.8, -24.4],
+    GG: [-8.0, -19.9], CC: [-8.0, -19.9],
+  };
+
+  const R = 1.987;       // gas constant, cal/(mol·K)
+  const Ct = 0.25e-6;    // total strand concentration, 250 nM
+  const Na = 0.05;       // monovalent salt, 50 mM (standard PCR buffer)
+
+  function reverseComplement(seq: string): string {
+    const comp: Record<string, string> = { A: 'T', T: 'A', G: 'C', C: 'G' };
+    let out = '';
+    for (let i = seq.length - 1; i >= 0; i--) out += comp[seq[i]];
+    return out;
+  }
+
+  function tmSantaLucia(seq: string): number | null {
+    const s = seq.toUpperCase().replace(/\s+/g, '');
+    if (!/^[ACGT]+$/.test(s) || s.length < 2) return null;
+
+    let dH = 0, dS = 0;
+    for (let i = 0; i < s.length - 1; i++) {
+      const nn = NN[s.slice(i, i + 2)];
+      if (!nn) return null;
+      dH += nn[0];
+      dS += nn[1];
+    }
+
+    // Initiation terms for the two terminal base pairs.
+    const initEnd = (b: string): [number, number] =>
+      b === 'G' || b === 'C' ? [0.1, -2.8] : [2.3, 4.1];
+    const i5 = initEnd(s[0]);
+    const i3 = initEnd(s[s.length - 1]);
+    dH += i5[0] + i3[0];
+    dS += i5[1] + i3[1];
+
+    // Self-complementary correction.
+    const selfComp = s === reverseComplement(s);
+    if (selfComp) dS += -1.4;
+    const x = selfComp ? 1 : 4;
+
+    // Salt correction (SantaLucia 1998).
+    const dSsalt = dS + 0.368 * (s.length - 1) * Math.log(Na);
+
+    const tmK = (dH * 1000) / (dSsalt + R * Math.log(Ct / x));
+    return tmK - 273.15;
+  }
+
+  const form = document.getElementById('anneal-form') as HTMLFormElement | null;
+  const output = document.getElementById('anneal-output') as HTMLOutputElement | null;
+
+  if (form && output) {
+    const errEmpty = form.dataset.errorEmpty ?? 'Enter at least one primer.';
+    const errSeq = form.dataset.errorSeq ?? 'Invalid sequence.';
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      output.classList.remove('is-error');
+
+      const data = new FormData(form);
+      const sequences = ['primer1', 'primer2', 'primer3', 'primer4']
+        .map((k) => String(data.get(k) ?? '').trim())
+        .filter((v) => v.length > 0);
+
+      if (sequences.length === 0) {
+        output.classList.add('is-error');
+        output.textContent = errEmpty;
+        return;
+      }
+
+      const tms: number[] = [];
+      for (const s of sequences) {
+        const tm = tmSantaLucia(s);
+        if (tm === null) {
+          output.classList.add('is-error');
+          output.textContent = errSeq;
+          return;
+        }
+        tms.push(tm);
+      }
+
+      // Common annealing temperature: 5 °C below the lowest primer Tm.
+      const ta = Math.min(...tms) - 5;
+      output.textContent = `${ta.toFixed(1)} °C`;
+    });
+  }
+</script>
