@@ -60,37 +60,51 @@ def primer_body_gc(body: str) -> float:
 # Hard filters (D5.3)
 # ===========================================================================
 
-def passes_hard_filters(body: str) -> bool:
-    """True iff body meets all hard filters. See D5.3 / skill_v2 §7."""
+def passes_hard_filters(
+    body: str,
+    *,
+    anchored: bool = False,
+) -> bool:
+    """True iff body meets all hard filters. See D5.3 / skill_v2 §7.
+
+    For ``anchored=True``, the body is expected to be tied to a gene boundary
+    (expression P1 at ATG, expression P2 at the native stop codon) with no
+    offset window. In that case the gene's sequence dictates GC content, Tm,
+    homopolymer runs, and the 3' G/C clamp; these become soft preferences via
+    the score function rather than hard rejects. Only length and primer-dimer
+    remain enforced.
+    """
     n = len(body)
     if not (cfg.BODY_LEN_MIN <= n <= cfg.BODY_LEN_MAX):
         return False
 
-    # 3' G/C clamp
-    if body[-1] not in cfg.CLAMP_LAST_BASE_OK:
-        return False
-    last5_gc = sum(b in "GC" for b in body[-5:])
-    if not (cfg.CLAMP_LAST5_GC_MIN <= last5_gc <= cfg.CLAMP_LAST5_GC_MAX):
-        return False
-    if cfg.CLAMP_NO_4IDENT_LAST4 and len(set(body[-4:])) == 1:
-        return False
-
-    # 4-homopolymer anywhere
-    for i in range(n - 3):
-        if body[i] == body[i + 1] == body[i + 2] == body[i + 3]:
+    if not anchored:
+        # 3' G/C clamp
+        if body[-1] not in cfg.CLAMP_LAST_BASE_OK:
+            return False
+        last5_gc = sum(b in "GC" for b in body[-5:])
+        if not (cfg.CLAMP_LAST5_GC_MIN <= last5_gc <= cfg.CLAMP_LAST5_GC_MAX):
+            return False
+        if cfg.CLAMP_NO_4IDENT_LAST4 and len(set(body[-4:])) == 1:
             return False
 
-    # GC content
-    gc = primer_body_gc(body)
-    if not (cfg.GC_MIN <= gc <= cfg.GC_MAX):
-        return False
+        # 4-homopolymer anywhere
+        for i in range(n - 3):
+            if body[i] == body[i + 1] == body[i + 2] == body[i + 3]:
+                return False
 
-    # Tm
-    tm = primer_body_tm(body)
-    if not (cfg.TM_HARD_MIN_C <= tm <= cfg.TM_HARD_MAX_C):
-        return False
+        # GC content
+        gc = primer_body_gc(body)
+        if not (cfg.GC_MIN <= gc <= cfg.GC_MAX):
+            return False
 
-    # 3' self-dimer
+        # Tm
+        tm = primer_body_tm(body)
+        if not (cfg.TM_HARD_MIN_C <= tm <= cfg.TM_HARD_MAX_C):
+            return False
+
+    # 3' self-dimer applies to anchored primers too — primer-dimer kinetics
+    # are independent of where the body is anchored.
     if max_3prime_self_dimer(body) > cfg.SELF_DIMER_MAX_3PRIME:
         return False
 
@@ -179,7 +193,7 @@ def enumerate_p4_candidates(dn_flank: str, p4_tail: str) -> list[Candidate]:
     return out
 
 
-def enumerate_p2_candidates(up_segment: str) -> list[Candidate]:
+def enumerate_p2_candidates(up_segment: str, *, anchored: bool = False) -> list[Candidate]:
     """P2 candidates: reverse primer anchored at 3' end of UP segment (= UP flank + retained N codons).
 
     Body is RC of the last L nt of up_segment. No offset window — the anchor is
@@ -190,7 +204,7 @@ def enumerate_p2_candidates(up_segment: str) -> list[Candidate]:
         if L > len(up_segment):
             break
         body = reverse_complement(up_segment[-L:])
-        if passes_hard_filters(body):
+        if passes_hard_filters(body, anchored=anchored):
             out.append(
                 Candidate(body=body, tm=primer_body_tm(body),
                           gc=primer_body_gc(body), anchor_offset=0)
@@ -199,14 +213,17 @@ def enumerate_p2_candidates(up_segment: str) -> list[Candidate]:
     return out
 
 
-def enumerate_p3_candidates(dn_segment: str) -> list[Candidate]:
-    """P3 candidates: forward primer anchored at 5' end of DN segment (= retained C codons + DN flank)."""
+def enumerate_p3_candidates(dn_segment: str, *, anchored: bool = False) -> list[Candidate]:
+    """P3 candidates: forward primer anchored at 5' end of DN segment (= retained C codons + DN flank).
+
+    Reused for expression P1 (anchored at coding_seq's ATG) with ``anchored=True``.
+    """
     out: list[Candidate] = []
     for L in range(cfg.BODY_LEN_MIN, cfg.BODY_LEN_MAX + 1):
         if L > len(dn_segment):
             break
         body = dn_segment[:L]
-        if passes_hard_filters(body):
+        if passes_hard_filters(body, anchored=anchored):
             out.append(
                 Candidate(body=body, tm=primer_body_tm(body),
                           gc=primer_body_gc(body), anchor_offset=0)
@@ -461,10 +478,10 @@ def search_expression_primers(
 
     coding_seq = build_plasmid_fusion_cds(gene.cds_seq, tag, tag_position)
 
-    # P1: forward primer, body = coding_seq[:L] for L in [BODY_LEN_MIN..BODY_LEN_MAX].
-    p1_pool = enumerate_p3_candidates(coding_seq)
-    # P2: reverse primer, body = RC(coding_seq[-L:]).
-    p2_pool = enumerate_p2_candidates(coding_seq)
+    # Both expression primers are anchor-fixed (P1 at ATG, P2 at stop). Use
+    # the relaxed filter set; only length and primer-dimer remain hard rules.
+    p1_pool = enumerate_p3_candidates(coding_seq, anchored=True)
+    p2_pool = enumerate_p2_candidates(coding_seq, anchored=True)
     if not p1_pool:
         raise NoCandidates(
             message=f"P1 (expression): no body at ATG of {gene.gene}/{gene.isolate_id} "

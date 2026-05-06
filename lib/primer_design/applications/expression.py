@@ -54,11 +54,21 @@ def run(
         gene, vector, convention, tag, request.tag_position
     )
 
-    insert = best.p1.tail + best.coding_seq + reverse_complement(best.p2.tail)
+    # Full PCR amplicon (used for plasmid assembly): includes both vector
+    # homology arms.
+    amplicon = (
+        best.p1.tail + best.coding_seq + reverse_complement(best.p2.tail)
+    )
+    # Reported "insert": the novel sequence carried into the plasmid, i.e.
+    # everything except the left vector homology arm (which duplicates the
+    # vector's left arm and gets collapsed at assembly). Equivalent to
+    # RBS+spacer + coding_seq + right_vector_arm_RC.
+    from ..config import VECTOR_TAIL_LEN
+    insert = amplicon[VECTOR_TAIL_LEN:]
 
     loader = genome_loader or _default_genome_loader
     genome_bytes = loader(request.isolate_id)
-    expected_products = _expected_products_for_expression(insert)
+    expected_products = _expected_products_for_expression(amplicon)
     off_target = primer_designer.off_target_scan(
         [best.p1, best.p2], genome_bytes, expected_products,
     )
@@ -68,7 +78,7 @@ def run(
             details={"violations": [vars(v) for v in off_target.violations]},
         )
 
-    final_plasmid = assemble(vector, insert, cut_nick, convention)
+    final_plasmid = assemble(vector, amplicon, cut_nick, convention)
     final_plasmid.name = f"{vector.name}_{gene.gene}_{gene.isolate_id}_expr"
 
     result = DesignResult(
@@ -90,7 +100,11 @@ def run(
 def _expected_products_for_expression(insert: str) -> dict:
     size = len(insert)
     tol = 150
-    return {
-        ("P1", "P2"): (max(0, size - tol),
-                       min(OFFTARGET_PRODUCT_SIZE_MAX_BP, size + tol)),
-    }
+    window = (
+        max(0, size - tol),
+        min(OFFTARGET_PRODUCT_SIZE_MAX_BP, size + tol),
+    )
+    # off_target_scan iterates ordered (a, b) pairs and may report the same
+    # genomic locus under both (P1, P2) and (P2, P1) when both primers happen
+    # to have matches on both strands. Accept either ordering as expected.
+    return {("P1", "P2"): window, ("P2", "P1"): window}
