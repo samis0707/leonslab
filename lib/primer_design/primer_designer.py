@@ -446,19 +446,69 @@ def search_expression_primers(
     tag: Tag | None,
     tag_position: str | None,
 ) -> tuple[ExpressionPrimerSet, list[ExpressionPrimerSet]]:
-    """2-primer search for plasmid expression.
+    """2-primer search for plasmid expression (skill_v2 §6.2).
 
-    See ``primer_design_skill_v2.md`` §6.2.
+    P1 = vector_p1_tail + RBS + spacer + body anchored at ATG (start of coding_seq).
+    P2 = vector_p2_tail + body = RC of last L nt of coding_seq (including stop).
 
-    Note:
-        - P1 tail = vector_p1_tail + RBS + spacer (29 nt total for HindIII)
-        - P2 tail = vector_p2_tail (15 nt)
-        - Tag handling: see ``tags.build_plasmid_fusion_cds``.
+    Choose the (P1, P2) pair that minimizes score = Tm spread + GC penalty.
     """
-    raise NotImplementedError(
-        "Phase 2 step 8: implement per skill_v2 §6.2. "
-        "Reuse passes_hard_filters / primer_body_tm / compute_score."
-    )
+    from .tags import build_plasmid_fusion_cds  # local import to avoid cycle
+
+    p1_vector_tail, p2_vector_tail = derive_tails(vector, convention.enzyme, "expression")
+    p1_tail = p1_vector_tail + cfg.RBS_TAIL_PART
+    p2_tail = p2_vector_tail
+
+    coding_seq = build_plasmid_fusion_cds(gene.cds_seq, tag, tag_position)
+
+    # P1: forward primer, body = coding_seq[:L] for L in [BODY_LEN_MIN..BODY_LEN_MAX].
+    p1_pool = enumerate_p3_candidates(coding_seq)
+    # P2: reverse primer, body = RC(coding_seq[-L:]).
+    p2_pool = enumerate_p2_candidates(coding_seq)
+    if not p1_pool:
+        raise NoCandidates(
+            message=f"P1 (expression): no body at ATG of {gene.gene}/{gene.isolate_id} "
+                    f"passes hard filters.",
+            details={"primer": "P1", "gene": gene.gene, "isolate": gene.isolate_id},
+        )
+    if not p2_pool:
+        raise NoCandidates(
+            message=f"P2 (expression): no body at stop of {gene.gene}/{gene.isolate_id} "
+                    f"passes hard filters.",
+            details={"primer": "P2", "gene": gene.gene, "isolate": gene.isolate_id},
+        )
+
+    best: ExpressionPrimerSet | None = None
+    top5: list[ExpressionPrimerSet] = []
+    for p1c in p1_pool:
+        for p2c in p2_pool:
+            tms = [p1c.tm, p2c.tm]
+            spread = max(tms) - min(tms)
+            if spread > cfg.TM_SPREAD_HARD_LIMIT_C:
+                continue
+            gcs = [p1c.gc, p2c.gc]
+            score = compute_score(tms, gcs)
+            cand = ExpressionPrimerSet(
+                p1=_make_primer("P1", "INSERT_Fwd", p1_tail, p1c, convention.name),
+                p2=_make_primer("P2", "INSERT_Rev", p2_tail, p2c, convention.name),
+                coding_seq=coding_seq,
+                tag=tag,
+                tag_position=tag_position,
+                score=score,
+                tm_spread=spread,
+            )
+            top5 = _topk_insert(top5, cand)
+            if best is None or score < best.score:
+                best = cand
+
+    if best is None:
+        raise NoCandidates(
+            message=f"No (P1, P2) pair satisfied Tm-spread bound for "
+                    f"{gene.gene}/{gene.isolate_id} expression.",
+            details={"gene": gene.gene, "isolate": gene.isolate_id,
+                     "p1_pool_size": len(p1_pool), "p2_pool_size": len(p2_pool)},
+        )
+    return best, top5
 
 
 # ===========================================================================

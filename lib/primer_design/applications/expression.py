@@ -4,23 +4,45 @@ Per skill_v2 §6 and project_plan §4.3.
 """
 from __future__ import annotations
 
-from .. import gene_finder, primer_designer, storage_adapter, vectors, verification
+from typing import Callable
+
+from .. import gene_finder, primer_designer, vectors, verification
+from ..config import OFFTARGET_PRODUCT_SIZE_MAX_BP
+from ..exceptions import OffTargetDetected
 from ..plasmid_builder import assemble
-from ..tags import build_plasmid_fusion_cds, get_tag, validate_tag_position
+from ..tags import get_tag, validate_tag_position
 from ..types import DesignRequest, DesignResult
+from ..vectors import reverse_complement
+from .deletion import _default_genome_loader
 
 
-def run(request: DesignRequest) -> DesignResult:
-    """End-to-end plasmid-expression design.
+GenomeLoader = Callable[[str], bytes]
+
+
+def run(
+    request: DesignRequest,
+    *,
+    genome_loader: GenomeLoader | None = None,
+) -> DesignResult:
+    """End-to-end plasmid-expression design (skill_v2 §6).
 
     Steps:
-        - Optional tag → build_plasmid_fusion_cds to construct the full ATG-to-stop
-          coding sequence (with N-term or C-term tag).
-        - 2-primer search:
-            P1 = vector_p1_tail + AGGAGG + spacer + body_at_ATG
-            P2 = vector_p2_tail + body_at_stop_RC
-        - Single PCR amplicon, 2-fragment In-Fusion.
+        1. Load gene record.
+        2. Resolve optional tag (validate position).
+        3. Load vector + expression tail convention; locate cut nick.
+        4. 2-primer search: P1 anchored at ATG, P2 anchored at stop.
+        5. Build single PCR amplicon = P1.tail + coding_seq + RC(P2.tail).
+        6. Off-target scan.
+        7. Assemble plasmid.
+        8. Verify.
     """
+    gene = gene_finder.get_gene_record(request.isolate_id, request.gene)
+    vector = vectors.get_vector(request.vector)
+    convention = vectors.get_tail_convention(
+        request.vector, request.enzyme, "expression"
+    )
+    cut_nick = vectors.find_cut_position(vector, request.enzyme)
+
     tag = None
     if request.tag is not None:
         tag = get_tag(request.tag)
@@ -28,7 +50,47 @@ def run(request: DesignRequest) -> DesignResult:
             raise ValueError("tag_position required when tag is set")
         validate_tag_position(tag, request.tag_position)
 
-    raise NotImplementedError(
-        "Phase 2 step 8: orchestrate per skill_v2 §6. "
-        "Test target: tests/integration/test_expression_PA14_lasR.py"
+    best, _alts = primer_designer.search_expression_primers(
+        gene, vector, convention, tag, request.tag_position
     )
+
+    insert = best.p1.tail + best.coding_seq + reverse_complement(best.p2.tail)
+
+    loader = genome_loader or _default_genome_loader
+    genome_bytes = loader(request.isolate_id)
+    expected_products = _expected_products_for_expression(insert)
+    off_target = primer_designer.off_target_scan(
+        [best.p1, best.p2], genome_bytes, expected_products,
+    )
+    if not off_target.passed:
+        raise OffTargetDetected(
+            message="Off-target scan reports unintended PCR products",
+            details={"violations": [vars(v) for v in off_target.violations]},
+        )
+
+    final_plasmid = assemble(vector, insert, cut_nick, convention)
+    final_plasmid.name = f"{vector.name}_{gene.gene}_{gene.isolate_id}_expr"
+
+    result = DesignResult(
+        request=request,
+        gene_record=gene,
+        vector=vector,
+        convention=convention,
+        primer_set=best,
+        up_amplicon=None,
+        dn_amplicon=None,
+        insert=insert,
+        final_plasmid=final_plasmid,
+        off_target=off_target,
+    )
+    verification.verify(result)
+    return result
+
+
+def _expected_products_for_expression(insert: str) -> dict:
+    size = len(insert)
+    tol = 150
+    return {
+        ("P1", "P2"): (max(0, size - tol),
+                       min(OFFTARGET_PRODUCT_SIZE_MAX_BP, size + tol)),
+    }
