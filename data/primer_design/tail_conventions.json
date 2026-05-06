@@ -20,8 +20,9 @@
 
   "pBBR1MCS2|HindIII|expression": {
     "name": "site_partial_AAGCT",
-    "p1_tail_rule": "rc_right_arm_15nt_incl_5nt_recognition",
-    "p4_tail_rule": "left_arm_15nt_incl_5nt_recognition",
+    "_geometry_note": "Addgene pBBR1MCS-2 (#85168) MCS reads 5'->3' as ...SalI-ClaI-HindIII-EcoRV-EcoRI... so the empirical primer #1573's tail (10 nt left-arm + first 5 nt of AAGCTT) is the FORWARD-strand left-arm rule. P4 then uses RC of the right arm, anchored at the nick.",
+    "p1_tail_rule": "left_arm_15nt_incl_5nt_recognition",
+    "p4_tail_rule": "rc_right_arm_15nt_incl_5nt_recognition",
     "expected_recognition_count_in_final_plasmid": 1,
     "calibrated_against": "PA14 lasR primer #1612 / lasB primer #1573 (working empirical set)",
     "expected_p1_tail_for_pBBR1MCS2_HindIII": "CGGTATCGATAAGCT",

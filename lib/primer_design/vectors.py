@@ -180,23 +180,33 @@ def _rule_rc_right_arm_15nt_starting_at_second_nt_of_recognition(
 
 
 def _rule_rc_right_arm_15nt_incl_5nt_recognition(v: VectorRecord, motif: str, nick: int) -> str:
-    """P1 tail for ``site_partial_AAGCT`` (pBBR1MCS2 expression).
+    """``site_partial_AAGCT`` tail derived from the right arm.
 
-    Same physical span as the P4 rule above (15 nt RC starting at nick). Different
-    convention name because intent differs: here the user wants the recognition site
-    regenerated at one junction.
+    Returns RC of the 15 nt starting at the nick position. Same physical span as
+    the deletion P4 rule above (15 nt RC at nick). For Addgene's pBBR1MCS-2
+    sequence (Addgene #85168, MCS oriented ...SalI-ClaI-HindIII-EcoRV-EcoRI...),
+    this is the **P4** tail in the expression triple. The recognition site is
+    regenerated at one junction in the final plasmid (the P1 vs P4 pairing
+    contributes the matching half of `AAGCT` from each side).
     """
     return reverse_complement(v.sequence[nick : nick + VECTOR_TAIL_LEN])
 
 
 def _rule_left_arm_15nt_incl_5nt_recognition(v: VectorRecord, motif: str, nick: int) -> str:
-    """P4 tail for ``site_partial_AAGCT`` (pBBR1MCS2 expression).
+    """``site_partial_AAGCT`` tail derived from the left arm.
 
-    Returns 15 nt that span the cut: 10 nt of left-arm context + 5 nt of recognition
-    (e.g., for HindIII ends with `AAGCT`). Pairs with the P1 rule above so that the
-    overall HindIII site is regenerated at one junction in the final plasmid.
+    Returns 15 nt of the forward strand: 10 nt of left-arm context immediately
+    before the recognition site + the first 5 nt of the recognition site
+    (for HindIII A^AGCTT this is `AAGCT`). For Addgene's pBBR1MCS-2 this is
+    the **P1** tail in the expression triple (matches the empirical PA14
+    lasB primer #1573 tail `CGGTATCGATAAGCT`).
+
+    The slice is anchored on the recognition start (`s = nick - 1` for HindIII)
+    rather than directly on `nick`, so the 5 nt of recognition included are
+    the first 5 of the motif, not the last 5.
     """
-    return v.sequence[nick - 10 : nick + 5]
+    s = nick - 1                                              # recognition start
+    return v.sequence[s - 10 : s + 5]                         # 10 nt context + AAGCT
 
 
 TAIL_RULES: dict[str, TailRuleFn] = {
