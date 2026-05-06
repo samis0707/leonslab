@@ -63,23 +63,26 @@ def primer_body_gc(body: str) -> float:
 def passes_hard_filters(
     body: str,
     *,
-    anchored: bool = False,
+    skip_homopolymer: bool = False,
+    skip_gc: bool = False,
+    skip_tm: bool = False,
+    skip_clamp: bool = False,
 ) -> bool:
     """True iff body meets all hard filters. See D5.3 / skill_v2 §7.
 
-    For ``anchored=True``, the body is expected to be tied to a gene boundary
-    (expression P1 at ATG, expression P2 at the native stop codon) with no
-    offset window. In that case the gene's sequence dictates GC content, Tm,
-    homopolymer runs, and the 3' G/C clamp; these become soft preferences via
-    the score function rather than hard rejects. Only length and primer-dimer
-    remain enforced.
+    The four ``skip_*`` flags exist for **anchored** primers (expression P1 at
+    the gene's ATG, P2 at the native stop, in-locus P3 at the scar boundary):
+    when no offset window is available, some checks become impossible to
+    satisfy regardless of length and degrade to soft preferences. Callers
+    relax in tiers (homopolymer first, then GC, then Tm, and only as a last
+    resort the 3' G/C clamp). Length and primer-dimer remain enforced in all
+    tiers.
     """
     n = len(body)
     if not (cfg.BODY_LEN_MIN <= n <= cfg.BODY_LEN_MAX):
         return False
 
-    if not anchored:
-        # 3' G/C clamp
+    if not skip_clamp:
         if body[-1] not in cfg.CLAMP_LAST_BASE_OK:
             return False
         last5_gc = sum(b in "GC" for b in body[-5:])
@@ -88,27 +91,71 @@ def passes_hard_filters(
         if cfg.CLAMP_NO_4IDENT_LAST4 and len(set(body[-4:])) == 1:
             return False
 
-        # 4-homopolymer anywhere
+    if not skip_homopolymer:
         for i in range(n - 3):
             if body[i] == body[i + 1] == body[i + 2] == body[i + 3]:
                 return False
 
-        # GC content
+    if not skip_gc:
         gc = primer_body_gc(body)
         if not (cfg.GC_MIN <= gc <= cfg.GC_MAX):
             return False
 
-        # Tm
+    if not skip_tm:
         tm = primer_body_tm(body)
         if not (cfg.TM_HARD_MIN_C <= tm <= cfg.TM_HARD_MAX_C):
             return False
 
-    # 3' self-dimer applies to anchored primers too — primer-dimer kinetics
-    # are independent of where the body is anchored.
+    # Primer-dimer kinetics are sequence-driven and always enforced.
     if max_3prime_self_dimer(body) > cfg.SELF_DIMER_MAX_3PRIME:
         return False
 
     return True
+
+
+# Relaxation tiers for anchored primers. Each tier adds one more skip on top
+# of the previous. Strict (tier 0) → all hard rules; tier 4 (last resort)
+# even drops the 3' G/C clamp.
+_ANCHORED_TIERS: list[dict] = [
+    {},
+    {"skip_homopolymer": True},
+    {"skip_homopolymer": True, "skip_gc": True},
+    {"skip_homopolymer": True, "skip_gc": True, "skip_tm": True},
+    {"skip_homopolymer": True, "skip_gc": True, "skip_tm": True, "skip_clamp": True},
+]
+
+
+def _enumerate_anchored(
+    seq: str, *, end: str
+) -> tuple[list[Candidate], int]:
+    """Enumerate candidates anchored at one end of ``seq``.
+
+    ``end="5'"`` builds bodies = seq[:L] (forward primer at the 5' end of seq).
+    ``end="3'"`` builds bodies = RC(seq[-L:]) (reverse primer at the 3' end).
+
+    Tries each relaxation tier in order; returns the first non-empty pool and
+    the tier index used.
+    """
+    for tier_idx, kwargs in enumerate(_ANCHORED_TIERS):
+        pool: list[Candidate] = []
+        for L in range(cfg.BODY_LEN_MIN, cfg.BODY_LEN_MAX + 1):
+            if L > len(seq):
+                break
+            if end == "5'":
+                body = seq[:L]
+            elif end == "3'":
+                body = reverse_complement(seq[-L:])
+            else:
+                raise ValueError(end)
+            if passes_hard_filters(body, **kwargs):
+                pool.append(
+                    Candidate(body=body, tm=primer_body_tm(body),
+                              gc=primer_body_gc(body), anchor_offset=0)
+                )
+        if pool:
+            pool.sort(key=lambda c: c.tm)
+            return pool, tier_idx
+    return [], len(_ANCHORED_TIERS) - 1
 
 
 def max_3prime_self_dimer(body: str) -> int:
@@ -193,18 +240,19 @@ def enumerate_p4_candidates(dn_flank: str, p4_tail: str) -> list[Candidate]:
     return out
 
 
-def enumerate_p2_candidates(up_segment: str, *, anchored: bool = False) -> list[Candidate]:
+def enumerate_p2_candidates(up_segment: str) -> list[Candidate]:
     """P2 candidates: reverse primer anchored at 3' end of UP segment (= UP flank + retained N codons).
 
     Body is RC of the last L nt of up_segment. No offset window — the anchor is
     fixed at the 3' end of UP because the junction overlap defines the cut.
+    Uses strict hard filters (deletion / tagging junction quality matters).
     """
     out: list[Candidate] = []
     for L in range(cfg.BODY_LEN_MIN, cfg.BODY_LEN_MAX + 1):
         if L > len(up_segment):
             break
         body = reverse_complement(up_segment[-L:])
-        if passes_hard_filters(body, anchored=anchored):
+        if passes_hard_filters(body):
             out.append(
                 Candidate(body=body, tm=primer_body_tm(body),
                           gc=primer_body_gc(body), anchor_offset=0)
@@ -213,17 +261,18 @@ def enumerate_p2_candidates(up_segment: str, *, anchored: bool = False) -> list[
     return out
 
 
-def enumerate_p3_candidates(dn_segment: str, *, anchored: bool = False) -> list[Candidate]:
+def enumerate_p3_candidates(dn_segment: str) -> list[Candidate]:
     """P3 candidates: forward primer anchored at 5' end of DN segment (= retained C codons + DN flank).
 
-    Reused for expression P1 (anchored at coding_seq's ATG) with ``anchored=True``.
+    Strict hard filters; for the analogous expression-P1 anchor at ATG, use
+    ``_enumerate_anchored`` which applies tiered relaxation.
     """
     out: list[Candidate] = []
     for L in range(cfg.BODY_LEN_MIN, cfg.BODY_LEN_MAX + 1):
         if L > len(dn_segment):
             break
         body = dn_segment[:L]
-        if passes_hard_filters(body, anchored=anchored):
+        if passes_hard_filters(body):
             out.append(
                 Candidate(body=body, tm=primer_body_tm(body),
                           gc=primer_body_gc(body), anchor_offset=0)
@@ -236,8 +285,21 @@ def enumerate_p3_candidates(dn_segment: str, *, anchored: bool = False) -> list[
 # Scoring
 # ===========================================================================
 
-def compute_score(tms: list[float], gcs: list[float]) -> float:
-    """Lower is better. Hard reject elsewhere if tm_spread > TM_SPREAD_HARD_LIMIT_C."""
+IDEAL_BODY_LEN: int = 20
+
+
+def compute_score(
+    tms: list[float],
+    gcs: list[float],
+    *,
+    body_lengths: list[int] | None = None,
+) -> float:
+    """Lower is better. Hard reject elsewhere if tm_spread > TM_SPREAD_HARD_LIMIT_C.
+
+    When ``body_lengths`` is provided, an additional penalty pulls the chosen
+    bodies toward IDEAL_BODY_LEN (= 20 nt). The penalty is small enough that
+    Tm and GC quality dominate, but ties are broken in favor of ideal length.
+    """
     tm_spread = max(tms) - min(tms)
     mean_tm = sum(tms) / len(tms)
     gc_spread = max(gcs) - min(gcs)
@@ -245,7 +307,10 @@ def compute_score(tms: list[float], gcs: list[float]) -> float:
         0.1 * max(0.0, cfg.GC_PREFERRED_MIN - g) + 0.1 * max(0.0, g - cfg.GC_PREFERRED_MAX)
         for g in gcs
     )
-    return tm_spread + 0.25 * abs(mean_tm - cfg.TM_TARGET_C) + 0.02 * gc_spread + gc_penalty
+    score = tm_spread + 0.25 * abs(mean_tm - cfg.TM_TARGET_C) + 0.02 * gc_spread + gc_penalty
+    if body_lengths is not None:
+        score += 0.05 * sum(abs(L - IDEAL_BODY_LEN) for L in body_lengths)
+    return score
 
 
 def closest_by_tm(pool: list[Candidate], target_tm: float) -> Candidate | None:
@@ -479,21 +544,32 @@ def search_expression_primers(
     coding_seq = build_plasmid_fusion_cds(gene.cds_seq, tag, tag_position)
 
     # Both expression primers are anchor-fixed (P1 at ATG, P2 at stop). Use
-    # the relaxed filter set; only length and primer-dimer remain hard rules.
-    p1_pool = enumerate_p3_candidates(coding_seq, anchored=True)
-    p2_pool = enumerate_p2_candidates(coding_seq, anchored=True)
+    # the tiered relaxation: stay strict if possible, drop the 4-homopolymer
+    # rule first, then GC range, then Tm range, and only as a last resort
+    # the 3' G/C clamp.
+    p1_pool, p1_tier = _enumerate_anchored(coding_seq, end="5'")
+    p2_pool, p2_tier = _enumerate_anchored(coding_seq, end="3'")
     if not p1_pool:
         raise NoCandidates(
             message=f"P1 (expression): no body at ATG of {gene.gene}/{gene.isolate_id} "
-                    f"passes hard filters.",
+                    f"passes hard filters even at maximum relaxation.",
             details={"primer": "P1", "gene": gene.gene, "isolate": gene.isolate_id},
         )
     if not p2_pool:
         raise NoCandidates(
             message=f"P2 (expression): no body at stop of {gene.gene}/{gene.isolate_id} "
-                    f"passes hard filters.",
+                    f"passes hard filters even at maximum relaxation.",
             details={"primer": "P2", "gene": gene.gene, "isolate": gene.isolate_id},
         )
+
+    # Tm spread bound is itself relaxed when either primer is anchored at a
+    # tier > 0 (because the gene's 3' AT-richness can force an unavoidable
+    # spread). Strict bound otherwise.
+    spread_limit = (
+        cfg.TM_SPREAD_HARD_LIMIT_C
+        if (p1_tier == 0 and p2_tier == 0)
+        else float("inf")
+    )
 
     best: ExpressionPrimerSet | None = None
     top5: list[ExpressionPrimerSet] = []
@@ -501,10 +577,13 @@ def search_expression_primers(
         for p2c in p2_pool:
             tms = [p1c.tm, p2c.tm]
             spread = max(tms) - min(tms)
-            if spread > cfg.TM_SPREAD_HARD_LIMIT_C:
+            if spread > spread_limit:
                 continue
             gcs = [p1c.gc, p2c.gc]
-            score = compute_score(tms, gcs)
+            score = compute_score(
+                tms, gcs,
+                body_lengths=[len(p1c.body), len(p2c.body)],
+            )
             cand = ExpressionPrimerSet(
                 p1=_make_primer("P1", "INSERT_Fwd", p1_tail, p1c, convention.name),
                 p2=_make_primer("P2", "INSERT_Rev", p2_tail, p2c, convention.name),
