@@ -39,8 +39,10 @@ EXPECTED = {
     "p1_tail": "CGGTATCGATAAGCT" + "AGGAGG" + "ACTTGTTC",   # 29 nt: vector + RBS + spacer
     "p2_tail": "ATTCGATATCAAGCT",                            # 15 nt: vector tail
     "p1_body_starts": "ATG",                                  # body anchored at native ATG
-    "amplicon_length_bp_min": 740,                            # ±10 bp tolerance
-    "amplicon_length_bp_max": 760,
+    # Full PCR amplicon = p1.tail (29) + coding_seq (720) + RC(p2.tail) (15)
+    # = 764 bp. Window allows ±10 around the canonical PA14 lasR length.
+    "amplicon_length_bp_min": 754,
+    "amplicon_length_bp_max": 774,
     "AAGCTT_count_in_final_plasmid": 1,                       # site_partial_AAGCT regenerates one site
 }
 
