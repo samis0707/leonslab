@@ -39,15 +39,31 @@ def verify(result: DesignResult) -> None:
 # Shared checks
 # ---------------------------------------------------------------------------
 
-def _check_recognition_count(result: DesignResult) -> None:
-    enzyme = result.request.enzyme
+def count_recognition_sites(sequence: str, enzyme: str) -> int:
+    """Count occurrences of ``enzyme``'s recognition motif in ``sequence``.
+
+    Counts both strands. Palindromic motifs (most type-II 6-cutters such as
+    HindIII, EcoRI, BamHI) are counted **once per occurrence**, not twice —
+    the forward and reverse-complement matches at a palindrome are the same
+    physical site. Non-palindromic motifs are summed across both strands.
+
+    Treats the sequence as linear; circular plasmids should be linearized
+    before calling (the production splice in plasmid_builder.assemble already
+    yields a linear representation that captures all sites).
+    """
+    if enzyme not in RESTRICTION_SITES:
+        raise KeyError(f"Unknown enzyme {enzyme!r}")
     motif, _ = RESTRICTION_SITES[enzyme]
     rc_motif = reverse_complement(motif)
-    seq = result.final_plasmid.sequence
-
-    actual = seq.count(motif)
+    n = sequence.count(motif)
     if rc_motif != motif:
-        actual += seq.count(rc_motif)
+        n += sequence.count(rc_motif)
+    return n
+
+
+def _check_recognition_count(result: DesignResult) -> None:
+    enzyme = result.request.enzyme
+    actual = count_recognition_sites(result.final_plasmid.sequence, enzyme)
 
     expected = result.convention.expected_recognition_count_in_final_plasmid
     if actual != expected:
