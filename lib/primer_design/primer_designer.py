@@ -506,19 +506,112 @@ def search_tagging_primers(
     convention: TailConvention,
     tag: Tag,
 ) -> tuple[TaggingPrimerSet, list[TaggingPrimerSet]]:
-    """Junction-fixed search: tag cassette occupies the P2/P3 junction overlap.
+    """In-locus C-terminal tagging primer search (skill_v2 §5.3).
 
-    See ``primer_design_skill_v2.md`` §5.2–5.3 for cassette splitting between P2
-    and P3 tails (15+15 for His6, 18+18 for FLAG/His8).
+    The tag cassette occupies the UP/DN junction. Each tail carries a slice of
+    the cassette such that the central ``overlap_len`` nucleotides are shared
+    between the two PCR products (the In-Fusion homology). For the 30-nt His6
+    cassette the shared overlap is 15 nt; for 36-nt FLAG / His8 cassettes it
+    is 18 nt.
+
+    Tail layout::
+
+        cassette = [0 .. overlap_start) [overlap_start .. overlap_end) [overlap_end .. len)
+                   ^^^^^^^^^ P2-tail-only ^^^^^^^^^^^^ shared ^^^^^^^^^^^^ P3-tail-only ^^^
+
+        p2_tail = RC(cassette[0 : overlap_end])           # carries left half + overlap
+        p3_tail =      cassette[overlap_start :]          # carries overlap + right half
+
+    P1 / P4 are deletion-style: anchored within the up/dn flanks with the
+    vector tails from the calibrated convention.
 
     Raises:
         TagTooLongForInLocus: cassette > 36 nt (3xFLAG, HiBiT).
     """
-    raise NotImplementedError(
-        "Phase 2 step 9: implement per skill_v2 §5.3 pseudocode. "
-        "Note that tail derivation differs from deletion: P2 and P3 tails are partly "
-        "fixed by the cassette, so search degrees of freedom collapse."
+    from .tags import build_in_locus_cassette  # local import to avoid cycles
+
+    cassette = build_in_locus_cassette(tag)  # raises TagTooLongForInLocus
+
+    p1_tail, p4_tail = derive_tails(vector, convention.enzyme, "tagging")
+
+    overlap_len = len(cassette) // 2 + len(cassette) % 2  # 15 (His6) or 18 (FLAG/His8)
+    overlap_start = (len(cassette) - overlap_len) // 2
+    overlap_end = overlap_start + overlap_len
+    p2_tail = reverse_complement(cassette[:overlap_end])
+    p3_tail = cassette[overlap_start:]
+    overlap_left = overlap_end                                # = len(cassette in P2 tail)
+    overlap_right = len(cassette) - overlap_start             # = len(cassette in P3 tail)
+
+    cds_no_stop = gene.cds_seq[:-3]
+    up_segment = gene.up_flank + cds_no_stop
+    dn_segment = gene.dn_flank
+
+    # P1 / P4 retain offset windows in the flanks → strict filters apply.
+    p1_pool = enumerate_p1_candidates(gene.up_flank, p1_tail)
+    p4_pool = enumerate_p4_candidates(gene.dn_flank, p4_tail)
+    # P2 anchors at the 3' end of cds_no_stop (potentially AT-rich); P3
+    # anchors at the 5' end of dn_flank (potentially GC-rich). Both lack
+    # offset windows, so apply tiered relaxation that keeps the 3' G/C clamp
+    # respected unless absolutely impossible.
+    p2_pool, p2_tier = _enumerate_anchored(up_segment, end="3'")
+    p3_pool, p3_tier = _enumerate_anchored(dn_segment, end="5'")
+
+    for name, pool in (("P1", p1_pool), ("P2", p2_pool),
+                       ("P3", p3_pool), ("P4", p4_pool)):
+        if not pool:
+            raise NoCandidates(
+                message=f"{name} (tagging): no body passes hard filters for "
+                        f"{gene.gene}/{gene.isolate_id} even at maximum relaxation.",
+                details={"primer": name, "gene": gene.gene,
+                         "isolate": gene.isolate_id},
+            )
+
+    spread_limit = (
+        cfg.TM_SPREAD_HARD_LIMIT_C
+        if (p2_tier == 0 and p3_tier == 0)
+        else float("inf")
     )
+
+    best: TaggingPrimerSet | None = None
+    top5: list[TaggingPrimerSet] = []
+    for p1c in p1_pool:
+        for p2c in p2_pool:
+            for p3c in p3_pool:
+                for p4c in p4_pool:
+                    tms = [p1c.tm, p2c.tm, p3c.tm, p4c.tm]
+                    spread = max(tms) - min(tms)
+                    if spread > spread_limit:
+                        continue
+                    gcs = [p1c.gc, p2c.gc, p3c.gc, p4c.gc]
+                    score = compute_score(
+                        tms, gcs,
+                        body_lengths=[len(p1c.body), len(p2c.body),
+                                      len(p3c.body), len(p4c.body)],
+                    )
+                    cand = TaggingPrimerSet(
+                        p1=_make_primer("P1", "UP_Fwd", p1_tail, p1c, convention.name),
+                        p2=_make_primer("P2", "UP_Rev", p2_tail, p2c, "tag_cassette"),
+                        p3=_make_primer("P3", "DN_Fwd", p3_tail, p3c, "tag_cassette"),
+                        p4=_make_primer("P4", "DN_Rev", p4_tail, p4c, convention.name),
+                        cassette=cassette,
+                        overlap_left=overlap_left,
+                        overlap_right=overlap_right,
+                        tag=tag,
+                        score=score,
+                        tm_spread=spread,
+                    )
+                    top5 = _topk_insert(top5, cand)
+                    if best is None or score < best.score:
+                        best = cand
+
+    if best is None:
+        raise NoCandidates(
+            message=f"No (P1, P2, P3, P4) tuple satisfied Tm-spread bound for "
+                    f"tagging of {gene.gene}/{gene.isolate_id}.",
+            details={"gene": gene.gene, "isolate": gene.isolate_id,
+                     "tag": tag.name, "cassette_nt": len(cassette)},
+        )
+    return best, top5
 
 
 def search_expression_primers(
@@ -665,16 +758,27 @@ def off_target_scan(
             ):
                 products.append(prod)
 
+    # Look up by either ordering: a primer pair (A, B) and (B, A) describe
+    # the same physical PCR product (one fwd primer + one rev primer at the
+    # same locus). Callers therefore need only specify one direction.
+    def _spec_for(pair: tuple[str, str]):
+        if pair in expected_products:
+            return expected_products[pair]
+        rev = (pair[1], pair[0])
+        if rev in expected_products:
+            return expected_products[rev]
+        return ...
+
     violations: list[OffTargetProduct] = []
     matched: list[OffTargetProduct] = []
     for prod in products:
-        spec = expected_products.get(prod.primer_pair)
+        spec = _spec_for(prod.primer_pair)
+        if spec is ...:
+            violations.append(prod)
+            continue
         if spec is None:
-            if prod.primer_pair in expected_products:
-                # explicit None → zero products allowed
-                violations.append(prod)
-            else:
-                violations.append(prod)
+            # explicit None → zero products allowed
+            violations.append(prod)
             continue
         lo, hi = spec
         if lo <= prod.size_bp <= hi:
