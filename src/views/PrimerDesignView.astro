@@ -688,57 +688,27 @@ const stats = {
     .pd-meta dt { margin-bottom: 0.1rem; }
     .pd-meta dd { font-size: 0.85rem; }
 
-    /* Stack primer table as cards */
-    .pd-table-wrap { overflow-x: visible; }
-    .pd-primers,
-    .pd-primers thead,
-    .pd-primers tbody,
-    .pd-primers tr,
+    /* Horizontally scrollable primer table, contained in card */
+    .pd-table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 -1.15rem;
+      padding: 0 1.15rem 0.25rem;
+      mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent);
+      -webkit-mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent);
+    }
+    .pd-primers { font-size: 0.78rem; }
     .pd-primers th,
-    .pd-primers td { display: block; }
-    .pd-primers thead { display: none; }
-    .pd-primers tr {
-      border: 1px solid var(--color-concrete-200);
-      border-radius: 10px;
-      padding: 0.8rem 0.9rem;
-      margin-bottom: 0.65rem;
-      background: white;
-    }
-    .pd-primers td { border: none; padding: 0; }
-    .pd-primers td:nth-child(1) {
-      font-size: 0.72rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--color-concrete-500);
-      margin-bottom: 0.45rem;
-    }
-    .pd-primers td.seq {
-      font-size: 0.78rem;
-      line-height: 1.55;
+    .pd-primers td {
       padding: 0.55rem 0.7rem;
-      background: var(--color-concrete-50);
-      border-radius: 6px;
-      margin-bottom: 0.6rem;
+      white-space: nowrap;
     }
-    .pd-primers td:nth-child(n+3) {
-      display: inline-block;
-      margin-right: 1.1rem;
-      font-size: 0.8rem;
-      color: var(--color-concrete-900);
-    }
-    .pd-primers td:nth-child(5) { margin-right: 0; }
-    .pd-primers td:nth-child(3)::before { content: 'nt'; }
-    .pd-primers td:nth-child(4)::before { content: 'Tm'; }
-    .pd-primers td:nth-child(5)::before { content: 'GC'; }
-    .pd-primers td:nth-child(n+3)::before {
-      display: inline-block;
-      font-size: 0.62rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--color-concrete-500);
-      font-weight: 600;
-      margin-right: 0.3rem;
+    .pd-primers th:first-child,
+    .pd-primers td:first-child { padding-left: 0; }
+    .pd-primers td.seq {
+      font-size: 0.76rem;
+      word-break: normal;
+      white-space: nowrap;
     }
   }
 </style>
