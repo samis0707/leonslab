@@ -38,7 +38,28 @@ const stats = {
   title="AG Schwarz Primer Design"
   description="Start in a new era of experimental design with fast and easy primer development for our clinical P. aeruginosa genome databank."
 >
-  <article class="pd-page">
+  <!-- PASSWORD GATE ------------------------------------------------- -->
+  <section class="pd-gate" id="pd-gate" aria-label="Access protected">
+    <form class="pd-gate-card" id="pd-gate-form" autocomplete="off" novalidate>
+      <p class="eyebrow">AG Schwarz</p>
+      <h2 class="pd-gate-title">Restricted access</h2>
+      <p class="pd-gate-hint">Enter the team password to continue.</p>
+      <input
+        type="password"
+        id="pd-gate-input"
+        class="pd-gate-input"
+        name="password"
+        placeholder="Password"
+        autofocus
+        spellcheck="false"
+        autocomplete="off"
+      />
+      <button type="submit" class="pd-gate-btn">Unlock</button>
+      <p class="pd-gate-error" id="pd-gate-error" hidden>Wrong password.</p>
+    </form>
+  </section>
+
+  <article class="pd-page" id="pd-page" hidden>
 
     <!-- HERO ---------------------------------------------------------- -->
     <section class="pd-hero">
@@ -177,6 +198,88 @@ const stats = {
 </BaseLayout>
 
 <style>
+  /* PASSWORD GATE -------------------------------------------------- */
+  .pd-gate {
+    min-height: calc(100vh - 4rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 1.5rem 4rem;
+    position: relative;
+  }
+  .pd-gate::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(12,94,59,0.08), transparent 55%),
+      radial-gradient(circle at 70% 70%, rgba(244,194,13,0.08), transparent 55%);
+    pointer-events: none;
+  }
+  .pd-gate-card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 22rem;
+    padding: 2rem 2rem 1.8rem;
+    background: white;
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02), 0 30px 60px -32px rgba(0,0,0,0.18);
+    display: flex;
+    flex-direction: column;
+  }
+  .pd-gate-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--color-concrete-900);
+    letter-spacing: -0.015em;
+    margin: 0.45rem 0 0.4rem;
+  }
+  .pd-gate-hint {
+    font-size: 0.88rem;
+    color: var(--color-concrete-600);
+    margin: 0 0 1.4rem;
+  }
+  .pd-gate-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--color-concrete-50);
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: var(--color-concrete-900);
+    transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+  }
+  .pd-gate-input:focus {
+    outline: none;
+    border-color: var(--color-park-green);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(12,94,59,0.15);
+  }
+  .pd-gate-btn {
+    margin-top: 0.85rem;
+    padding: 0.8rem 1rem;
+    background: var(--color-concrete-900);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 180ms ease;
+  }
+  .pd-gate-btn:hover { background: var(--color-park-green); }
+  .pd-gate-error {
+    margin: 0.85rem 0 0;
+    padding: 0.55rem 0.85rem;
+    background: #faf1f0;
+    border: 1px solid #e9c8c4;
+    color: #8a2a24;
+    border-radius: 8px;
+    font-size: 0.82rem;
+  }
+
   /* page wrapper */
   .pd-page {
     min-height: 100vh;
@@ -568,6 +671,45 @@ const stats = {
 </style>
 
 <script>
+  // -------------------------------------------------------------------
+  // PASSWORD GATE
+  // -------------------------------------------------------------------
+  // Casual access control only — the page content is in the static HTML
+  // and accessible to anyone who views source. Goal is to keep accidental
+  // visitors out, not to enforce real auth.
+  const PD_PASSWORD = 'Team_Schwarz';
+  const PD_STORAGE_KEY = 'pd-unlocked';
+
+  const gateEl = document.getElementById('pd-gate') as HTMLElement | null;
+  const pageEl = document.getElementById('pd-page') as HTMLElement | null;
+  const gateForm = document.getElementById('pd-gate-form') as HTMLFormElement | null;
+  const gateInput = document.getElementById('pd-gate-input') as HTMLInputElement | null;
+  const gateError = document.getElementById('pd-gate-error') as HTMLElement | null;
+
+  function unlock(): void {
+    if (gateEl) gateEl.hidden = true;
+    if (pageEl) pageEl.hidden = false;
+  }
+
+  if (sessionStorage.getItem(PD_STORAGE_KEY) === '1') {
+    unlock();
+  }
+
+  if (gateForm && gateInput && gateError) {
+    gateForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (gateInput.value === PD_PASSWORD) {
+        sessionStorage.setItem(PD_STORAGE_KEY, '1');
+        gateError.hidden = true;
+        unlock();
+      } else {
+        gateError.hidden = false;
+        gateInput.value = '';
+        gateInput.focus();
+      }
+    });
+  }
+
   type Catalog = Record<string, string[]>;
   type ApiPrimer = {
     name: string;
