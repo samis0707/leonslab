@@ -50,30 +50,54 @@ def run(
             raise ValueError("tag_position required when tag is set")
         validate_tag_position(tag, request.tag_position)
 
-    best, _alts = primer_designer.search_expression_primers(
+    best, alts = primer_designer.search_expression_primers(
         gene, vector, convention, tag, request.tag_position
     )
 
-    # Full PCR amplicon: F.tail + coding_seq + RC(R.tail). This is what the
-    # bench biologist sees on a gel and what the elongation timer scales by;
-    # used both for plasmid assembly and as the reported insert length so
-    # numbers stay consistent across the UI / PDF / JSON manifest.
-    amplicon = (
-        best.p1.tail + best.coding_seq + reverse_complement(best.p2.tail)
-    )
-    insert = amplicon
-
     loader = genome_loader or _default_genome_loader
     genome_bytes = loader(request.isolate_id)
-    expected_products = _expected_products_for_expression(amplicon)
-    off_target = primer_designer.off_target_scan(
-        [best.p1, best.p2], genome_bytes, expected_products,
-    )
-    if not off_target.passed:
-        raise OffTargetDetected(
-            message="Off-target scan reports unintended PCR products",
-            details={"violations": [vars(v) for v in off_target.violations]},
+
+    candidates: list = [best]
+    seen = {(best.p1.body, best.p2.body)}
+    for alt in alts:
+        key = (alt.p1.body, alt.p2.body)
+        if key in seen:
+            continue
+        seen.add(key)
+        candidates.append(alt)
+
+    chosen = amplicon = chosen_off = None
+    last_violations: list = []
+    for cand in candidates:
+        # Full PCR amplicon: F.tail + coding_seq + RC(R.tail). What the bench
+        # biologist sees on a gel and what the elongation timer scales by;
+        # used both for plasmid assembly and as the reported insert length
+        # so numbers stay consistent across UI / PDF / JSON.
+        amp = cand.p1.tail + cand.coding_seq + reverse_complement(cand.p2.tail)
+        expected_products = _expected_products_for_expression(amp)
+        off_target = primer_designer.off_target_scan(
+            [cand.p1, cand.p2], genome_bytes, expected_products,
         )
+        if off_target.passed:
+            chosen, amplicon, chosen_off = cand, amp, off_target
+            break
+        last_violations = off_target.violations
+
+    if chosen is None:
+        raise OffTargetDetected(
+            message=(
+                "Off-target scan reports unintended PCR products for the "
+                f"{len(candidates)} top-scoring primer alternatives."
+            ),
+            details={
+                "candidates_tried": len(candidates),
+                "last_violations": [vars(v) for v in last_violations],
+            },
+        )
+
+    best = chosen
+    insert = amplicon
+    off_target = chosen_off
 
     final_plasmid = assemble(vector, amplicon, cut_nick, convention)
     final_plasmid.name = f"{vector.name}_{gene.gene}_{gene.isolate_id}_expr"

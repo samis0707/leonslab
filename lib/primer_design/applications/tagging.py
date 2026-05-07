@@ -50,25 +50,51 @@ def run(
     )
     cut_nick = vectors.find_cut_position(vector, request.enzyme)
 
-    best, _alts = primer_designer.search_tagging_primers(
+    best, alts = primer_designer.search_tagging_primers(
         gene, vector, convention, tag
     )
 
-    up_amplicon, dn_amplicon, insert = _build_amplicons(gene, best)
-
     loader = genome_loader or _default_genome_loader
     genome_bytes = loader(request.isolate_id)
-    expected = _expected_products_for_tagging(
-        up_amplicon, dn_amplicon, gene, best
-    )
-    off_target = primer_designer.off_target_scan(
-        [best.p1, best.p2, best.p3, best.p4], genome_bytes, expected,
-    )
-    if not off_target.passed:
-        raise OffTargetDetected(
-            message="Off-target scan reports unintended PCR products",
-            details={"violations": [vars(v) for v in off_target.violations]},
+
+    candidates: list = [best]
+    seen = {(best.p1.body, best.p2.body, best.p3.body, best.p4.body)}
+    for alt in alts:
+        key = (alt.p1.body, alt.p2.body, alt.p3.body, alt.p4.body)
+        if key in seen:
+            continue
+        seen.add(key)
+        candidates.append(alt)
+
+    chosen = chosen_amps = chosen_off = None
+    last_violations: list = []
+    for cand in candidates:
+        up_amplicon, dn_amplicon, insert = _build_amplicons(gene, cand)
+        expected = _expected_products_for_tagging(up_amplicon, dn_amplicon, gene, cand)
+        off_target = primer_designer.off_target_scan(
+            [cand.p1, cand.p2, cand.p3, cand.p4], genome_bytes, expected,
         )
+        if off_target.passed:
+            chosen, chosen_amps, chosen_off = cand, (up_amplicon, dn_amplicon, insert), off_target
+            break
+        last_violations = off_target.violations
+
+    if chosen is None:
+        raise OffTargetDetected(
+            message=(
+                "Off-target scan reports unintended PCR products for the "
+                f"{len(candidates)} top-scoring primer alternatives. Manual "
+                "primer design or anchor tuning required."
+            ),
+            details={
+                "candidates_tried": len(candidates),
+                "last_violations": [vars(v) for v in last_violations],
+            },
+        )
+
+    best = chosen
+    up_amplicon, dn_amplicon, insert = chosen_amps
+    off_target = chosen_off
 
     final_plasmid = assemble(vector, insert, cut_nick, convention)
     final_plasmid.name = (

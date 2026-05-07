@@ -49,30 +49,67 @@ def run(
     )
     cut_nick = vectors.find_cut_position(vector, request.enzyme)
 
-    best, _alts = primer_designer.search_deletion_primers(
+    best, alts = primer_designer.search_deletion_primers(
         gene, vector, convention
     )
-
-    up_amplicon, dn_amplicon, insert = _build_amplicons(gene, best)
 
     loader = genome_loader or _default_genome_loader
     genome_bytes = loader(request.isolate_id)
 
-    expected_products = _expected_products_for_deletion(
-        up_amplicon, dn_amplicon, gene
-    )
-    off_target = primer_designer.off_target_scan(
-        [best.p1, best.p2, best.p3, best.p4],
-        genome_bytes,
-        expected_products,
-    )
-    if not off_target.passed:
+    # Try the top-scoring set first; if it produces an off-target product,
+    # walk the top-N alternatives and pick the first that scans cleanly.
+    # `alts` is already sorted ascending by score (best last). We dedupe by
+    # primer-tuple identity since the search returns near-duplicates when
+    # different (N, C) pairs yield the same P1/P4 bodies.
+    candidates: list = [best]
+    seen = {(best.p1.body, best.p2.body, best.p3.body, best.p4.body)}
+    for alt in alts:
+        key = (alt.p1.body, alt.p2.body, alt.p3.body, alt.p4.body)
+        if key in seen:
+            continue
+        seen.add(key)
+        candidates.append(alt)
+
+    chosen = None
+    chosen_amps = None
+    chosen_off = None
+    last_violations: list = []
+    for cand in candidates:
+        up_amplicon, dn_amplicon, insert = _build_amplicons(gene, cand)
+        expected_products = _expected_products_for_deletion(
+            up_amplicon, dn_amplicon, gene
+        )
+        off_target = primer_designer.off_target_scan(
+            [cand.p1, cand.p2, cand.p3, cand.p4],
+            genome_bytes,
+            expected_products,
+        )
+        if off_target.passed:
+            chosen = cand
+            chosen_amps = (up_amplicon, dn_amplicon, insert)
+            chosen_off = off_target
+            break
+        last_violations = off_target.violations
+
+    if chosen is None:
         raise OffTargetDetected(
-            message="Off-target scan reports unintended PCR products",
+            message=(
+                "Off-target scan reports unintended PCR products for the "
+                f"{len(candidates)} top-scoring primer alternatives. Most "
+                "likely cause: a paralog in this isolate's genome shares "
+                "high homology with the lasR/lasB flank used for primer "
+                "anchoring. Manual primer design or gene-specific anchor "
+                "tuning required."
+            ),
             details={
-                "violations": [vars(v) for v in off_target.violations],
+                "candidates_tried": len(candidates),
+                "last_violations": [vars(v) for v in last_violations],
             },
         )
+
+    best = chosen
+    up_amplicon, dn_amplicon, insert = chosen_amps
+    off_target = chosen_off
 
     final_plasmid = assemble(vector, insert, cut_nick, convention)
     final_plasmid.name = f"{vector.name}_{gene.gene}_delta_{gene.isolate_id}"
