@@ -54,17 +54,14 @@ def run(
         gene, vector, convention, tag, request.tag_position
     )
 
-    # Full PCR amplicon (used for plasmid assembly): includes both vector
-    # homology arms.
+    # Full PCR amplicon: F.tail + coding_seq + RC(R.tail). This is what the
+    # bench biologist sees on a gel and what the elongation timer scales by;
+    # used both for plasmid assembly and as the reported insert length so
+    # numbers stay consistent across the UI / PDF / JSON manifest.
     amplicon = (
         best.p1.tail + best.coding_seq + reverse_complement(best.p2.tail)
     )
-    # Reported "insert": the novel sequence carried into the plasmid, i.e.
-    # everything except the left vector homology arm (which duplicates the
-    # vector's left arm and gets collapsed at assembly). Equivalent to
-    # RBS+spacer + coding_seq + right_vector_arm_RC.
-    from ..config import VECTOR_TAIL_LEN
-    insert = amplicon[VECTOR_TAIL_LEN:]
+    insert = amplicon
 
     loader = genome_loader or _default_genome_loader
     genome_bytes = loader(request.isolate_id)
