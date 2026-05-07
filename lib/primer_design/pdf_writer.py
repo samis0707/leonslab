@@ -539,7 +539,7 @@ def _elong_seconds(amplicon_bp: int, sec_per_kb: int) -> int:
 def _format_scar(scar_dna: str, n_codons: int) -> tuple[str, str]:
     """Render scar codons + amino acids as two aligned monospace lines with a
     junction marker after the N-terminal portion."""
-    from Bio.Seq import Seq
+    from ._bio_lite import Seq
 
     codons = [scar_dna[i:i + 3] for i in range(0, len(scar_dna), 3)]
     aas = list(str(Seq(scar_dna).translate()))
@@ -555,7 +555,7 @@ def _format_scar(scar_dna: str, n_codons: int) -> tuple[str, str]:
 
 
 def _format_cassette(cassette_dna: str) -> tuple[str, str]:
-    from Bio.Seq import Seq
+    from ._bio_lite import Seq
 
     codons = [cassette_dna[i:i + 3] for i in range(0, len(cassette_dna), 3)]
     aas = list(str(Seq(cassette_dna).translate()))

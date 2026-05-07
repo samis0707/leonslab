@@ -7,6 +7,7 @@ import json
 import uuid
 
 from . import config as cfg
+from ._bio_lite import translate_dna as _translate_dna
 from .types import (
     DeletionPrimerSet,
     DesignResult,
@@ -74,13 +75,13 @@ def write_manifest(result: DesignResult) -> dict:
             "N": ps.N,
             "C": ps.C,
             "dna": ps.scar_dna,
-            "translation": str(__import__("Bio").Seq.Seq(ps.scar_dna).translate()),
+            "translation": _translate_dna(ps.scar_dna),
         }
     elif isinstance(ps, TaggingPrimerSet):
         manifest["computed"]["tag_cassette"] = {
             "tag": ps.tag.name,
             "dna": ps.cassette,
-            "translation": str(__import__("Bio").Seq.Seq(ps.cassette).translate()),
+            "translation": _translate_dna(ps.cassette),
             "overlap_left": ps.overlap_left,
             "overlap_right": ps.overlap_right,
         }

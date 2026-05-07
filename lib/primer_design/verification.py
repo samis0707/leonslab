@@ -5,7 +5,7 @@ the handler can surface it as a typed JSON error.
 """
 from __future__ import annotations
 
-from Bio.Seq import Seq
+from ._bio_lite import Seq
 
 from .config import RESTRICTION_SITES, JUNCTION_LEN_DEFAULT, JUNCTION_LEN_FLAG_HIS8
 from .exceptions import VerificationFailure

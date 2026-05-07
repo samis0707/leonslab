@@ -9,8 +9,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from Bio import SeqIO
-from Bio.Seq import Seq
+from ._bio_lite import Seq, parse_fasta as _parse_fasta
 
 from .config import SUPPORTED_GENES
 from .exceptions import CdsValidationError, GeneRecordNotFound
@@ -38,7 +37,7 @@ def get_gene_record(isolate_id: str, gene: str, genes_dir: Path | None = None) -
             details={"isolate_id": isolate_id, "gene": gene, "expected_path": str(path)},
         )
 
-    record = next(SeqIO.parse(path, "fasta"))
+    record = next(_parse_fasta(path))
     meta = parse_header_metadata(record.description)
     sequence = str(record.seq).upper()
     up = int(meta["up"])

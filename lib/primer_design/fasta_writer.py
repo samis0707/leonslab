@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from io import StringIO
 
-from Bio.Seq import Seq
+from ._bio_lite import Seq
 
 from .types import (
     DeletionPrimerSet,

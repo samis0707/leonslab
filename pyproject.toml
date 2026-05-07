@@ -8,7 +8,6 @@ version = "0.1.0"
 description = "P. aeruginosa primer design tool — In-Fusion cloning"
 requires-python = ">=3.11"
 dependencies = [
-    "biopython>=1.83",
     "reportlab>=4.0",
     "boto3>=1.34",
 ]

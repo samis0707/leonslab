@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 from typing import Callable
 
-from Bio import SeqIO
+from ._bio_lite import parse_fasta as _parse_fasta, parse_genbank as _parse_genbank
 
 from .config import RESTRICTION_SITES, SUPPORTED_VECTORS, VECTOR_TAIL_LEN
 from .exceptions import (
@@ -72,7 +72,7 @@ def get_vector(name: str, vectors_dir: Path | None = None) -> VectorRecord:
         # Allow FASTA fallback during early Phase-2 work, before GenBank annotations exist
         fasta_path = vectors_dir / f"{name}.fasta"
         if fasta_path.exists():
-            record = next(SeqIO.parse(fasta_path, "fasta"))
+            record = next(_parse_fasta(fasta_path))
             features = []
         else:
             raise UnknownVector(
@@ -80,7 +80,7 @@ def get_vector(name: str, vectors_dir: Path | None = None) -> VectorRecord:
                 details={"vector": name, "search_dir": str(vectors_dir)},
             )
     else:
-        record = next(SeqIO.parse(gb_path, "genbank"))
+        record = next(_parse_genbank(gb_path))
         features = list(record.features)
 
     vec = VectorRecord(

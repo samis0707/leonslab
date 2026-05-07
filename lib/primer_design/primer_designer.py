@@ -22,8 +22,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from Bio.Seq import Seq
-from Bio.SeqUtils.MeltingTemp import Tm_NN
+from ._bio_lite import Seq, tm_nn as Tm_NN
 
 from . import config as cfg
 from .exceptions import NoCandidates, OffTargetDetected
