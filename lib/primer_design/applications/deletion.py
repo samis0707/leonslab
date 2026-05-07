@@ -89,6 +89,16 @@ def run(
         final_plasmid=final_plasmid,
         off_target=off_target,
     )
+    if not gene.functional:
+        reason = gene.truncation_reason or "non-functional allele in this isolate"
+        result.warnings.append(
+            f"NON-FUNCTIONAL ALLELE: {gene.gene} in {gene.isolate_id} appears to be "
+            f"truncated/inactive at the protein level ({reason}). The primers below "
+            f"target the nominal locus position (reconstructed from the closest "
+            f"functional reference) and will work for allelic exchange, but the "
+            f"native protein product is already absent or non-functional in this "
+            f"isolate. Verify your experimental design accounts for this."
+        )
     verification.verify(result)
     return result
 

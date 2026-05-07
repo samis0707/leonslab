@@ -218,6 +218,46 @@ TAIL_RULES: dict[str, TailRuleFn] = {
 }
 
 
+def forbidden_body_5prime_prefixes(
+    p1_tail: str, p4_tail: str, motif: str, *, expected_count: int,
+) -> tuple[frozenset[str], frozenset[str]]:
+    """Compute body 5'-prefixes that would regenerate ``motif`` at a vector junction.
+
+    Returns ``(p1_forbidden, p4_forbidden)``: sets of forbidden 5'-prefix strings
+    for P1 and P4 body sequences.
+
+    Mechanism (assembled top strand of final plasmid):
+        Left junction:  ...vector...|p1_tail|P1_body...
+        Right junction: ...RC(P4_body)|RC(p4_tail)|...vector...
+
+    A motif occurrence overlapping a junction boundary at offset *k* (1..len(motif)-1)
+    is forbidden iff the upstream side ends with ``motif[:k]`` and the downstream
+    side starts with ``motif[k:]``. We turn that into a forbidden prefix on the
+    body (the only side the designer controls).
+
+    The check is **only meaningful for site_destroyed-style conventions** where the
+    expected post-assembly count is 0. For ``site_partial_*`` (count == 1, regen by
+    design at one junction), all motif-prefix matches are allowed and we return
+    empty sets.
+    """
+    if expected_count != 0:
+        return frozenset(), frozenset()
+
+    p1_forbidden: set[str] = set()
+    for k in range(1, len(motif)):
+        if p1_tail.endswith(motif[:k]):
+            p1_forbidden.add(motif[k:])
+
+    rc_p4_tail = reverse_complement(p4_tail)
+    p4_forbidden: set[str] = set()
+    for k in range(1, len(motif)):
+        if rc_p4_tail.startswith(motif[k:]):
+            # body starts with RC(motif[:k]) → RC(body) ends with motif[:k]
+            p4_forbidden.add(reverse_complement(motif[:k]))
+
+    return frozenset(p1_forbidden), frozenset(p4_forbidden)
+
+
 def derive_tails(vector: VectorRecord, enzyme: str, application: Application) -> tuple[str, str]:
     """Return (P1_tail, P4_tail) for the given vector / enzyme / application.
 

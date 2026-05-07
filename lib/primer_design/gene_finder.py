@@ -50,7 +50,16 @@ def get_gene_record(isolate_id: str, gene: str, genes_dir: Path | None = None) -
         )
 
     cds = sequence[up : len(sequence) - dn]
-    _assert_cds_valid(cds, isolate_id, gene)
+
+    # functional defaults to True for legacy headers without the field
+    functional = meta.get("functional", "true").lower() != "false"
+    truncation_reason = meta.get("truncation_reason") or None
+
+    if functional:
+        _assert_cds_valid(cds, isolate_id, gene)
+    # Non-functional records carry a *nominal* CDS (reference-derived) for
+    # primer design; we deliberately skip strict CDS validation. The truncation
+    # reason is propagated downstream so PDF/JSON output can warn the user.
 
     return GeneRecord(
         isolate_id=isolate_id,
@@ -62,6 +71,8 @@ def get_gene_record(isolate_id: str, gene: str, genes_dir: Path | None = None) -
         genome_start_1based=int(meta["start"]),
         genome_end_1based=int(meta["end"]),
         original_strand=meta["strand"],   # type: ignore[arg-type]
+        functional=functional,
+        truncation_reason=truncation_reason,
     )
 
 
