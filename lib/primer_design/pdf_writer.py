@@ -1,6 +1,6 @@
 """PDF report generator (3 templates: deletion, tagging, expression).
 
-A4 single-page layout. Visual style follows ``vorlage für pdf.pdf``:
+A4 single-page layout. Visual style follows ``docs/primer_design/pdf_layout_template.pdf``:
     - Navy section heads with monospace primer table
     - Tail bold + body regular in the Sequenz column
     - Two-column "Parameter | Wert" overview
