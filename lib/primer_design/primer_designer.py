@@ -40,7 +40,8 @@ from .types import (
     TailConvention,
     VectorRecord,
 )
-from .vectors import derive_tails, reverse_complement
+from .config import RESTRICTION_SITES
+from .vectors import derive_tails, forbidden_body_5prime_prefixes, reverse_complement
 
 
 # ===========================================================================
@@ -195,11 +196,21 @@ class Candidate:
     anchor_offset: int    # 0-based position within the segment
 
 
-def enumerate_p1_candidates(up_flank: str, p1_tail: str) -> list[Candidate]:
+def _has_forbidden_prefix(body: str, forbidden: frozenset[str]) -> bool:
+    """True if ``body`` starts with any string in ``forbidden`` (cut-site regen guard)."""
+    return any(body.startswith(p) for p in forbidden)
+
+
+def enumerate_p1_candidates(
+    up_flank: str,
+    p1_tail: str,
+    forbidden_5prime_prefixes: frozenset[str] = frozenset(),
+) -> list[Candidate]:
     """P1 candidates: forward primer anchored near 5' end of up_flank.
 
     For each (offset, length) within the configured offset/length windows, accept
-    the body if it passes hard filters. Returns sorted-by-Tm list.
+    the body if it passes hard filters AND its 5' prefix would not regenerate
+    the cut site at the left vector junction. Returns sorted-by-Tm list.
     """
     out: list[Candidate] = []
     for offset in range(cfg.P1_OFFSET_MIN, cfg.P1_OFFSET_MAX + 1):
@@ -207,6 +218,8 @@ def enumerate_p1_candidates(up_flank: str, p1_tail: str) -> list[Candidate]:
             if offset + L > len(up_flank):
                 break
             body = up_flank[offset : offset + L]
+            if _has_forbidden_prefix(body, forbidden_5prime_prefixes):
+                continue
             if passes_hard_filters(body):
                 out.append(
                     Candidate(body=body, tm=primer_body_tm(body),
@@ -216,11 +229,17 @@ def enumerate_p1_candidates(up_flank: str, p1_tail: str) -> list[Candidate]:
     return out
 
 
-def enumerate_p4_candidates(dn_flank: str, p4_tail: str) -> list[Candidate]:
+def enumerate_p4_candidates(
+    dn_flank: str,
+    p4_tail: str,
+    forbidden_5prime_prefixes: frozenset[str] = frozenset(),
+) -> list[Candidate]:
     """P4 candidates: reverse primer anchored near 3' end of dn_flank.
 
     Body is RC of the forward sequence at the 3' anchor. Tm computed on the body
-    sequence as it will appear in the primer (i.e., on the RC strand).
+    sequence as it will appear in the primer (i.e., on the RC strand). Bodies
+    whose 5' prefix would regenerate the cut site at the right vector junction
+    are rejected before the hard-filter check.
     """
     out: list[Candidate] = []
     for offset in range(cfg.P4_OFFSET_MIN, cfg.P4_OFFSET_MAX + 1):
@@ -231,6 +250,8 @@ def enumerate_p4_candidates(dn_flank: str, p4_tail: str) -> list[Candidate]:
                 break
             fwd_segment = dn_flank[start:end]
             body = reverse_complement(fwd_segment)
+            if _has_forbidden_prefix(body, forbidden_5prime_prefixes):
+                continue
             if passes_hard_filters(body):
                 out.append(
                     Candidate(body=body, tm=primer_body_tm(body),
@@ -422,11 +443,16 @@ def search_deletion_primers(
         NoCandidates: if no tuple satisfies all hard filters and Tm-spread bound.
     """
     p1_tail, p4_tail = derive_tails(vector, convention.enzyme, "deletion")
+    motif, _ = RESTRICTION_SITES[convention.enzyme]
+    p1_forbidden, p4_forbidden = forbidden_body_5prime_prefixes(
+        p1_tail, p4_tail, motif,
+        expected_count=convention.expected_recognition_count_in_final_plasmid,
+    )
     cds = gene.cds_seq
     L = len(cds) // 3                                          # total codons including stop
 
-    p1_pool = enumerate_p1_candidates(gene.up_flank, p1_tail)
-    p4_pool = enumerate_p4_candidates(gene.dn_flank, p4_tail)
+    p1_pool = enumerate_p1_candidates(gene.up_flank, p1_tail, p1_forbidden)
+    p4_pool = enumerate_p4_candidates(gene.dn_flank, p4_tail, p4_forbidden)
     if not p1_pool:
         raise NoCandidates(message=f"P1: no body in up-flank passes hard filters "
                                    f"({gene.gene}/{gene.isolate_id}). Relax GC range or offset window.",
@@ -533,6 +559,11 @@ def search_tagging_primers(
     cassette = build_in_locus_cassette(tag)  # raises TagTooLongForInLocus
 
     p1_tail, p4_tail = derive_tails(vector, convention.enzyme, "tagging")
+    motif, _ = RESTRICTION_SITES[convention.enzyme]
+    p1_forbidden, p4_forbidden = forbidden_body_5prime_prefixes(
+        p1_tail, p4_tail, motif,
+        expected_count=convention.expected_recognition_count_in_final_plasmid,
+    )
 
     overlap_len = len(cassette) // 2 + len(cassette) % 2  # 15 (His6) or 18 (FLAG/His8)
     overlap_start = (len(cassette) - overlap_len) // 2
@@ -547,8 +578,8 @@ def search_tagging_primers(
     dn_segment = gene.dn_flank
 
     # P1 / P4 retain offset windows in the flanks → strict filters apply.
-    p1_pool = enumerate_p1_candidates(gene.up_flank, p1_tail)
-    p4_pool = enumerate_p4_candidates(gene.dn_flank, p4_tail)
+    p1_pool = enumerate_p1_candidates(gene.up_flank, p1_tail, p1_forbidden)
+    p4_pool = enumerate_p4_candidates(gene.dn_flank, p4_tail, p4_forbidden)
     # P2 anchors at the 3' end of cds_no_stop (potentially AT-rich); P3
     # anchors at the 5' end of dn_flank (potentially GC-rich). Both lack
     # offset windows, so apply tiered relaxation that keeps the 3' G/C clamp
