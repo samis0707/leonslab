@@ -232,6 +232,7 @@ def _render(result: DesignResult, output_path: Path) -> None:
 
     story = []
     _section_title_block(story, result, styles)
+    _section_warnings(story, result, styles)
     _section_konstrukt_ueberblick(story, result, styles)
     _section_primer_tabelle(story, result, styles)
     _section_pcr_conditions(story, result, styles)
@@ -266,6 +267,42 @@ def _section_title_block(story, result, styles):
         f"Primer design • PCR / Assembly protocol • {date.today().isoformat()}",
         styles["subtitle"],
     ))
+
+
+_WARN_BG  = colors.HexColor("#FFF4D6")
+_WARN_BAR = colors.HexColor("#C97A00")
+
+
+def _section_warnings(story, result, styles):
+    """Prominent warning banner when result.warnings is non-empty.
+
+    Used today for non-functional alleles (truncated lasR/lasB/lasI in some
+    isolates); the banner sits between the title and the construct overview
+    so the reader sees it before any sequence."""
+    if not result.warnings:
+        return
+    warn_style = ParagraphStyle(
+        "WarnBody", parent=styles["body"], fontName="DejaVu-Bold",
+        fontSize=9.0, leading=11.5, textColor=_WARN_BAR, spaceAfter=2,
+    )
+    warn_body = ParagraphStyle(
+        "WarnText", parent=styles["body"], fontSize=8.5, leading=11,
+        textColor=DARK_TEXT,
+    )
+    rows = [[Paragraph("⚠  WARNING", warn_style)]]
+    for w in result.warnings:
+        rows.append([Paragraph(w, warn_body)])
+    tbl = Table(rows, colWidths=[480])
+    tbl.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), _WARN_BG),
+        ("LINEBEFORE", (0, 0), (0, -1), 3, _WARN_BAR),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.append(tbl)
+    story.append(Spacer(1, 6))
 
 
 def _section_konstrukt_ueberblick(story, result, styles):

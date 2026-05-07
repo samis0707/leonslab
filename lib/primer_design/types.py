@@ -64,6 +64,16 @@ class GeneRecord:
     genome_start_1based: int
     genome_end_1based: int
     original_strand: Strand
+    functional: bool = True
+    """False if the allele is truncated / non-functional at the protein level
+    (premature stop, frameshift, missing start, etc.). The CDS sequence is then
+    a *reconstructed nominal* CDS based on the closest functional reference;
+    primer design still works (user may want to delete or complement the
+    truncated allele) but the output must surface this warning prominently."""
+
+    truncation_reason: str | None = None
+    """Free-text reason when ``functional`` is False
+    (e.g. ``"premature_stop@codon_47"``, ``"frameshift_at_nt_213"``)."""
 
 
 # ============================================================================
