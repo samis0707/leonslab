@@ -568,7 +568,7 @@ const stats = {
 
   /* RESULT -------------------------------------------------------------- */
   .pd-result {
-    max-width: 64rem;
+    width: min(calc(100% - 3rem), calc(64rem - 3rem));
     margin: 3rem auto 0;
     padding: 1.8rem;
     background: white;
@@ -577,7 +577,7 @@ const stats = {
     box-shadow: 0 1px 2px rgba(0,0,0,0.02), 0 24px 48px -32px rgba(0,0,0,0.10);
   }
   @media (min-width: 768px) {
-    .pd-result { margin-left: 1.5rem; margin-right: 1.5rem; padding: 2.2rem 2.4rem; }
+    .pd-result { padding: 2.2rem 2.4rem; }
   }
   .pd-result-head {
     display: flex;
