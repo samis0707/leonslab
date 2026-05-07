@@ -34,6 +34,8 @@ export const ui = {
     'cards.cartoons.desc': 'Mikrobiologie mit Augenzwinkern — eine Serie zusammenhängender Zeichnungen.',
     'cards.stickers.title': 'Sticker',
     'cards.stickers.desc': 'Designs, die ihren Weg auf Notebooks, Wände und Beton finden.',
+    'cards.primerDesign.title': 'Primer Design',
+    'cards.primerDesign.desc': 'In-Fusion-Primer-Sets für unsere klinische P. aeruginosa-Genombank — schnell und reproduzierbar.',
     'cards.labSolutions.title': 'Annealing Tool',
     'cards.labSolutions.desc': 'Mini-Tool: optimale gemeinsame Annealing-Temperatur für bis zu vier PCR-Primer.',
 
@@ -127,6 +129,8 @@ export const ui = {
     'cards.cartoons.desc': 'Microbiology with a wink — a series of connected drawings.',
     'cards.stickers.title': 'Stickers',
     'cards.stickers.desc': 'Designs that find their way onto laptops, walls and concrete.',
+    'cards.primerDesign.title': 'Primer Design',
+    'cards.primerDesign.desc': 'In-Fusion primer sets for our clinical P. aeruginosa genome databank — fast and reproducible.',
     'cards.labSolutions.title': 'Annealing Tool',
     'cards.labSolutions.desc': 'Mini tool: optimal common annealing temperature for up to four PCR primers.',
 
