@@ -25,6 +25,27 @@ if (fs.existsSync(genesDir)) {
 const SUPPORTED_TAGS = ['FLAG', '3xFLAG', 'His6', 'His8', 'HiBiT'];
 const IN_LOCUS_TAGS = ['FLAG', 'His6', 'His8'];   // ≤ 36 nt cassette
 
+// Mirrors lib/primer_design/config.py::RESTRICTION_SITES.
+// `calibrated` flags whether an empirical (vector, enzyme, application) tail
+// convention exists in data/primer_design/tail_conventions.json. Non-calibrated
+// enzymes use the generic site_destroyed fallback — primers should still be
+// correct but have not been validated against a working wet-lab primer set.
+const RESTRICTION_ENZYMES: { name: string; site: string; calibrated: boolean }[] = [
+  { name: 'HindIII', site: 'AAGCTT', calibrated: true  },
+  { name: 'EcoRI',   site: 'GAATTC', calibrated: false },
+  { name: 'BamHI',   site: 'GGATCC', calibrated: false },
+  { name: 'SalI',    site: 'GTCGAC', calibrated: false },
+  { name: 'XhoI',    site: 'CTCGAG', calibrated: false },
+  { name: 'KpnI',    site: 'GGTACC', calibrated: false },
+  { name: 'SacI',    site: 'GAGCTC', calibrated: false },
+  { name: 'SpeI',    site: 'ACTAGT', calibrated: false },
+  { name: 'XbaI',    site: 'TCTAGA', calibrated: false },
+  { name: 'ApaI',    site: 'GGGCCC', calibrated: false },
+  { name: 'ClaI',    site: 'ATCGAT', calibrated: false },
+  { name: 'EcoRV',   site: 'GATATC', calibrated: false },
+  { name: 'SmaI',    site: 'CCCGGG', calibrated: false },
+];
+
 // Stats for the hero strip
 const allIsolates = new Set<string>();
 for (const ids of Object.values(catalog)) ids.forEach((i) => allIsolates.add(i));
@@ -96,13 +117,13 @@ const stats = {
       <div class="pd-workflow" data-workflow="tag">
         <div class="pd-workflow-tag">Workflow 02</div>
         <h3>In-locus C-term tagging</h3>
-        <p>Native promoter retained. Cassette spans the junction. FLAG, His6, His8 supported.</p>
+        <p>Native promoter retained. Cassette spans the junction. Limited to tags ≤ 36 nt: <strong>FLAG, His6, His8</strong>. For 3×FLAG or HiBiT use Workflow 03.</p>
         <button type="button" class="pd-workflow-cta" data-action="tag">Use this workflow →</button>
       </div>
       <div class="pd-workflow" data-workflow="express">
         <div class="pd-workflow-tag">Workflow 03</div>
         <h3>Plasmid expression</h3>
-        <p>Constitutive expression from <code>pBBR1MCS-2</code> with fixed RBS. Optional N- or C-tag.</p>
+        <p>Constitutive expression from <code>pBBR1MCS-2</code> with fixed RBS. Optional N- or C-tag — all five tags available: FLAG, 3×FLAG, His6, His8, HiBiT.</p>
         <button type="button" class="pd-workflow-cta" data-action="express">Use this workflow →</button>
       </div>
     </section>
@@ -117,7 +138,8 @@ const stats = {
       <form id="pd-form" class="pd-form" autocomplete="off" novalidate
             data-catalog={JSON.stringify(catalog)}
             data-in-locus-tags={JSON.stringify(IN_LOCUS_TAGS)}
-            data-all-tags={JSON.stringify(SUPPORTED_TAGS)}>
+            data-all-tags={JSON.stringify(SUPPORTED_TAGS)}
+            data-enzymes={JSON.stringify(RESTRICTION_ENZYMES)}>
         <div class="pd-grid">
           <label class="pd-field">
             <span>Application</span>
@@ -143,8 +165,18 @@ const stats = {
           <label class="pd-field">
             <span>Enzyme</span>
             <select name="enzyme" id="pd-enzyme">
-              <option value="HindIII">HindIII</option>
+              <optgroup label="Calibrated (validated)">
+                {RESTRICTION_ENZYMES.filter(e => e.calibrated).map((e) => (
+                  <option value={e.name}>{e.name} ({e.site})</option>
+                ))}
+              </optgroup>
+              <optgroup label="Experimental (fallback tails)">
+                {RESTRICTION_ENZYMES.filter(e => !e.calibrated).map((e) => (
+                  <option value={e.name}>{e.name} ({e.site})</option>
+                ))}
+              </optgroup>
             </select>
+            <small class="pd-field-hint" id="pd-enzyme-hint"></small>
           </label>
 
           <label class="pd-field" id="pd-tag-field" hidden>
@@ -512,6 +544,18 @@ const stats = {
     outline: none;
     box-shadow: 0 0 0 3px rgba(12,94,59,0.15);
   }
+  .pd-field-hint {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+    font-size: 0.76rem;
+    color: var(--color-concrete-500);
+    line-height: 1.35;
+    min-height: 1.05rem;
+  }
+  .pd-field-hint.is-warn {
+    color: #8a6d24;
+  }
   .pd-form-foot {
     display: flex;
     align-items: center;
@@ -784,6 +828,9 @@ const stats = {
   const catalog: Catalog = JSON.parse(form.dataset.catalog ?? '{}');
   const inLocusTags: string[] = JSON.parse(form.dataset.inLocusTags ?? '[]');
   const allTags: string[] = JSON.parse(form.dataset.allTags ?? '[]');
+  type EnzymeMeta = { name: string; site: string; calibrated: boolean };
+  const enzymes: EnzymeMeta[] = JSON.parse(form.dataset.enzymes ?? '[]');
+  const enzymeByName = new Map(enzymes.map((e) => [e.name, e] as const));
 
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
   const actionEl   = $<HTMLSelectElement>('pd-action');
@@ -793,6 +840,8 @@ const stats = {
   const tagEl      = $<HTMLSelectElement>('pd-tag');
   const tagPosField= $<HTMLLabelElement>('pd-tag-position-field');
   const tagPosEl   = $<HTMLSelectElement>('pd-tag-position');
+  const enzymeEl   = $<HTMLSelectElement>('pd-enzyme');
+  const enzymeHint = $<HTMLElement>('pd-enzyme-hint');
   const submitBtn  = $<HTMLButtonElement>('pd-submit');
   const outputEl   = $<HTMLOutputElement>('pd-output');
   const formSection= $<HTMLElement>('pd-form-section');
@@ -840,10 +889,21 @@ const stats = {
     if (opts.includes(current)) tagEl.value = current;
   }
 
+  function refreshEnzymeHint(): void {
+    const meta = enzymeByName.get(enzymeEl.value);
+    if (!meta) { enzymeHint.textContent = ''; return; }
+    enzymeHint.textContent = meta.calibrated
+      ? 'Calibrated against empirical primer set.'
+      : 'Experimental — generic fallback tail rule, please verify before ordering.';
+    enzymeHint.classList.toggle('is-warn', !meta.calibrated);
+  }
+
   geneEl.addEventListener('change', refreshIsolates);
   actionEl.addEventListener('change', refreshTagFields);
+  enzymeEl.addEventListener('change', refreshEnzymeHint);
   refreshIsolates();
   refreshTagFields();
+  refreshEnzymeHint();
 
   // Workflow card → set action + scroll to form
   document.querySelectorAll<HTMLButtonElement>('.pd-workflow-cta').forEach((btn) => {
