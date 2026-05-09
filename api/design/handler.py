@@ -28,8 +28,10 @@ from primer_design.exceptions import (              # noqa: E402
     PrimerDesignError,
 )
 from primer_design.fasta_writer import write_fasta  # noqa: E402
+from primer_design.genbank_writer import write_genbank  # noqa: E402
 from primer_design.json_writer import to_json_string, write_manifest  # noqa: E402
 from primer_design.pdf_writer import render_pdf     # noqa: E402
+from primer_design.tags import TAGS as _TAG_LIBRARY  # noqa: E402
 from primer_design.types import DesignRequest      # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -107,6 +109,7 @@ def run_design(request: DesignRequest) -> dict:
 
     # Render artefacts
     fasta_str = write_fasta(result)
+    genbank_str = write_genbank(result)
     manifest = write_manifest(result)
 
     # PDF goes to /tmp, then base64-encoded inline
@@ -124,6 +127,7 @@ def run_design(request: DesignRequest) -> dict:
         "job_id": manifest["job_id"],
         "artefacts": {
             "fasta": base64.b64encode(fasta_str.encode("utf-8")).decode("ascii"),
+            "genbank": base64.b64encode(genbank_str.encode("utf-8")).decode("ascii"),
             "pdf": base64.b64encode(pdf_bytes).decode("ascii"),
             "json": manifest,
         },
@@ -142,7 +146,7 @@ def run_design(request: DesignRequest) -> dict:
 # ---------------------------------------------------------------------------
 
 _VALID_ACTIONS = ("delete", "tag", "express")
-_VALID_TAGS = (None, "FLAG", "3xFLAG", "His6", "His8", "HiBiT")
+_VALID_TAGS = (None, *sorted(_TAG_LIBRARY.keys()))
 _VALID_TAG_POSITIONS = (None, "N", "C")
 _VALID_POLYMERASES = ("B7", "Phusion", "Q5", "Taq")
 

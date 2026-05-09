@@ -65,6 +65,57 @@ TAGS: dict[str, Tag] = {
         in_locus_ok=False,                                                # cassette = 45 nt
         cassette_nt=_cassette_nt("GTGAGCGGCTGGCGGCTGTTCAAGAAGATCAGC"),
     ),
+    # ------------------------------------------------------------------
+    # Epitope tags. DNA codon-optimized for *P. aeruginosa* high-frequency
+    # codons (PAO1 reference, GC ~66%): see data/primer_design/codon_table_paeruginosa.json.
+    # Only Strep-II (8 aa) fits the 36 nt in-locus cassette cap; all others
+    # are plasmid-expression only.
+    # ------------------------------------------------------------------
+    "HA": Tag(
+        name="HA",
+        dna="TACCCGTACGACGTGCCGGACTACGCC",                                # YPYDVPDYA, 27 nt
+        protein="YPYDVPDYA",
+        n_term_ok=True,
+        c_term_ok=True,
+        in_locus_ok=False,                                                # cassette = 39 nt
+        cassette_nt=_cassette_nt("TACCCGTACGACGTGCCGGACTACGCC"),
+    ),
+    "c-Myc": Tag(
+        name="c-Myc",
+        dna="GAGCAGAAGCTGATCAGCGAGGAGGACCTG",                            # EQKLISEEDL, 30 nt
+        protein="EQKLISEEDL",
+        n_term_ok=True,
+        c_term_ok=True,
+        in_locus_ok=False,                                                # cassette = 42 nt
+        cassette_nt=_cassette_nt("GAGCAGAAGCTGATCAGCGAGGAGGACCTG"),
+    ),
+    "V5": Tag(
+        name="V5",
+        dna="GGCAAGCCGATCCCGAACCCGCTGCTGGGCCTGGACAGCACC",                # GKPIPNPLLGLDST, 42 nt
+        protein="GKPIPNPLLGLDST",
+        n_term_ok=True,
+        c_term_ok=True,
+        in_locus_ok=False,                                                # cassette = 54 nt
+        cassette_nt=_cassette_nt("GGCAAGCCGATCCCGAACCCGCTGCTGGGCCTGGACAGCACC"),
+    ),
+    "T7": Tag(
+        name="T7",
+        dna="ATGGCCAGCATGACCGGCGGCCAGCAGATGGGC",                          # MASMTGGQQMG, 33 nt
+        protein="MASMTGGQQMG",
+        n_term_ok=True,
+        c_term_ok=True,
+        in_locus_ok=False,                                                # cassette = 45 nt
+        cassette_nt=_cassette_nt("ATGGCCAGCATGACCGGCGGCCAGCAGATGGGC"),
+    ),
+    "Strep-II": Tag(
+        name="Strep-II",
+        dna="TGGAGCCACCCGCAGTTCGAGAAG",                                   # WSHPQFEK, 24 nt
+        protein="WSHPQFEK",
+        n_term_ok=True,
+        c_term_ok=True,
+        in_locus_ok=True,                                                 # cassette = 36 nt
+        cassette_nt=_cassette_nt("TGGAGCCACCCGCAGTTCGAGAAG"),
+    ),
 }
 
 

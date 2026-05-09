@@ -22,8 +22,8 @@ if (fs.existsSync(genesDir)) {
   }
 }
 
-const SUPPORTED_TAGS = ['FLAG', '3xFLAG', 'His6', 'His8', 'HiBiT'];
-const IN_LOCUS_TAGS = ['FLAG', 'His6', 'His8'];   // ≤ 36 nt cassette
+const SUPPORTED_TAGS = ['FLAG', '3xFLAG', 'His6', 'His8', 'HiBiT', 'HA', 'c-Myc', 'V5', 'T7', 'Strep-II'];
+const IN_LOCUS_TAGS = ['FLAG', 'His6', 'His8', 'Strep-II'];   // ≤ 36 nt cassette
 
 // Mirrors lib/primer_design/config.py::RESTRICTION_SITES.
 // `calibrated` flags whether an empirical (vector, enzyme, application) tail
@@ -117,13 +117,13 @@ const stats = {
       <div class="pd-workflow" data-workflow="tag">
         <div class="pd-workflow-tag">Workflow 02</div>
         <h3>In-locus C-term tagging</h3>
-        <p>Native promoter retained. Cassette spans the junction. Limited to tags ≤ 36 nt: <strong>FLAG, His6, His8</strong>. For 3×FLAG or HiBiT use Workflow 03.</p>
+        <p>Native promoter retained. Cassette spans the junction. Limited to tags ≤ 36 nt: <strong>FLAG, His6, His8, Strep-II</strong>. For larger tags (3×FLAG, HiBiT, HA, c-Myc, V5, T7) use Workflow 03.</p>
         <button type="button" class="pd-workflow-cta" data-action="tag">Use this workflow →</button>
       </div>
       <div class="pd-workflow" data-workflow="express">
         <div class="pd-workflow-tag">Workflow 03</div>
         <h3>Plasmid expression</h3>
-        <p>Constitutive expression from <code>pBBR1MCS-2</code> with fixed RBS. Optional N- or C-tag — all five tags available: FLAG, 3×FLAG, His6, His8, HiBiT.</p>
+        <p>Constitutive expression from <code>pBBR1MCS-2</code> with fixed RBS. Optional N- or C-tag — ten tags available: FLAG, 3×FLAG, His6, His8, HiBiT, HA, c-Myc, V5, T7, Strep-II.</p>
         <button type="button" class="pd-workflow-cta" data-action="express">Use this workflow →</button>
       </div>
     </section>
@@ -217,6 +217,7 @@ const stats = {
         <div class="pd-result-actions">
           <a id="pd-dl-pdf" download class="pd-link pd-link-primary" hidden>Download PDF</a>
           <a id="pd-dl-fasta" download class="pd-link" hidden>FASTA</a>
+          <a id="pd-dl-gbk" download class="pd-link" hidden>GenBank</a>
           <a id="pd-dl-json" download class="pd-link" hidden>JSON</a>
         </div>
       </header>
@@ -818,6 +819,7 @@ const stats = {
     };
     artefacts?: {
       fasta: string;
+      genbank?: string;
       pdf: string;
       json: Record<string, unknown>;
     };
@@ -851,6 +853,7 @@ const stats = {
   const tableEl    = $<HTMLTableElement>('pd-primers');
   const dlPdf      = $<HTMLAnchorElement>('pd-dl-pdf');
   const dlFasta    = $<HTMLAnchorElement>('pd-dl-fasta');
+  const dlGbk      = $<HTMLAnchorElement>('pd-dl-gbk');
   const dlJson     = $<HTMLAnchorElement>('pd-dl-json');
 
   // --- Cascading dropdowns -------------------------------------------------
@@ -1009,6 +1012,11 @@ const stats = {
 
     setDownload(dlPdf, `${constructName}.pdf`, 'application/pdf', data.artefacts.pdf, true);
     setDownload(dlFasta, `${constructName}.fasta`, 'text/x-fasta', data.artefacts.fasta, true);
+    if (data.artefacts.genbank) {
+      setDownload(dlGbk, `${constructName}.gb`, 'chemical/seq-na-genbank', data.artefacts.genbank, true);
+    } else {
+      dlGbk.hidden = true;
+    }
     const jsonStr = JSON.stringify(data.artefacts.json, null, 2);
     dlJson.href = `data:application/json;charset=utf-8,${encodeURIComponent(jsonStr)}`;
     dlJson.download = `${constructName}.json`;

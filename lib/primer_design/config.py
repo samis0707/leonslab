@@ -129,7 +129,7 @@ OFFTARGET_PRODUCT_SIZE_MAX_BP: int = 6000
 # Gene catalog (extend by adding to this set + adding gene FASTA in R2)
 # ============================================================================
 
-SUPPORTED_GENES: tuple[str, ...] = ("lasB", "lasR", "lasI")
+SUPPORTED_GENES: tuple[str, ...] = ("lasB", "lasR", "lasI", "rhlR", "aprA")
 
 # ============================================================================
 # Vector catalog
