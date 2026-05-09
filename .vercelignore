@@ -1,0 +1,22 @@
+# Reference artefacts (kept locally for development; PA14/PAO1 genomes live on R2)
+*.gbk
+*.fna
+*.fasta
+!data/primer_design/genes/**/*.fasta
+
+# Dev / docs / examples — never needed at runtime
+examples/
+tests/
+docs/
+scripts/
+*.md
+!README.md
+vorlage*.pdf
+pyproject.toml
+requirements*.txt
+!requirements.txt
+
+# Astro / Node build artefacts (Vercel rebuilds these)
+node_modules/
+dist/
+.astro/
