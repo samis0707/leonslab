@@ -653,25 +653,54 @@ def search_expression_primers(
 ) -> tuple[ExpressionPrimerSet, list[ExpressionPrimerSet]]:
     """2-primer search for plasmid expression (skill_v2 §6.2).
 
-    P1 = vector_p1_tail + RBS + spacer + body anchored at ATG (start of coding_seq).
-    P2 = vector_p2_tail + body = RC of last L nt of coding_seq (including stop).
+    PCR template is always **native genomic DNA** of the requested isolate —
+    it never contains a tag. Any tag must therefore be introduced through the
+    primer overhangs, not annealed to the genome:
+
+        N-term tag → P1 tail = vector_p1_tail + RBS + spacer + ATG + tag.dna + GGS
+                     P1 body anneals to cds_seq[3:]  (codon 2 onward)
+        C-term tag → P2 tail = vector_p2_tail + RC(GGS + tag.dna + new_stop)
+                     P2 body anneals to RC(cds_seq[:-3])  (last native codon before stop)
+        untagged   → P1 tail = vector_p1_tail + RBS + spacer;  P2 tail = vector_p2_tail
+                     bodies anneal to full cds_seq.
 
     Choose the (P1, P2) pair that minimizes score = Tm spread + GC penalty.
     """
-    from .tags import build_plasmid_fusion_cds  # local import to avoid cycle
+    from .tags import build_plasmid_fusion_cds, LINKER_GGS  # local import to avoid cycle
+    from .config import NEW_STOP_DEFAULT
 
     p1_vector_tail, p2_vector_tail = derive_tails(vector, convention.enzyme, "expression")
-    p1_tail = p1_vector_tail + cfg.RBS_TAIL_PART
-    p2_tail = p2_vector_tail
 
     coding_seq = build_plasmid_fusion_cds(gene.cds_seq, tag, tag_position)
 
-    # Both expression primers are anchor-fixed (P1 at ATG, P2 at stop). Use
-    # the tiered relaxation: stay strict if possible, drop the 4-homopolymer
-    # rule first, then GC range, then Tm range, and only as a last resort
-    # the 3' G/C clamp.
-    p1_pool, p1_tier = _enumerate_anchored(coding_seq, end="5'")
-    p2_pool, p2_tier = _enumerate_anchored(coding_seq, end="3'")
+    # Decide where bodies anneal (native template) and what extra DNA is folded
+    # into each tail to encode the tag cassette during the PCR.
+    if tag is None:
+        native_template = gene.cds_seq
+        p1_tag_overhang = ""
+        p2_tag_overhang_rc = ""
+    elif tag_position == "N":
+        native_template = gene.cds_seq[3:]                       # drop native ATG
+        p1_tag_overhang = "ATG" + tag.dna + LINKER_GGS           # 5'→3' coding orientation
+        p2_tag_overhang_rc = ""
+    elif tag_position == "C":
+        native_template = gene.cds_seq[:-3]                      # drop native stop
+        p1_tag_overhang = ""
+        p2_tag_overhang_rc = reverse_complement(
+            LINKER_GGS + tag.dna + NEW_STOP_DEFAULT
+        )
+    else:
+        raise ValueError(f"Unknown tag_position {tag_position!r}")
+
+    p1_tail = p1_vector_tail + cfg.RBS_TAIL_PART + p1_tag_overhang
+    p2_tail = p2_vector_tail + p2_tag_overhang_rc
+
+    # Both expression primers are anchor-fixed (P1 at ATG of native_template,
+    # P2 at the 3' end of native_template). Tiered relaxation: stay strict if
+    # possible, drop the 4-homopolymer rule first, then GC range, then Tm
+    # range, and only as a last resort the 3' G/C clamp.
+    p1_pool, p1_tier = _enumerate_anchored(native_template, end="5'")
+    p2_pool, p2_tier = _enumerate_anchored(native_template, end="3'")
     if not p1_pool:
         raise NoCandidates(
             message=f"P1 (expression): no body at ATG of {gene.gene}/{gene.isolate_id} "
@@ -711,6 +740,7 @@ def search_expression_primers(
                 p1=_make_primer("P1", "INSERT_Fwd", p1_tail, p1c, convention.name),
                 p2=_make_primer("P2", "INSERT_Rev", p2_tail, p2c, convention.name),
                 coding_seq=coding_seq,
+                native_anneal_segment=native_template,
                 tag=tag,
                 tag_position=tag_position,
                 score=score,

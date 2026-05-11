@@ -561,32 +561,62 @@ For the forward primer (P1 in expression mode), full tail = `vector_p1_tail (15 
 
 ### 6.2 Primer construction — expression
 
+**Hard invariant (D6.2.v3, 2026-05-11):** the PCR template is always **native
+genomic DNA** of the requested isolate. It never contains a tag. Tag-encoding
+nucleotides must therefore ride along inside the primer 5' overhangs; only the
+body anneals to the genome. Earlier versions of this section anchored the body
+inside the engineered tag cassette, which collapsed the genome-annealing
+portion to ~0 nt and would not have primed at all on the bench.
+
 ```python
 def search_expression_primers(gene, vector, convention, tag, tag_position, config):
     p1_vector_tail, p2_vector_tail = derive_tails(vector, convention.enzyme, "expression")
 
-    # CDS variants with tag insertion
+    # Final ORF (used for reporting, verification, plasmid assembly).
     if tag is None:
-        coding_seq = gene.cds_seq                 # ATG...stop
+        coding_seq = gene.cds_seq
     elif tag_position == "N":
         if not tag.n_term_ok:
             raise InvalidTagPosition(f"{tag.name} cannot be N-terminal")
-        coding_seq = "ATG" + tag.dna + LINKER_GGS + gene.cds_seq[3:]    # replace native ATG
+        coding_seq = "ATG" + tag.dna + LINKER_GGS + gene.cds_seq[3:]
     elif tag_position == "C":
         if not tag.c_term_ok:
             raise InvalidTagPosition(f"{tag.name} cannot be C-terminal")
-        coding_seq = gene.cds_seq[:-3] + LINKER_GGS + tag.dna + "TAA"   # replace native stop
+        coding_seq = gene.cds_seq[:-3] + LINKER_GGS + tag.dna + "TAA"
 
-    # P1 (forward): tail = vector_tail + RBS + spacer; body = first L nt of coding_seq starting at ATG
-    p1_tail = p1_vector_tail + RBS_TAIL_PART
-    p1_pool = gen_body_candidates_at_5end(coding_seq, p1_tail, config)
+    # What the primer bodies actually anneal to (native genomic DNA), and what
+    # extra non-templated DNA we tack onto each tail to introduce the tag.
+    if tag is None:
+        native_template = gene.cds_seq
+        p1_tag_overhang = ""
+        p2_tag_overhang_rc = ""
+    elif tag_position == "N":
+        native_template = gene.cds_seq[3:]                                # drop native ATG
+        p1_tag_overhang = "ATG" + tag.dna + LINKER_GGS                    # 5'→3' coding orientation
+        p2_tag_overhang_rc = ""
+    elif tag_position == "C":
+        native_template = gene.cds_seq[:-3]                               # drop native stop
+        p1_tag_overhang = ""
+        p2_tag_overhang_rc = rc(LINKER_GGS + tag.dna + "TAA")
 
-    # P2 (reverse): tail = vector_tail; body = RC of last L nt of coding_seq (including stop)
-    p2_pool = gen_body_candidates_at_3end(coding_seq, p2_vector_tail, config)
+    p1_tail = p1_vector_tail + RBS_TAIL_PART + p1_tag_overhang
+    p2_tail = p2_vector_tail + p2_tag_overhang_rc
 
-    # Search: minimize Tm spread
+    p1_pool = gen_body_candidates_at_5end(native_template, p1_tail, config)
+    p2_pool = gen_body_candidates_at_3end(native_template, p2_tail, config)
+
+    # Search: minimize Tm spread. Amplicon assembled downstream as
+    #     amplicon = p1.tail + native_template + rc(p2.tail)
+    # which collapses to p1_vector_tail + RBS + spacer + coding_seq + rc(p2_vector_tail).
     return select_best_pair(p1_pool, p2_pool, config)
 ```
+
+For a C-terminal tag the P2 tail thus has three regions, 5'→3':
+`vector_tail (15) | rc(new_stop) (3) | rc(tag_dna) (n) | rc(GGS_linker) (9)`,
+followed by the native-annealing body. The tag overhang reverse-complements
+the GGS linker into a GC-rich stretch immediately upstream of the body, so
+the relaxed `gc5 ≤ 4` filter tier is commonly invoked on the reverse primer
+of C-term-tagged designs — this is expected and acceptable.
 
 ### 6.3 Worked example: PA14 lasR pBBR1MCS2 HindIII (must reproduce empirical #1612 / #1608)
 
