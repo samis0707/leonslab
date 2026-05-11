@@ -176,6 +176,11 @@ class ExpressionPrimerSet:
     p1: Primer
     p2: Primer
     coding_seq: str        # full insert CDS with optional tag, 5'→3', starts ATG, ends stop
+    # Stretch of native CDS that is amplified from genomic template. Equals
+    # ``coding_seq`` for the untagged case; for tagged designs the tag-encoding
+    # nucleotides are carried in the primer overhangs (P1 tail for N-term,
+    # P2 tail for C-term) rather than primed off the genome.
+    native_anneal_segment: str
     tag: Tag | None
     tag_position: TagPosition | None
     score: float

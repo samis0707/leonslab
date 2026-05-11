@@ -69,11 +69,12 @@ def run(
     chosen = amplicon = chosen_off = None
     last_violations: list = []
     for cand in candidates:
-        # Full PCR amplicon: F.tail + coding_seq + RC(R.tail). What the bench
-        # biologist sees on a gel and what the elongation timer scales by;
-        # used both for plasmid assembly and as the reported insert length
-        # so numbers stay consistent across UI / PDF / JSON.
-        amp = cand.p1.tail + cand.coding_seq + reverse_complement(cand.p2.tail)
+        # Full PCR amplicon: P1.tail + native_anneal_segment + RC(P2.tail).
+        # The template is native genomic DNA (no tag), so the tag-encoding
+        # nucleotides ride along inside the primer overhangs; reconstituting
+        # the amplicon from primers + native template gives the same final
+        # insert structure the assembly is supposed to produce.
+        amp = cand.p1.tail + cand.native_anneal_segment + reverse_complement(cand.p2.tail)
         expected_products = _expected_products_for_expression(amp)
         off_target = primer_designer.off_target_scan(
             [cand.p1, cand.p2], genome_bytes, expected_products,
