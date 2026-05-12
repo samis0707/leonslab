@@ -5,10 +5,11 @@
 !data/primer_design/genes/**/*.fasta
 
 # Dev / docs / examples — never needed at runtime
-examples/
-tests/
-docs/
-scripts/
+# (anchored to repo root so public/docs/ stays deployable)
+/examples/
+/tests/
+/docs/
+/scripts/
 *.md
 !README.md
 vorlage*.pdf
