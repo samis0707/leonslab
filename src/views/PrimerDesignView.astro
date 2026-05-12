@@ -102,6 +102,17 @@ const stats = {
           <li class="pd-stats-sep" aria-hidden="true"></li>
           <li><strong>{stats.workflows}</strong><span>workflows</span></li>
         </ul>
+
+        <a
+          class="pd-explainer"
+          href="/docs/primer_design/Primer-design-tool.pdf"
+          download="Primer-design-tool.pdf"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M7 1.5v8M3.5 6L7 9.5 10.5 6M2 12h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>You wanna know how it works?</span>
+        </a>
       </div>
       <div class="pd-hero-bg" aria-hidden="true"></div>
     </section>
@@ -414,6 +425,32 @@ const stats = {
     width: 1px;
     background: var(--color-concrete-200);
     flex-shrink: 0;
+  }
+
+  .pd-explainer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    margin-left: 1rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--color-concrete-700);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--color-concrete-300);
+    padding-bottom: 0.15rem;
+    transition: color 180ms ease, border-color 180ms ease;
+  }
+  .pd-explainer:hover {
+    color: var(--color-park-green);
+    border-bottom-color: var(--color-park-green);
+  }
+  .pd-explainer svg { flex-shrink: 0; }
+  @media (max-width: 767px) {
+    .pd-explainer {
+      margin-left: 0;
+      display: flex;
+    }
   }
 
   /* WORKFLOW CARDS ------------------------------------------------------ */
