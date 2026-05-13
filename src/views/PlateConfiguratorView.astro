@@ -794,8 +794,7 @@ const i18n = {
       const src = getWell(focusId);
       selection.forEach((id) => {
         if (id === focusId) return;
-        const cur = getWell(id);
-        setWell(id, { label: cur.label, segments: src.segments.map(s => ({ color: s.color })) });
+        setWell(id, { label: src.label, segments: src.segments.map(s => ({ color: s.color })) });
       });
       saveFormat();
       renderPlate();
