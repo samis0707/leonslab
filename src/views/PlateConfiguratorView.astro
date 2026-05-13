@@ -13,6 +13,9 @@ const i18n = {
   format96: t('plate.format.96'),
   format48: t('plate.format.48'),
   format24: t('plate.format.24'),
+  labelsHeading: t('plate.labels.heading'),
+  labelsOn: t('plate.labels.on'),
+  labelsOff: t('plate.labels.off'),
   colorsHeading: t('plate.colors.heading'),
   colorsNone: t('plate.colors.none'),
   selectionHint: t('plate.selection.hint'),
@@ -48,6 +51,14 @@ const i18n = {
           <button type="button" class="tb-seg is-active" data-format="96" role="radio" aria-checked="true">{i18n.format96}</button>
           <button type="button" class="tb-seg" data-format="48" role="radio" aria-checked="false">{i18n.format48}</button>
           <button type="button" class="tb-seg" data-format="24" role="radio" aria-checked="false">{i18n.format24}</button>
+        </div>
+      </div>
+
+      <div class="tb-group">
+        <span class="tb-label">{i18n.labelsHeading}</span>
+        <div class="tb-segmented" role="radiogroup" aria-label={i18n.labelsHeading}>
+          <button type="button" class="tb-seg is-active" data-labels="on" role="radio" aria-checked="true">{i18n.labelsOn}</button>
+          <button type="button" class="tb-seg" data-labels="off" role="radio" aria-checked="false">{i18n.labelsOff}</button>
         </div>
       </div>
 
@@ -476,9 +487,16 @@ const i18n = {
     const inspectorClear = root.querySelector('[data-inspector-clear]') as HTMLButtonElement;
 
     let format: Format = '96';
+    let labelsOn = true;
     let wells: Record<string, Well> = {};
     let selection: Set<string> = new Set();
     let primary: string | null = null; // last clicked
+
+    const LABELS_STORAGE_KEY = 'leonslab.plate.labelsOn';
+    try {
+      const stored = localStorage.getItem(LABELS_STORAGE_KEY);
+      if (stored !== null) labelsOn = stored === '1';
+    } catch {}
 
     // ---------- Persistence ----------
     const storageKey = (f: Format) => `leonslab.plate.${f}`;
@@ -497,7 +515,7 @@ const i18n = {
     // ---------- Helpers ----------
     const rowLetter = (r: number) => String.fromCharCode(65 + r);
     const wellId = (r: number, c: number) => `${rowLetter(r)}${c + 1}`;
-    function defaultLabel(id: string) { return id; }
+    function defaultLabel(id: string) { return labelsOn ? id : ''; }
     function getWell(id: string): Well {
       return wells[id] || { label: defaultLabel(id), segments: [] };
     }
@@ -961,6 +979,28 @@ const i18n = {
           x.classList.toggle('is-active', active);
           x.setAttribute('aria-checked', active ? 'true' : 'false');
         });
+        renderPlate();
+        renderInspector();
+      });
+    });
+
+    // ---------- Labels toggle ----------
+    const labelBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-labels]'));
+    function syncLabelBtns() {
+      labelBtns.forEach((b) => {
+        const active = (b.dataset.labels === 'on') === labelsOn;
+        b.classList.toggle('is-active', active);
+        b.setAttribute('aria-checked', active ? 'true' : 'false');
+      });
+    }
+    syncLabelBtns();
+    labelBtns.forEach((b) => {
+      b.addEventListener('click', () => {
+        const next = b.dataset.labels === 'on';
+        if (next === labelsOn) return;
+        labelsOn = next;
+        try { localStorage.setItem(LABELS_STORAGE_KEY, labelsOn ? '1' : '0'); } catch {}
+        syncLabelBtns();
         renderPlate();
         renderInspector();
       });
