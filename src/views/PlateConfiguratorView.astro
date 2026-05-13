@@ -35,6 +35,7 @@ const i18n = {
   printScaleHint: t('plate.print.scaleHint'),
   printCalibration: t('plate.print.calibration'),
   printCalibrationUnit: t('plate.print.calibrationUnit'),
+  printLegend: t('plate.print.legend'),
 };
 ---
 <BaseLayout title={title} description={subtitle}>
@@ -113,6 +114,11 @@ const i18n = {
           </div>
         </div>
       </aside>
+    </div>
+
+    <div class="plate-legend" data-legend aria-hidden="true">
+      <p class="plate-legend-title">{i18n.printLegend}</p>
+      <ul class="plate-legend-list" data-legend-list></ul>
     </div>
 
     <div class="plate-calibration" aria-hidden="true">
@@ -249,13 +255,51 @@ const i18n = {
     margin: 0 0 1rem;
   }
 
-  /* Calibration bar — only shown on print output. */
+  /* Calibration bar + color legend — only shown on print output. */
   .plate-calibration {
     display: none;
     flex-direction: column;
     gap: 1mm;
     align-items: flex-start;
     margin-top: 8mm;
+  }
+  .plate-legend {
+    display: none;
+    flex-direction: column;
+    gap: 2mm;
+    margin-top: 8mm;
+  }
+  .plate-legend-title {
+    margin: 0;
+    font-size: 10pt;
+    font-weight: 600;
+    color: #000;
+  }
+  .plate-legend-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3mm;
+  }
+  .plate-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 3mm;
+  }
+  .plate-legend-swatch {
+    width: 6mm;
+    height: 6mm;
+    border-radius: 50%;
+    border: 0.3mm solid #555;
+    flex: none;
+  }
+  .plate-legend-line {
+    flex: 1;
+    max-width: 80mm;
+    height: 0;
+    border-bottom: 0.3mm solid #000;
   }
   .plate-calibration-label {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -488,6 +532,8 @@ const i18n = {
     }
     .well-group.is-selected .well-outline { display: none !important; }
     .plate-calibration { display: flex !important; }
+    .plate-legend:not(:empty) { display: flex !important; }
+    .plate-legend[hidden] { display: none !important; }
   }
 </style>
 
@@ -544,6 +590,8 @@ const i18n = {
   if (root) {
     const i18n = JSON.parse(root.dataset.i18n || '{}');
     const wrap = root.querySelector('[data-plate-wrap]') as HTMLElement;
+    const legend = root.querySelector('[data-legend]') as HTMLElement;
+    const legendList = root.querySelector('[data-legend-list]') as HTMLElement;
     const formatBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-format]'));
     const inspector = root.querySelector('[data-inspector]') as HTMLElement;
     const inspectorEmpty = root.querySelector('[data-inspector-empty]') as HTMLElement;
@@ -587,6 +635,44 @@ const i18n = {
       } else {
         wells[id] = w;
       }
+    }
+
+    // ---------- Legend (print-only) ----------
+    function renderLegend() {
+      // Collect unique colors in the order they first appear on the plate
+      // (row-major, segment-order within a well).
+      const seen = new Set<string>();
+      const colors: string[] = [];
+      const g = GEOMS[format];
+      for (let r = 0; r < g.rows; r++) {
+        for (let c = 0; c < g.cols; c++) {
+          const w = wells[wellId(r, c)];
+          if (!w) continue;
+          for (const seg of w.segments) {
+            if (!seen.has(seg.color)) {
+              seen.add(seg.color);
+              colors.push(seg.color);
+            }
+          }
+        }
+      }
+      legendList.innerHTML = '';
+      if (colors.length === 0) {
+        legend.hidden = true;
+        return;
+      }
+      legend.hidden = false;
+      colors.forEach((color) => {
+        const li = document.createElement('li');
+        li.className = 'plate-legend-row';
+        const sw = document.createElement('span');
+        sw.className = 'plate-legend-swatch';
+        sw.style.background = color;
+        const line = document.createElement('span');
+        line.className = 'plate-legend-line';
+        li.append(sw, line);
+        legendList.appendChild(li);
+      });
     }
 
     // ---------- Plate rendering ----------
@@ -757,6 +843,7 @@ const i18n = {
 
       wrap.innerHTML = '';
       wrap.appendChild(svg);
+      renderLegend();
 
       // Set CSS vars for print scaling (true-size mm)
       wrap.style.setProperty('--plate-print-w', `${g.plateW}mm`);

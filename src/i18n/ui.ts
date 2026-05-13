@@ -127,6 +127,7 @@ export const ui = {
     'plate.print.scaleHint': 'Im Druckdialog Skalierung auf 100 % bzw. „Tatsächliche Größe" setzen — nicht „An Seite anpassen".',
     'plate.print.calibration': 'Kalibrierbalken: misst dieser Strich auf dem Ausdruck exakt 50 mm, stimmen auch die Wells maßstabsgetreu.',
     'plate.print.calibrationUnit': '50 mm',
+    'plate.print.legend': 'Legende',
 
     'page.park.title': 'Pseudomonas Park',
     'page.park.subtitle': 'Der Creative Space.',
@@ -253,6 +254,7 @@ export const ui = {
     'plate.print.scaleHint': 'Set the print dialog scaling to 100% / "Actual size" — not "Fit to page".',
     'plate.print.calibration': 'Calibration bar: if this line measures exactly 50 mm on paper, the plate prints to scale.',
     'plate.print.calibrationUnit': '50 mm',
+    'plate.print.legend': 'Legend',
 
     'page.park.title': 'Pseudomonas Park',
     'page.park.subtitle': 'The creative space.',
