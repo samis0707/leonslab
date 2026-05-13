@@ -910,6 +910,7 @@ const i18n = {
       svg.setAttribute('xmlns', svgNS);
       svg.setAttribute('role', 'application');
       svg.setAttribute('aria-label', 'Well plate');
+      svg.setAttribute('draggable', 'false');
 
       // Plate frame
       const frame = document.createElementNS(svgNS, 'rect');
@@ -1257,7 +1258,10 @@ const i18n = {
     wrap.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       if ((e.target as Element).closest('[data-header-col],[data-header-row]')) return;
-      e.preventDefault();
+      // NOTE: do NOT preventDefault here — Chrome cancels the subsequent
+      // click event if pointerdown's default is prevented, which breaks
+      // single-well selection. The browser's native image-drag on the SVG
+      // is suppressed via draggable="false" + CSS user-drag: none.
       const rect = wrap.getBoundingClientRect();
       dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       dragAdditive = e.shiftKey;
@@ -1277,6 +1281,7 @@ const i18n = {
       if (!dragging && Math.hypot(dx, dy) < 5) return;
       dragging = true;
       suppressClick = true;
+      e.preventDefault();
 
       // Marquee
       if (!marquee) {
