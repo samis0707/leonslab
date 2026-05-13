@@ -124,6 +124,9 @@ export const ui = {
     'plate.action.print': 'Drucken / PDF',
     'plate.action.resetLabels': 'Beschriftungen zurücksetzen',
     'plate.confirm.reset': 'Wirklich alle Wells zurücksetzen?',
+    'plate.print.scaleHint': 'Im Druckdialog Skalierung auf 100 % bzw. „Tatsächliche Größe" setzen — nicht „An Seite anpassen".',
+    'plate.print.calibration': 'Kalibrierbalken: misst dieser Strich auf dem Ausdruck exakt 50 mm, stimmen auch die Wells maßstabsgetreu.',
+    'plate.print.calibrationUnit': '50 mm',
 
     'page.park.title': 'Pseudomonas Park',
     'page.park.subtitle': 'Der Creative Space.',
@@ -247,6 +250,9 @@ export const ui = {
     'plate.action.print': 'Print / PDF',
     'plate.action.resetLabels': 'Reset labels',
     'plate.confirm.reset': 'Really reset all wells?',
+    'plate.print.scaleHint': 'Set the print dialog scaling to 100% / "Actual size" — not "Fit to page".',
+    'plate.print.calibration': 'Calibration bar: if this line measures exactly 50 mm on paper, the plate prints to scale.',
+    'plate.print.calibrationUnit': '50 mm',
 
     'page.park.title': 'Pseudomonas Park',
     'page.park.subtitle': 'The creative space.',

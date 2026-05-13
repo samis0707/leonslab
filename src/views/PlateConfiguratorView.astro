@@ -32,6 +32,9 @@ const i18n = {
   actionPrint: t('plate.action.print'),
   actionResetLabels: t('plate.action.resetLabels'),
   confirmReset: t('plate.confirm.reset'),
+  printScaleHint: t('plate.print.scaleHint'),
+  printCalibration: t('plate.print.calibration'),
+  printCalibrationUnit: t('plate.print.calibrationUnit'),
 };
 ---
 <BaseLayout title={title} description={subtitle}>
@@ -70,10 +73,26 @@ const i18n = {
     </div>
 
     <p class="plate-hint no-print">{i18n.selectionHint}</p>
+    <p class="plate-print-hint no-print" role="note">{i18n.printScaleHint}</p>
 
     <div class="plate-stage">
       <div class="plate-svg-wrap" data-plate-wrap>
         <!-- SVG injected by script -->
+      </div>
+
+      <div class="plate-calibration print-only" aria-hidden="true">
+        <svg class="plate-calibration-svg" width="50mm" height="6mm" viewBox="0 0 50 6" xmlns="http://www.w3.org/2000/svg">
+          <line x1="0" y1="3" x2="50" y2="3" stroke="#000" stroke-width="0.3" />
+          <line x1="0"  y1="0" x2="0"  y2="6" stroke="#000" stroke-width="0.3" />
+          <line x1="10" y1="1.5" x2="10" y2="4.5" stroke="#000" stroke-width="0.2" />
+          <line x1="20" y1="1.5" x2="20" y2="4.5" stroke="#000" stroke-width="0.2" />
+          <line x1="25" y1="0"  x2="25" y2="6"  stroke="#000" stroke-width="0.3" />
+          <line x1="30" y1="1.5" x2="30" y2="4.5" stroke="#000" stroke-width="0.2" />
+          <line x1="40" y1="1.5" x2="40" y2="4.5" stroke="#000" stroke-width="0.2" />
+          <line x1="50" y1="0"  x2="50" y2="6"  stroke="#000" stroke-width="0.3" />
+        </svg>
+        <span class="plate-calibration-label">{i18n.printCalibrationUnit}</span>
+        <span class="plate-calibration-note">{i18n.printCalibration}</span>
       </div>
 
       <aside class="plate-inspector no-print" data-inspector aria-live="polite">
@@ -218,7 +237,36 @@ const i18n = {
   .plate-hint {
     font-size: 0.78rem;
     color: var(--color-concrete-500);
+    margin: 0 0 0.4rem;
+  }
+  .plate-print-hint {
+    font-size: 0.78rem;
+    color: #8a6d24;
+    background: #fdf6e3;
+    border: 1px solid #ecd9a8;
+    border-radius: 6px;
+    padding: 0.45rem 0.7rem;
     margin: 0 0 1rem;
+  }
+
+  /* Calibration bar — only shown on print output. */
+  .print-only { display: none; }
+  .plate-calibration {
+    display: flex;
+    flex-direction: column;
+    gap: 1mm;
+    align-items: flex-start;
+    margin-top: 8mm;
+  }
+  .plate-calibration-label {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 9pt;
+    color: #000;
+  }
+  .plate-calibration-note {
+    font-size: 8pt;
+    color: #444;
+    max-width: 160mm;
   }
 
   /* ----- Stage ----- */
@@ -398,27 +446,49 @@ const i18n = {
 
   /* ----- Print ----- */
   @media print {
-    @page { size: A4; margin: 10mm; }
-    :global(html), :global(body) { background: white !important; }
+    /* Explicit A4 with zero browser-side margins — we control whitespace
+       inside the page, so the plate prints at its true mm size no matter
+       which "Margins" the browser dialog defaults to. The user still has
+       to set scaling to 100% in the dialog; the calibration bar below
+       lets them verify that. */
+    @page { size: 210mm 297mm; margin: 0; }
+    :global(html), :global(body) {
+      background: white !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
     :global(.site-header), :global(footer), :global(.no-print) { display: none !important; }
-    .plate-page { padding: 0 !important; max-width: none !important; }
+    .plate-page {
+      padding: 10mm !important;
+      margin: 0 !important;
+      max-width: none !important;
+    }
     .plate-stage { display: block; }
     .plate-svg-wrap {
       background: white;
       border: none;
       padding: 0;
       overflow: visible;
+      width: auto;
     }
+    /* Don't override the SVG width/height — they are set in real mm on the
+       element itself (width="XXmm" height="YYmm"), which is the most
+       reliable way to force true scale. Just make sure CSS doesn't shrink
+       or stretch them. */
     .plate-svg-wrap svg {
-      width: var(--plate-print-w, 130mm) !important;
-      height: var(--plate-print-h, 90mm) !important;
+      width: auto !important;
+      height: auto !important;
       max-width: none !important;
+      max-height: none !important;
     }
     .well-group.is-selected .well-circle {
-      stroke: var(--color-concrete-300);
-      stroke-width: 0.3;
+      stroke: #bdbab2 !important;
+      stroke-width: 0.25 !important;
     }
-    .well-group.is-selected .well-outline { display: none; }
+    .well-group.is-selected .well-outline { display: none !important; }
+    .print-only { display: flex !important; }
   }
 </style>
 
@@ -538,6 +608,10 @@ const i18n = {
       const svgNS = 'http://www.w3.org/2000/svg';
       const svg = document.createElementNS(svgNS, 'svg');
       svg.setAttribute('viewBox', `0 0 ${vbW} ${vbH}`);
+      // Intrinsic mm sizing: the viewBox numbers are mm, so 1 user unit = 1 mm.
+      // This is what gives a true-to-scale print regardless of CSS.
+      svg.setAttribute('width', `${vbW}mm`);
+      svg.setAttribute('height', `${vbH}mm`);
       svg.setAttribute('xmlns', svgNS);
       svg.setAttribute('role', 'application');
       svg.setAttribute('aria-label', 'Well plate');
