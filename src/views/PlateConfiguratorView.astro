@@ -1,0 +1,1025 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const title = t('page.plate.title');
+const subtitle = t('page.plate.subtitle');
+
+const i18n = {
+  formatLabel: t('plate.format.label'),
+  format96: t('plate.format.96'),
+  format48: t('plate.format.48'),
+  format24: t('plate.format.24'),
+  colorsHeading: t('plate.colors.heading'),
+  colorsNone: t('plate.colors.none'),
+  selectionHint: t('plate.selection.hint'),
+  selectionCount: t('plate.selection.count'),
+  inspectorLabel: t('plate.inspector.label'),
+  inspectorLabelPlaceholder: t('plate.inspector.label.placeholder'),
+  inspectorSegments: t('plate.inspector.segments'),
+  inspectorSegmentsAdd: t('plate.inspector.segments.add'),
+  inspectorSegmentsRemove: t('plate.inspector.segments.remove'),
+  inspectorApply: t('plate.inspector.apply'),
+  inspectorClear: t('plate.inspector.clear'),
+  inspectorEmpty: t('plate.inspector.empty'),
+  actionReset: t('plate.action.reset'),
+  actionPrint: t('plate.action.print'),
+  actionResetLabels: t('plate.action.resetLabels'),
+  confirmReset: t('plate.confirm.reset'),
+};
+---
+<BaseLayout title={title} description={subtitle}>
+  <section class="plate-page max-w-6xl mx-auto px-6 pt-20 md:pt-28 pb-32" data-i18n={JSON.stringify(i18n)}>
+    <p class="eyebrow no-print">Tools</p>
+    <h1 class="display text-[clamp(2rem,4.5vw,3.25rem)] mt-4 mb-4 text-[color:var(--color-concrete-900)] no-print">
+      {title}
+    </h1>
+    <p class="text-base text-[color:var(--color-concrete-600)] leading-relaxed mb-8 max-w-2xl no-print">
+      {subtitle}
+    </p>
+
+    <div class="plate-toolbar no-print" role="toolbar" aria-label={title}>
+      <div class="tb-group">
+        <span class="tb-label">{i18n.formatLabel}</span>
+        <div class="tb-segmented" role="radiogroup" aria-label={i18n.formatLabel}>
+          <button type="button" class="tb-seg is-active" data-format="96" role="radio" aria-checked="true">{i18n.format96}</button>
+          <button type="button" class="tb-seg" data-format="48" role="radio" aria-checked="false">{i18n.format48}</button>
+          <button type="button" class="tb-seg" data-format="24" role="radio" aria-checked="false">{i18n.format24}</button>
+        </div>
+      </div>
+
+      <div class="tb-group">
+        <span class="tb-label">{i18n.colorsHeading}</span>
+        <div class="tb-palette" role="radiogroup" aria-label={i18n.colorsHeading} data-palette></div>
+      </div>
+
+      <div class="tb-group tb-group-end">
+        <button type="button" class="tb-btn" data-action="reset-labels">{i18n.actionResetLabels}</button>
+        <button type="button" class="tb-btn tb-btn-danger" data-action="reset-all">{i18n.actionReset}</button>
+        <button type="button" class="tb-btn tb-btn-primary" data-action="print">{i18n.actionPrint}</button>
+      </div>
+    </div>
+
+    <p class="plate-hint no-print">{i18n.selectionHint}</p>
+
+    <div class="plate-stage">
+      <div class="plate-svg-wrap" data-plate-wrap>
+        <!-- SVG injected by script -->
+      </div>
+
+      <aside class="plate-inspector no-print" data-inspector aria-live="polite">
+        <p class="ins-empty" data-inspector-empty>{i18n.inspectorEmpty}</p>
+
+        <div class="ins-content" data-inspector-content hidden>
+          <div class="ins-meta">
+            <span class="ins-pill" data-inspector-count></span>
+          </div>
+
+          <label class="ins-field">
+            <span class="ins-field-label">{i18n.inspectorLabel}</span>
+            <input
+              type="text"
+              class="ins-input"
+              data-inspector-label
+              placeholder={i18n.inspectorLabelPlaceholder}
+              maxlength="8"
+              spellcheck={false}
+              autocomplete="off"
+            />
+          </label>
+
+          <div class="ins-field">
+            <span class="ins-field-label">{i18n.inspectorSegments}</span>
+            <div class="ins-segments" data-inspector-segments></div>
+            <button type="button" class="ins-seg-add" data-inspector-add-segment>{i18n.inspectorSegmentsAdd}</button>
+          </div>
+
+          <div class="ins-actions">
+            <button type="button" class="tb-btn" data-inspector-apply hidden>{i18n.inspectorApply}</button>
+            <button type="button" class="tb-btn tb-btn-ghost" data-inspector-clear>{i18n.inspectorClear}</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* ----- Toolbar ----- */
+  .plate-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem 1.75rem;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    background: var(--color-concrete-50);
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+  }
+  .tb-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .tb-group-end {
+    margin-left: auto;
+    gap: 0.45rem;
+  }
+  .tb-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-concrete-500);
+  }
+  .tb-segmented {
+    display: inline-flex;
+    background: white;
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .tb-seg {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.82rem;
+    color: var(--color-concrete-700);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background 160ms ease, color 160ms ease;
+  }
+  .tb-seg + .tb-seg { border-left: 1px solid var(--color-concrete-200); }
+  .tb-seg:hover { background: var(--color-concrete-100); }
+  .tb-seg.is-active {
+    background: var(--color-concrete-900);
+    color: var(--color-concrete-50);
+  }
+  .tb-palette {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  .tb-swatch {
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px var(--color-concrete-300);
+    cursor: pointer;
+    padding: 0;
+    transition: transform 140ms ease, box-shadow 140ms ease;
+  }
+  .tb-swatch:hover { transform: scale(1.08); }
+  .tb-swatch.is-active {
+    box-shadow: 0 0 0 2px var(--color-concrete-900);
+  }
+  .tb-swatch.is-none {
+    background:
+      linear-gradient(45deg, transparent 45%, var(--color-concrete-500) 45%, var(--color-concrete-500) 55%, transparent 55%) center / 100% 100% no-repeat,
+      white;
+  }
+  .tb-btn {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--color-concrete-800);
+    background: white;
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+  }
+  .tb-btn:hover { background: var(--color-concrete-100); }
+  .tb-btn-primary {
+    background: var(--color-concrete-900);
+    color: var(--color-concrete-50);
+    border-color: var(--color-concrete-900);
+  }
+  .tb-btn-primary:hover { background: var(--color-park-green); border-color: var(--color-park-green); }
+  .tb-btn-danger { color: #8a2a24; border-color: #e9c8c4; }
+  .tb-btn-danger:hover { background: #faf1f0; }
+  .tb-btn-ghost { background: transparent; border-color: transparent; color: var(--color-concrete-600); }
+  .tb-btn-ghost:hover { background: var(--color-concrete-100); color: var(--color-concrete-900); }
+
+  .plate-hint {
+    font-size: 0.78rem;
+    color: var(--color-concrete-500);
+    margin: 0 0 1rem;
+  }
+
+  /* ----- Stage ----- */
+  .plate-stage {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  @media (min-width: 900px) {
+    .plate-stage {
+      grid-template-columns: minmax(0, 1fr) 18rem;
+      align-items: start;
+    }
+  }
+  .plate-svg-wrap {
+    background: white;
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 10px;
+    padding: 1rem;
+    overflow: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  .plate-svg-wrap svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+  }
+
+  /* SVG nodes */
+  .well-header {
+    fill: var(--color-concrete-500);
+    font-family: var(--font-mono);
+    font-size: 3.2px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .well-header:hover { fill: var(--color-concrete-900); }
+  .well-circle {
+    fill: white;
+    stroke: var(--color-concrete-300);
+    stroke-width: 0.3;
+    cursor: pointer;
+    transition: stroke 120ms ease;
+  }
+  .well-circle:hover { stroke: var(--color-concrete-700); }
+  .well-segment { cursor: pointer; }
+  .well-label {
+    fill: var(--color-concrete-800);
+    font-family: var(--font-mono);
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+    user-select: none;
+  }
+  .well-group.is-selected .well-circle {
+    stroke: var(--color-park-green);
+    stroke-width: 0.6;
+  }
+  .well-group.is-selected .well-outline {
+    stroke: var(--color-park-green);
+    stroke-width: 0.5;
+    fill: none;
+  }
+  .well-group.has-fill .well-label {
+    fill: #fff;
+    paint-order: stroke;
+    stroke: rgba(0,0,0,0.25);
+    stroke-width: 0.15;
+  }
+
+  /* ----- Inspector ----- */
+  .plate-inspector {
+    background: var(--color-concrete-50);
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 10px;
+    padding: 1rem;
+    position: sticky;
+    top: 5rem;
+  }
+  .ins-empty {
+    color: var(--color-concrete-500);
+    font-size: 0.85rem;
+    margin: 0;
+  }
+  .ins-meta {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .ins-pill {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-concrete-700);
+    background: white;
+    border: 1px solid var(--color-concrete-200);
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+  }
+  .ins-field { display: block; margin-bottom: 0.9rem; }
+  .ins-field-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-concrete-500);
+    margin-bottom: 0.35rem;
+  }
+  .ins-input {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    background: white;
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--color-concrete-900);
+  }
+  .ins-input:focus {
+    outline: none;
+    border-color: var(--color-park-green);
+    box-shadow: 0 0 0 3px rgba(12, 94, 59, 0.12);
+  }
+  .ins-segments {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+  }
+  .ins-segment {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 6px;
+    padding: 0.35rem 0.45rem;
+  }
+  .ins-segment-swatch {
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 50%;
+    border: 1px solid var(--color-concrete-300);
+    flex: none;
+  }
+  .ins-segment-palette {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+    flex: 1;
+  }
+  .ins-segment-palette .tb-swatch {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+  .ins-segment-remove {
+    background: none;
+    border: none;
+    color: var(--color-concrete-500);
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+  }
+  .ins-segment-remove:hover { color: #8a2a24; }
+  .ins-seg-add {
+    width: 100%;
+    padding: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--color-concrete-700);
+    background: white;
+    border: 1px dashed var(--color-concrete-300);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .ins-seg-add:hover { background: var(--color-concrete-100); }
+  .ins-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.9rem;
+  }
+
+  /* ----- Drag-select marquee ----- */
+  .plate-marquee {
+    position: absolute;
+    pointer-events: none;
+    border: 1px dashed var(--color-park-green);
+    background: rgba(12, 94, 59, 0.08);
+    border-radius: 2px;
+  }
+  .plate-svg-wrap { position: relative; }
+
+  /* ----- Print ----- */
+  @media print {
+    @page { size: A4; margin: 10mm; }
+    :global(html), :global(body) { background: white !important; }
+    :global(.site-header), :global(footer), :global(.no-print) { display: none !important; }
+    .plate-page { padding: 0 !important; max-width: none !important; }
+    .plate-stage { display: block; }
+    .plate-svg-wrap {
+      background: white;
+      border: none;
+      padding: 0;
+      overflow: visible;
+    }
+    .plate-svg-wrap svg {
+      width: var(--plate-print-w, 130mm) !important;
+      height: var(--plate-print-h, 90mm) !important;
+      max-width: none !important;
+    }
+    .well-group.is-selected .well-circle {
+      stroke: var(--color-concrete-300);
+      stroke-width: 0.3;
+    }
+    .well-group.is-selected .well-outline { display: none; }
+  }
+</style>
+
+<script>
+  // ---------- Types ----------
+  type Segment = { color: string };
+  type Well = { label: string; segments: Segment[] };
+  type Format = '96' | '48' | '24';
+
+  type Geom = {
+    rows: number;
+    cols: number;
+    pitch: number;   // mm
+    wellR: number;   // mm
+    plateW: number;  // mm (well-center bbox)
+    plateH: number;  // mm
+  };
+
+  const GEOMS: Record<Format, Geom> = {
+    '96': { rows: 8, cols: 12, pitch: 9.0, wellR: 3.25, plateW: 99, plateH: 63 },
+    '48': { rows: 6, cols: 8,  pitch: 13.0, wellR: 5.0,  plateW: 91, plateH: 65 },
+    '24': { rows: 4, cols: 6,  pitch: 19.3, wellR: 8.0,  plateW: 96.5, plateH: 57.9 },
+  };
+
+  // Final plateW/plateH so well centers are inset by margin = pitch (label area + frame)
+  for (const f of Object.keys(GEOMS) as Format[]) {
+    const g = GEOMS[f];
+    g.plateW = g.pitch * (g.cols - 1) + g.pitch * 2;
+    g.plateH = g.pitch * (g.rows - 1) + g.pitch * 2;
+  }
+
+  // ---------- Palette ----------
+  const PALETTE: string[] = [
+    '#E53935', // red
+    '#FB8C00', // orange
+    '#FDD835', // yellow
+    '#43A047', // green
+    '#1E88E5', // blue
+    '#5E35B1', // purple
+    '#EC407A', // pink
+    '#26A69A', // teal
+    '#8D6E63', // brown
+    '#424242', // near-black
+  ];
+
+  // ---------- State ----------
+  const root = document.querySelector('.plate-page') as HTMLElement | null;
+  if (root) {
+    const i18n = JSON.parse(root.dataset.i18n || '{}');
+    const wrap = root.querySelector('[data-plate-wrap]') as HTMLElement;
+    const paletteEl = root.querySelector('[data-palette]') as HTMLElement;
+    const formatBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-format]'));
+    const inspector = root.querySelector('[data-inspector]') as HTMLElement;
+    const inspectorEmpty = root.querySelector('[data-inspector-empty]') as HTMLElement;
+    const inspectorContent = root.querySelector('[data-inspector-content]') as HTMLElement;
+    const inspectorCount = root.querySelector('[data-inspector-count]') as HTMLElement;
+    const inspectorLabel = root.querySelector('[data-inspector-label]') as HTMLInputElement;
+    const inspectorSegments = root.querySelector('[data-inspector-segments]') as HTMLElement;
+    const inspectorAddSegment = root.querySelector('[data-inspector-add-segment]') as HTMLButtonElement;
+    const inspectorApply = root.querySelector('[data-inspector-apply]') as HTMLButtonElement;
+    const inspectorClear = root.querySelector('[data-inspector-clear]') as HTMLButtonElement;
+
+    let format: Format = '96';
+    let activeColor: string = PALETTE[0]; // selected palette color
+    let wells: Record<string, Well> = {};
+    let selection: Set<string> = new Set();
+    let primary: string | null = null; // last clicked
+
+    // ---------- Persistence ----------
+    const storageKey = (f: Format) => `leonslab.plate.${f}`;
+
+    function loadFormat(f: Format) {
+      try {
+        const raw = localStorage.getItem(storageKey(f));
+        if (raw) return JSON.parse(raw) as Record<string, Well>;
+      } catch {}
+      return {};
+    }
+    function saveFormat() {
+      try { localStorage.setItem(storageKey(format), JSON.stringify(wells)); } catch {}
+    }
+
+    // ---------- Helpers ----------
+    const rowLetter = (r: number) => String.fromCharCode(65 + r);
+    const wellId = (r: number, c: number) => `${rowLetter(r)}${c + 1}`;
+    function defaultLabel(id: string) { return id; }
+    function getWell(id: string): Well {
+      return wells[id] || { label: defaultLabel(id), segments: [] };
+    }
+    function setWell(id: string, w: Well) {
+      const def = defaultLabel(id);
+      if (w.segments.length === 0 && w.label === def) {
+        delete wells[id];
+      } else {
+        wells[id] = w;
+      }
+    }
+
+    // ---------- Palette UI ----------
+    function buildPalette() {
+      paletteEl.innerHTML = '';
+      // "none" swatch
+      const none = document.createElement('button');
+      none.type = 'button';
+      none.className = 'tb-swatch tb-swatch-none is-none';
+      none.title = i18n.colorsNone;
+      none.dataset.color = '';
+      paletteEl.appendChild(none);
+      PALETTE.forEach((c) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tb-swatch';
+        b.style.background = c;
+        b.dataset.color = c;
+        if (c === activeColor) b.classList.add('is-active');
+        paletteEl.appendChild(b);
+      });
+    }
+    paletteEl?.addEventListener('click', (e) => {
+      const t = (e.target as HTMLElement).closest('.tb-swatch') as HTMLElement | null;
+      if (!t) return;
+      activeColor = t.dataset.color || '';
+      paletteEl.querySelectorAll('.tb-swatch').forEach(el => el.classList.toggle('is-active', el === t));
+      // Apply color to current selection: add as a single-segment well (replaces).
+      if (selection.size > 0) {
+        applyColorToSelection(activeColor);
+      }
+    });
+
+    function applyColorToSelection(color: string) {
+      selection.forEach((id) => {
+        const w = getWell(id);
+        if (color === '') {
+          setWell(id, { label: w.label, segments: [] });
+        } else {
+          setWell(id, { label: w.label, segments: [{ color }] });
+        }
+      });
+      saveFormat();
+      renderPlate();
+      renderInspector();
+    }
+
+    // ---------- Plate rendering ----------
+    function renderPlate() {
+      const g = GEOMS[format];
+      // viewBox: leave space for headers (top + left)
+      const headerSpace = g.pitch; // 1 pitch
+      const vbW = g.plateW;
+      const vbH = g.plateH;
+
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('viewBox', `0 0 ${vbW} ${vbH}`);
+      svg.setAttribute('xmlns', svgNS);
+      svg.setAttribute('role', 'application');
+      svg.setAttribute('aria-label', 'Well plate');
+
+      // Plate frame
+      const frame = document.createElementNS(svgNS, 'rect');
+      frame.setAttribute('x', '1');
+      frame.setAttribute('y', '1');
+      frame.setAttribute('width', String(vbW - 2));
+      frame.setAttribute('height', String(vbH - 2));
+      frame.setAttribute('rx', '2');
+      frame.setAttribute('fill', '#fafaf8');
+      frame.setAttribute('stroke', '#d6d3cb');
+      frame.setAttribute('stroke-width', '0.4');
+      svg.appendChild(frame);
+
+      // Column headers
+      for (let c = 0; c < g.cols; c++) {
+        const cx = headerSpace + c * g.pitch;
+        const txt = document.createElementNS(svgNS, 'text');
+        txt.setAttribute('x', String(cx));
+        txt.setAttribute('y', String(headerSpace * 0.55));
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('dominant-baseline', 'central');
+        txt.setAttribute('class', 'well-header no-print-header');
+        txt.textContent = String(c + 1);
+        txt.dataset.headerCol = String(c);
+        svg.appendChild(txt);
+      }
+      // Row headers
+      for (let r = 0; r < g.rows; r++) {
+        const cy = headerSpace + r * g.pitch;
+        const txt = document.createElementNS(svgNS, 'text');
+        txt.setAttribute('x', String(headerSpace * 0.55));
+        txt.setAttribute('y', String(cy));
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('dominant-baseline', 'central');
+        txt.setAttribute('class', 'well-header');
+        txt.textContent = rowLetter(r);
+        txt.dataset.headerRow = String(r);
+        svg.appendChild(txt);
+      }
+
+      // Wells
+      for (let r = 0; r < g.rows; r++) {
+        for (let c = 0; c < g.cols; c++) {
+          const id = wellId(r, c);
+          const cx = headerSpace + c * g.pitch;
+          const cy = headerSpace + r * g.pitch;
+          const w = getWell(id);
+          const group = document.createElementNS(svgNS, 'g');
+          group.setAttribute('class', 'well-group' + (selection.has(id) ? ' is-selected' : '') + (w.segments.length ? ' has-fill' : ''));
+          group.dataset.wellId = id;
+
+          // Base circle (background or single-fill)
+          const circle = document.createElementNS(svgNS, 'circle');
+          circle.setAttribute('cx', String(cx));
+          circle.setAttribute('cy', String(cy));
+          circle.setAttribute('r', String(g.wellR));
+          circle.setAttribute('class', 'well-circle');
+          if (w.segments.length === 1) {
+            circle.setAttribute('fill', w.segments[0].color);
+          }
+          group.appendChild(circle);
+
+          // Multi-segment sectors (over the circle)
+          if (w.segments.length >= 2) {
+            const n = w.segments.length;
+            const step = (Math.PI * 2) / n;
+            const start0 = -Math.PI / 2; // start at top
+            for (let i = 0; i < n; i++) {
+              const a0 = start0 + i * step;
+              const a1 = start0 + (i + 1) * step;
+              const p = document.createElementNS(svgNS, 'path');
+              p.setAttribute('d', sectorPath(cx, cy, g.wellR, a0, a1));
+              p.setAttribute('fill', w.segments[i].color);
+              p.setAttribute('class', 'well-segment');
+              group.appendChild(p);
+            }
+            // Outline ring back on top for clean edge
+            const ring = document.createElementNS(svgNS, 'circle');
+            ring.setAttribute('cx', String(cx));
+            ring.setAttribute('cy', String(cy));
+            ring.setAttribute('r', String(g.wellR));
+            ring.setAttribute('fill', 'none');
+            ring.setAttribute('stroke', 'rgba(0,0,0,0.18)');
+            ring.setAttribute('stroke-width', '0.25');
+            group.appendChild(ring);
+          }
+
+          // Selection outline (slightly larger ring)
+          if (selection.has(id)) {
+            const sel = document.createElementNS(svgNS, 'circle');
+            sel.setAttribute('cx', String(cx));
+            sel.setAttribute('cy', String(cy));
+            sel.setAttribute('r', String(g.wellR + 0.6));
+            sel.setAttribute('class', 'well-outline');
+            sel.setAttribute('fill', 'none');
+            group.appendChild(sel);
+          }
+
+          // Label
+          if (w.label) {
+            const txt = document.createElementNS(svgNS, 'text');
+            txt.setAttribute('x', String(cx));
+            txt.setAttribute('y', String(cy));
+            txt.setAttribute('class', 'well-label');
+            const fontSize = Math.max(1.6, g.wellR * 0.7);
+            txt.setAttribute('font-size', String(fontSize));
+            txt.textContent = w.label;
+            group.appendChild(txt);
+          }
+
+          svg.appendChild(group);
+        }
+      }
+
+      wrap.innerHTML = '';
+      wrap.appendChild(svg);
+
+      // Set CSS vars for print scaling (true-size mm)
+      wrap.style.setProperty('--plate-print-w', `${g.plateW}mm`);
+      wrap.style.setProperty('--plate-print-h', `${g.plateH}mm`);
+    }
+
+    function sectorPath(cx: number, cy: number, r: number, a0: number, a1: number): string {
+      const x0 = cx + r * Math.cos(a0);
+      const y0 = cy + r * Math.sin(a0);
+      const x1 = cx + r * Math.cos(a1);
+      const y1 = cy + r * Math.sin(a1);
+      const large = a1 - a0 > Math.PI ? 1 : 0;
+      return `M ${cx} ${cy} L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
+    }
+
+    // ---------- Inspector ----------
+    function renderInspector() {
+      if (selection.size === 0) {
+        inspectorEmpty.hidden = false;
+        inspectorContent.hidden = true;
+        return;
+      }
+      inspectorEmpty.hidden = true;
+      inspectorContent.hidden = false;
+
+      inspectorCount.textContent =
+        selection.size === 1
+          ? (primary ?? Array.from(selection)[0])
+          : `${selection.size} ${i18n.selectionCount}`;
+
+      const focusId = primary && selection.has(primary) ? primary : Array.from(selection)[0];
+      const w = getWell(focusId);
+      if (document.activeElement !== inspectorLabel) {
+        inspectorLabel.value = w.label;
+      }
+
+      inspectorApply.hidden = selection.size <= 1;
+
+      // Segments list
+      inspectorSegments.innerHTML = '';
+      w.segments.forEach((seg, idx) => {
+        const row = document.createElement('div');
+        row.className = 'ins-segment';
+
+        const sw = document.createElement('span');
+        sw.className = 'ins-segment-swatch';
+        sw.style.background = seg.color;
+        row.appendChild(sw);
+
+        const pal = document.createElement('div');
+        pal.className = 'ins-segment-palette';
+        PALETTE.forEach((c) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'tb-swatch';
+          b.style.background = c;
+          if (c === seg.color) b.classList.add('is-active');
+          b.addEventListener('click', () => {
+            const cur = getWell(focusId);
+            const newSegs = cur.segments.slice();
+            newSegs[idx] = { color: c };
+            setWell(focusId, { label: cur.label, segments: newSegs });
+            saveFormat();
+            renderPlate();
+            renderInspector();
+          });
+          pal.appendChild(b);
+        });
+        row.appendChild(pal);
+
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'ins-segment-remove';
+        rm.textContent = '×';
+        rm.title = i18n.inspectorSegmentsRemove;
+        rm.addEventListener('click', () => {
+          const cur = getWell(focusId);
+          const newSegs = cur.segments.slice();
+          newSegs.splice(idx, 1);
+          setWell(focusId, { label: cur.label, segments: newSegs });
+          saveFormat();
+          renderPlate();
+          renderInspector();
+        });
+        row.appendChild(rm);
+
+        inspectorSegments.appendChild(row);
+      });
+
+      inspectorAddSegment.disabled = w.segments.length >= 4;
+      inspectorAddSegment.style.opacity = inspectorAddSegment.disabled ? '0.5' : '1';
+    }
+
+    inspectorLabel?.addEventListener('input', () => {
+      if (selection.size === 0) return;
+      const focusId = primary && selection.has(primary) ? primary : Array.from(selection)[0];
+      const w = getWell(focusId);
+      setWell(focusId, { label: inspectorLabel.value, segments: w.segments });
+      saveFormat();
+      renderPlate();
+    });
+
+    inspectorAddSegment?.addEventListener('click', () => {
+      const focusId = primary && selection.has(primary) ? primary : Array.from(selection)[0];
+      if (!focusId) return;
+      const w = getWell(focusId);
+      if (w.segments.length >= 4) return;
+      const next = PALETTE[w.segments.length % PALETTE.length];
+      setWell(focusId, { label: w.label, segments: [...w.segments, { color: next }] });
+      saveFormat();
+      renderPlate();
+      renderInspector();
+    });
+
+    inspectorApply?.addEventListener('click', () => {
+      const focusId = primary && selection.has(primary) ? primary : Array.from(selection)[0];
+      if (!focusId) return;
+      const src = getWell(focusId);
+      selection.forEach((id) => {
+        if (id === focusId) return;
+        const cur = getWell(id);
+        setWell(id, { label: cur.label, segments: src.segments.map(s => ({ color: s.color })) });
+      });
+      saveFormat();
+      renderPlate();
+      renderInspector();
+    });
+
+    inspectorClear?.addEventListener('click', () => {
+      selection.forEach((id) => {
+        setWell(id, { label: defaultLabel(id), segments: [] });
+      });
+      saveFormat();
+      renderPlate();
+      renderInspector();
+    });
+
+    // ---------- Selection / pointer ----------
+    let dragging = false;
+    let dragAdditive = false;
+    let dragStart: { x: number; y: number } | null = null;
+    let dragInitialSelection: Set<string> | null = null;
+    let marquee: HTMLDivElement | null = null;
+    let suppressClick = false;
+
+    function setSelection(ids: Iterable<string>, primaryId: string | null) {
+      selection = new Set(ids);
+      primary = primaryId;
+      renderPlate();
+      renderInspector();
+    }
+
+    wrap.addEventListener('click', (e) => {
+      if (suppressClick) { suppressClick = false; return; }
+      const target = e.target as Element;
+
+      // Row/col header click → select row/col
+      const hCol = target.closest('[data-header-col]') as HTMLElement | null;
+      const hRow = target.closest('[data-header-row]') as HTMLElement | null;
+      if (hCol) {
+        const c = Number(hCol.dataset.headerCol);
+        const g = GEOMS[format];
+        const ids: string[] = [];
+        for (let r = 0; r < g.rows; r++) ids.push(wellId(r, c));
+        if (e.shiftKey) ids.forEach(id => selection.add(id));
+        else selection = new Set(ids);
+        setSelection(selection, ids[0]);
+        return;
+      }
+      if (hRow) {
+        const r = Number(hRow.dataset.headerRow);
+        const g = GEOMS[format];
+        const ids: string[] = [];
+        for (let c = 0; c < g.cols; c++) ids.push(wellId(r, c));
+        if (e.shiftKey) ids.forEach(id => selection.add(id));
+        else selection = new Set(ids);
+        setSelection(selection, ids[0]);
+        return;
+      }
+
+      const wellEl = target.closest('[data-well-id]') as HTMLElement | null;
+      if (wellEl) {
+        const id = wellEl.dataset.wellId!;
+        if (e.shiftKey) {
+          if (selection.has(id)) selection.delete(id);
+          else selection.add(id);
+          setSelection(selection, id);
+        } else {
+          setSelection([id], id);
+        }
+        return;
+      }
+
+      // Click on empty area → clear
+      setSelection([], null);
+    });
+
+    // Drag-select: pointer events on wrap, hit-test via SVG bbox
+    wrap.addEventListener('pointerdown', (e) => {
+      if ((e.target as Element).closest('[data-header-col],[data-header-row]')) return;
+      // start drag
+      const rect = wrap.getBoundingClientRect();
+      dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      dragAdditive = e.shiftKey;
+      dragInitialSelection = new Set(selection);
+      dragging = false;
+      (e.target as Element).setPointerCapture?.(e.pointerId);
+    });
+
+    wrap.addEventListener('pointermove', (e) => {
+      if (!dragStart) return;
+      const rect = wrap.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const dx = x - dragStart.x;
+      const dy = y - dragStart.y;
+      if (!dragging && Math.hypot(dx, dy) < 5) return;
+      dragging = true;
+      suppressClick = true;
+
+      // Marquee
+      if (!marquee) {
+        marquee = document.createElement('div');
+        marquee.className = 'plate-marquee';
+        wrap.appendChild(marquee);
+      }
+      const left = Math.min(dragStart.x, x);
+      const top = Math.min(dragStart.y, y);
+      marquee.style.left = `${left}px`;
+      marquee.style.top = `${top}px`;
+      marquee.style.width = `${Math.abs(dx)}px`;
+      marquee.style.height = `${Math.abs(dy)}px`;
+
+      // Hit-test wells
+      const svg = wrap.querySelector('svg')!;
+      const svgRect = svg.getBoundingClientRect();
+      const marqueeBox = {
+        l: rect.left + left, t: rect.top + top, r: rect.left + left + Math.abs(dx), b: rect.top + top + Math.abs(dy),
+      };
+      const hit = new Set<string>(dragAdditive && dragInitialSelection ? dragInitialSelection : []);
+      wrap.querySelectorAll<SVGGElement>('[data-well-id]').forEach((g) => {
+        const c = g.querySelector('circle.well-circle') as SVGCircleElement | null;
+        if (!c) return;
+        const cb = c.getBoundingClientRect();
+        const intersect = !(cb.right < marqueeBox.l || cb.left > marqueeBox.r || cb.bottom < marqueeBox.t || cb.top > marqueeBox.b);
+        if (intersect) hit.add(g.dataset.wellId!);
+      });
+      // Apply selection visually without full re-render: toggle classes
+      wrap.querySelectorAll<SVGGElement>('[data-well-id]').forEach((g) => {
+        g.classList.toggle('is-selected', hit.has(g.dataset.wellId!));
+      });
+      selection = hit;
+    });
+
+    function endDrag() {
+      if (marquee) { marquee.remove(); marquee = null; }
+      if (dragging) {
+        primary = selection.size ? Array.from(selection)[selection.size - 1] : null;
+        renderPlate();
+        renderInspector();
+      }
+      dragStart = null;
+      dragging = false;
+      dragInitialSelection = null;
+    }
+    wrap.addEventListener('pointerup', endDrag);
+    wrap.addEventListener('pointercancel', endDrag);
+    window.addEventListener('pointerup', endDrag);
+
+    // Esc clears selection
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') setSelection([], null);
+    });
+
+    // ---------- Format switch ----------
+    formatBtns.forEach((b) => {
+      b.addEventListener('click', () => {
+        const f = b.dataset.format as Format;
+        if (f === format) return;
+        format = f;
+        wells = loadFormat(format);
+        selection.clear();
+        primary = null;
+        formatBtns.forEach(x => {
+          const active = x === b;
+          x.classList.toggle('is-active', active);
+          x.setAttribute('aria-checked', active ? 'true' : 'false');
+        });
+        renderPlate();
+        renderInspector();
+      });
+    });
+
+    // ---------- Toolbar actions ----------
+    root.querySelector('[data-action="print"]')?.addEventListener('click', () => window.print());
+    root.querySelector('[data-action="reset-all"]')?.addEventListener('click', () => {
+      if (!confirm(i18n.confirmReset)) return;
+      wells = {};
+      saveFormat();
+      selection.clear();
+      primary = null;
+      renderPlate();
+      renderInspector();
+    });
+    root.querySelector('[data-action="reset-labels"]')?.addEventListener('click', () => {
+      Object.keys(wells).forEach((id) => {
+        const w = wells[id];
+        if (w.segments.length === 0) delete wells[id];
+        else wells[id] = { label: defaultLabel(id), segments: w.segments };
+      });
+      saveFormat();
+      renderPlate();
+      renderInspector();
+    });
+
+    // ---------- Init ----------
+    buildPalette();
+    wells = loadFormat(format);
+    renderPlate();
+    renderInspector();
+  }
+</script>
