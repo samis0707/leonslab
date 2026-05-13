@@ -74,7 +74,6 @@ const i18n = {
     </div>
 
     <p class="plate-hint no-print">{i18n.selectionHint}</p>
-    <p class="plate-print-hint no-print" role="note">{i18n.printScaleHint}</p>
 
     <div class="plate-stage">
       <div class="plate-svg-wrap" data-plate-wrap>
@@ -334,7 +333,10 @@ const i18n = {
     -webkit-user-select: none;
     touch-action: none;
   }
-  .plate-svg-wrap svg {
+  /* JS-created SVG misses Astro's scope attribute, so globalize the sizing.
+     Width/height attributes on the SVG carry the true mm size for print;
+     on screen we let the SVG fill its container instead. */
+  :global(.plate-svg-wrap > svg) {
     display: block;
     width: 100%;
     height: auto;
