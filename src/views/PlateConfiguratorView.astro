@@ -80,21 +80,6 @@ const i18n = {
         <!-- SVG injected by script -->
       </div>
 
-      <div class="plate-calibration print-only" aria-hidden="true">
-        <svg class="plate-calibration-svg" width="50mm" height="6mm" viewBox="0 0 50 6" xmlns="http://www.w3.org/2000/svg">
-          <line x1="0" y1="3" x2="50" y2="3" stroke="#000" stroke-width="0.3" />
-          <line x1="0"  y1="0" x2="0"  y2="6" stroke="#000" stroke-width="0.3" />
-          <line x1="10" y1="1.5" x2="10" y2="4.5" stroke="#000" stroke-width="0.2" />
-          <line x1="20" y1="1.5" x2="20" y2="4.5" stroke="#000" stroke-width="0.2" />
-          <line x1="25" y1="0"  x2="25" y2="6"  stroke="#000" stroke-width="0.3" />
-          <line x1="30" y1="1.5" x2="30" y2="4.5" stroke="#000" stroke-width="0.2" />
-          <line x1="40" y1="1.5" x2="40" y2="4.5" stroke="#000" stroke-width="0.2" />
-          <line x1="50" y1="0"  x2="50" y2="6"  stroke="#000" stroke-width="0.3" />
-        </svg>
-        <span class="plate-calibration-label">{i18n.printCalibrationUnit}</span>
-        <span class="plate-calibration-note">{i18n.printCalibration}</span>
-      </div>
-
       <aside class="plate-inspector no-print" data-inspector aria-live="polite">
         <p class="ins-empty" data-inspector-empty>{i18n.inspectorEmpty}</p>
 
@@ -128,6 +113,21 @@ const i18n = {
           </div>
         </div>
       </aside>
+    </div>
+
+    <div class="plate-calibration" aria-hidden="true">
+      <svg class="plate-calibration-svg" width="50mm" height="6mm" viewBox="0 0 50 6" xmlns="http://www.w3.org/2000/svg">
+        <line x1="0" y1="3" x2="50" y2="3" stroke="#000" stroke-width="0.3" />
+        <line x1="0"  y1="0" x2="0"  y2="6" stroke="#000" stroke-width="0.3" />
+        <line x1="10" y1="1.5" x2="10" y2="4.5" stroke="#000" stroke-width="0.2" />
+        <line x1="20" y1="1.5" x2="20" y2="4.5" stroke="#000" stroke-width="0.2" />
+        <line x1="25" y1="0"  x2="25" y2="6"  stroke="#000" stroke-width="0.3" />
+        <line x1="30" y1="1.5" x2="30" y2="4.5" stroke="#000" stroke-width="0.2" />
+        <line x1="40" y1="1.5" x2="40" y2="4.5" stroke="#000" stroke-width="0.2" />
+        <line x1="50" y1="0"  x2="50" y2="6"  stroke="#000" stroke-width="0.3" />
+      </svg>
+      <span class="plate-calibration-label">{i18n.printCalibrationUnit}</span>
+      <span class="plate-calibration-note">{i18n.printCalibration}</span>
     </div>
   </section>
 </BaseLayout>
@@ -250,9 +250,8 @@ const i18n = {
   }
 
   /* Calibration bar — only shown on print output. */
-  .print-only { display: none; }
   .plate-calibration {
-    display: flex;
+    display: none;
     flex-direction: column;
     gap: 1mm;
     align-items: flex-start;
@@ -488,7 +487,7 @@ const i18n = {
       stroke-width: 0.25 !important;
     }
     .well-group.is-selected .well-outline { display: none !important; }
-    .print-only { display: flex !important; }
+    .plate-calibration { display: flex !important; }
   }
 </style>
 
