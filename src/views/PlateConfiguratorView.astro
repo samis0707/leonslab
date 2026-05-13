@@ -51,11 +51,6 @@ const i18n = {
         </div>
       </div>
 
-      <div class="tb-group">
-        <span class="tb-label">{i18n.colorsHeading}</span>
-        <div class="tb-palette" role="radiogroup" aria-label={i18n.colorsHeading} data-palette></div>
-      </div>
-
       <div class="tb-group tb-group-end">
         <button type="button" class="tb-btn" data-action="reset-labels">{i18n.actionResetLabels}</button>
         <button type="button" class="tb-btn tb-btn-danger" data-action="reset-all">{i18n.actionReset}</button>
@@ -463,7 +458,6 @@ const i18n = {
   if (root) {
     const i18n = JSON.parse(root.dataset.i18n || '{}');
     const wrap = root.querySelector('[data-plate-wrap]') as HTMLElement;
-    const paletteEl = root.querySelector('[data-palette]') as HTMLElement;
     const formatBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-format]'));
     const inspector = root.querySelector('[data-inspector]') as HTMLElement;
     const inspectorEmpty = root.querySelector('[data-inspector-empty]') as HTMLElement;
@@ -476,7 +470,6 @@ const i18n = {
     const inspectorClear = root.querySelector('[data-inspector-clear]') as HTMLButtonElement;
 
     let format: Format = '96';
-    let activeColor: string = PALETTE[0]; // selected palette color
     let wells: Record<string, Well> = {};
     let selection: Set<string> = new Set();
     let primary: string | null = null; // last clicked
@@ -509,51 +502,6 @@ const i18n = {
       } else {
         wells[id] = w;
       }
-    }
-
-    // ---------- Palette UI ----------
-    function buildPalette() {
-      paletteEl.innerHTML = '';
-      // "none" swatch
-      const none = document.createElement('button');
-      none.type = 'button';
-      none.className = 'tb-swatch tb-swatch-none is-none';
-      none.title = i18n.colorsNone;
-      none.dataset.color = '';
-      paletteEl.appendChild(none);
-      PALETTE.forEach((c) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'tb-swatch';
-        b.style.background = c;
-        b.dataset.color = c;
-        if (c === activeColor) b.classList.add('is-active');
-        paletteEl.appendChild(b);
-      });
-    }
-    paletteEl?.addEventListener('click', (e) => {
-      const t = (e.target as HTMLElement).closest('.tb-swatch') as HTMLElement | null;
-      if (!t) return;
-      activeColor = t.dataset.color || '';
-      paletteEl.querySelectorAll('.tb-swatch').forEach(el => el.classList.toggle('is-active', el === t));
-      // Apply color to current selection: add as a single-segment well (replaces).
-      if (selection.size > 0) {
-        applyColorToSelection(activeColor);
-      }
-    });
-
-    function applyColorToSelection(color: string) {
-      selection.forEach((id) => {
-        const w = getWell(id);
-        if (color === '') {
-          setWell(id, { label: w.label, segments: [] });
-        } else {
-          setWell(id, { label: w.label, segments: [{ color }] });
-        }
-      });
-      saveFormat();
-      renderPlate();
-      renderInspector();
     }
 
     // ---------- Plate rendering ----------
@@ -1031,7 +979,6 @@ const i18n = {
     });
 
     // ---------- Init ----------
-    buildPalette();
     wells = loadFormat(format);
     renderPlate();
     renderInspector();
