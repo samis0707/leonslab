@@ -1255,19 +1255,21 @@ const i18n = {
     // We capture the pointer on the wrap (not on the SVG child) so subsequent
     // pointermove/up events always reach this handler, and call preventDefault
     // to suppress the browser's native image/text drag on the SVG.
+    let dragPointerId: number | null = null;
     wrap.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       if ((e.target as Element).closest('[data-header-col],[data-header-row]')) return;
-      // NOTE: do NOT preventDefault here — Chrome cancels the subsequent
-      // click event if pointerdown's default is prevented, which breaks
-      // single-well selection. The browser's native image-drag on the SVG
-      // is suppressed via draggable="false" + CSS user-drag: none.
+      // Don't preventDefault or capture here. Chrome cancels the synthetic
+      // click if pointerdown is preventDefault'd, and capturing on wrap makes
+      // the click event's target be the wrap instead of the well — both
+      // break single-click selection. We commit to a drag (capture + prevent)
+      // only once the pointer actually moves past the threshold below.
       const rect = wrap.getBoundingClientRect();
       dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       dragAdditive = e.shiftKey;
       dragInitialSelection = new Set(selection);
       dragging = false;
-      try { wrap.setPointerCapture(e.pointerId); } catch {}
+      dragPointerId = e.pointerId;
     });
 
     wrap.addEventListener('pointermove', (e) => {
@@ -1279,6 +1281,10 @@ const i18n = {
       const dx = x - dragStart.x;
       const dy = y - dragStart.y;
       if (!dragging && Math.hypot(dx, dy) < 5) return;
+      if (!dragging) {
+        // Threshold just crossed — promote this gesture to a drag.
+        try { wrap.setPointerCapture(e.pointerId); } catch {}
+      }
       dragging = true;
       suppressClick = true;
       e.preventDefault();
@@ -1318,8 +1324,9 @@ const i18n = {
     });
 
     function endDrag(e?: PointerEvent) {
-      if (e && e.pointerId !== undefined) {
-        try { wrap.releasePointerCapture(e.pointerId); } catch {}
+      const pid = e?.pointerId ?? dragPointerId;
+      if (pid != null) {
+        try { wrap.releasePointerCapture(pid); } catch {}
       }
       if (marquee) { marquee.remove(); marquee = null; }
       if (dragging) {
@@ -1330,6 +1337,7 @@ const i18n = {
       dragStart = null;
       dragging = false;
       dragInitialSelection = null;
+      dragPointerId = null;
     }
     wrap.addEventListener('pointerup', endDrag);
     wrap.addEventListener('pointercancel', endDrag);
