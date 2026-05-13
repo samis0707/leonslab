@@ -40,13 +40,20 @@ const i18n = {
 ---
 <BaseLayout title={title} description={subtitle}>
   <section class="plate-page max-w-6xl mx-auto px-6 pt-20 md:pt-28 pb-32" data-i18n={JSON.stringify(i18n)}>
-    <p class="eyebrow no-print">Tools</p>
-    <h1 class="display text-[clamp(2rem,4.5vw,3.25rem)] mt-4 mb-4 text-[color:var(--color-concrete-900)] no-print">
-      {title}
-    </h1>
-    <p class="text-base text-[color:var(--color-concrete-600)] leading-relaxed mb-8 max-w-2xl no-print">
-      {subtitle}
-    </p>
+    <header class="plate-hero no-print" aria-hidden="false">
+      <div class="plate-hero-blocks" aria-hidden="true">
+        <span class="phb phb-square"></span>
+        <span class="phb phb-circle"></span>
+        <span class="phb phb-bar"></span>
+      </div>
+      <p class="plate-eyebrow">Tools — 01</p>
+      <h1 class="plate-title">
+        <span>Plate</span>
+        <span>Configurator<span class="plate-title-dot">.</span></span>
+      </h1>
+      <p class="plate-subtitle">{subtitle}</p>
+      <span class="plate-hero-aside" aria-hidden="true"></span>
+    </header>
 
     <div class="plate-toolbar no-print" role="toolbar" aria-label={title}>
       <div class="tb-group">
@@ -138,17 +145,104 @@ const i18n = {
 </BaseLayout>
 
 <style>
+  /* ----- Bauhaus palette (local to this page) ----- */
+  .plate-page {
+    --bh-black: #0a0a0a;
+    --bh-ink: #161616;
+    --bh-paper: #fafaf7;
+    --bh-rule: #0a0a0a;
+    --bh-red: #e63946;
+    --bh-blue: #1e4ed8;
+    --bh-yellow: #ffd60a;
+    --bh-accent: var(--bh-yellow);
+    color: var(--bh-ink);
+  }
+  .plate-page :global(.eyebrow) { display: none; }
+
+  /* ----- Hero ----- */
+  .plate-hero {
+    position: relative;
+    padding: 1rem 0 2.5rem;
+    border-bottom: 2px solid var(--bh-rule);
+    margin-bottom: 2rem;
+    isolation: isolate;
+  }
+  .plate-hero-blocks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .phb {
+    position: absolute;
+    display: block;
+  }
+  .phb-square {
+    width: clamp(80px, 14vw, 160px);
+    aspect-ratio: 1 / 1;
+    background: var(--bh-red);
+    top: 1.5rem;
+    right: 18%;
+    transform: rotate(0deg);
+  }
+  .phb-circle {
+    width: clamp(60px, 10vw, 120px);
+    aspect-ratio: 1 / 1;
+    background: var(--bh-blue);
+    border-radius: 50%;
+    top: 4rem;
+    right: 6%;
+  }
+  .phb-bar {
+    width: clamp(40px, 6vw, 70px);
+    height: clamp(80px, 14vw, 160px);
+    background: var(--bh-yellow);
+    top: 0;
+    right: 32%;
+  }
+  .plate-eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--bh-ink);
+    margin: 0 0 0.65rem;
+  }
+  .plate-title {
+    font-family: var(--font-display, "Fraunces", "Times New Roman", serif);
+    font-weight: 900;
+    font-size: clamp(2.6rem, 8.4vw, 6.4rem);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+    margin: 0;
+    color: var(--bh-black);
+    display: flex;
+    flex-direction: column;
+    text-transform: uppercase;
+  }
+  .plate-title-dot {
+    color: var(--bh-red);
+  }
+  .plate-subtitle {
+    margin: 1.2rem 0 0;
+    max-width: 36rem;
+    font-size: 0.95rem;
+    color: #3a3a3a;
+    line-height: 1.55;
+  }
+
   /* ----- Toolbar ----- */
   .plate-toolbar {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.25rem 1.75rem;
+    gap: 1rem 1.5rem;
     align-items: center;
-    padding: 0.85rem 1rem;
-    background: var(--color-concrete-50);
-    border: 1px solid var(--color-concrete-200);
-    border-radius: 8px;
-    margin-bottom: 0.75rem;
+    padding: 0.9rem 1rem;
+    background: var(--bh-paper);
+    border: 2px solid var(--bh-rule);
+    border-radius: 0;
+    margin-bottom: 0.9rem;
   }
   .tb-group {
     display: inline-flex;
@@ -161,33 +255,37 @@ const i18n = {
     gap: 0.45rem;
   }
   .tb-label {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.72rem;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--color-concrete-500);
+    color: var(--bh-ink);
   }
   .tb-segmented {
     display: inline-flex;
-    background: white;
-    border: 1px solid var(--color-concrete-200);
-    border-radius: 6px;
+    background: #fff;
+    border: 2px solid var(--bh-rule);
+    border-radius: 0;
     overflow: hidden;
   }
   .tb-seg {
-    padding: 0.45rem 0.8rem;
-    font-size: 0.82rem;
-    color: var(--color-concrete-700);
+    padding: 0.5rem 0.9rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--bh-ink);
     background: transparent;
     border: none;
     cursor: pointer;
-    transition: background 160ms ease, color 160ms ease;
+    transition: background 120ms ease, color 120ms ease;
   }
-  .tb-seg + .tb-seg { border-left: 1px solid var(--color-concrete-200); }
-  .tb-seg:hover { background: var(--color-concrete-100); }
+  .tb-seg + .tb-seg { border-left: 2px solid var(--bh-rule); }
+  .tb-seg:hover { background: var(--bh-yellow); }
   .tb-seg.is-active {
-    background: var(--color-concrete-900);
-    color: var(--color-concrete-50);
+    background: var(--bh-black);
+    color: #fff;
   }
   .tb-palette {
     display: inline-flex;
@@ -197,52 +295,58 @@ const i18n = {
   /* Palette swatches are created in JS, so Astro's scoped attribute is
      missing on them — use :global() to reach them. */
   :global(.tb-swatch) {
-    width: 1.6rem;
-    height: 1.6rem;
-    border-radius: 50%;
-    border: 2px solid white;
-    box-shadow: 0 0 0 1px #c8c5be;
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 0;
+    border: 2px solid #0a0a0a;
+    box-shadow: none;
     cursor: pointer;
     padding: 0;
     background-color: transparent;
-    transition: transform 140ms ease, box-shadow 140ms ease;
+    transition: transform 120ms ease, box-shadow 120ms ease, outline-offset 120ms ease;
   }
-  :global(.tb-swatch:hover) { transform: scale(1.08); }
+  :global(.tb-swatch:hover) { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 #0a0a0a; }
   :global(.tb-swatch.is-active) {
-    box-shadow: 0 0 0 2px #1a1a1a;
+    outline: 3px solid #ffd60a;
+    outline-offset: 2px;
   }
   :global(.tb-swatch.is-none) {
     background:
-      linear-gradient(45deg, transparent 45%, #888 45%, #888 55%, transparent 55%) center / 100% 100% no-repeat,
-      white;
+      linear-gradient(45deg, transparent 45%, #0a0a0a 45%, #0a0a0a 55%, transparent 55%) center / 100% 100% no-repeat,
+      #fff;
   }
   .tb-btn {
-    padding: 0.45rem 0.85rem;
-    font-size: 0.82rem;
-    font-weight: 500;
-    color: var(--color-concrete-800);
-    background: white;
-    border: 1px solid var(--color-concrete-200);
-    border-radius: 6px;
+    padding: 0.55rem 1rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--bh-ink);
+    background: #fff;
+    border: 2px solid var(--bh-rule);
+    border-radius: 0;
     cursor: pointer;
-    transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+    transition: background 120ms ease, color 120ms ease;
   }
-  .tb-btn:hover { background: var(--color-concrete-100); }
+  .tb-btn:hover { background: var(--bh-yellow); color: var(--bh-black); }
   .tb-btn-primary {
-    background: var(--color-concrete-900);
-    color: var(--color-concrete-50);
-    border-color: var(--color-concrete-900);
+    background: var(--bh-blue);
+    color: #fff;
+    border-color: var(--bh-rule);
   }
-  .tb-btn-primary:hover { background: var(--color-park-green); border-color: var(--color-park-green); }
-  .tb-btn-danger { color: #8a2a24; border-color: #e9c8c4; }
-  .tb-btn-danger:hover { background: #faf1f0; }
-  .tb-btn-ghost { background: transparent; border-color: transparent; color: var(--color-concrete-600); }
-  .tb-btn-ghost:hover { background: var(--color-concrete-100); color: var(--color-concrete-900); }
+  .tb-btn-primary:hover { background: var(--bh-black); color: #fff; }
+  .tb-btn-danger { color: var(--bh-red); border-color: var(--bh-red); background: #fff; }
+  .tb-btn-danger:hover { background: var(--bh-red); color: #fff; }
+  .tb-btn-ghost { background: transparent; border-color: transparent; color: #555; }
+  .tb-btn-ghost:hover { background: var(--bh-yellow); color: var(--bh-black); }
 
   .plate-hint {
-    font-size: 0.78rem;
-    color: var(--color-concrete-500);
-    margin: 0 0 0.4rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: #555;
+    margin: 0 0 0.75rem;
+    text-transform: none;
   }
   .plate-print-hint {
     font-size: 0.78rem;
@@ -331,14 +435,15 @@ const i18n = {
     }
   }
   .plate-svg-wrap {
-    background: white;
-    border: 1px solid var(--color-concrete-200);
-    border-radius: 10px;
+    background: #fff;
+    border: 2px solid var(--bh-rule);
+    border-radius: 0;
     padding: 1rem;
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
+    box-shadow: 8px 8px 0 var(--bh-black);
   }
   .plate-svg-wrap :global(svg) {
     -webkit-user-drag: none;
@@ -366,67 +471,84 @@ const i18n = {
     paint-order: stroke;
   }
   :global(.well-group.is-selected .well-circle) {
-    stroke: var(--color-park-green) !important;
-    stroke-width: 0.6 !important;
+    stroke: #ffd60a !important;
+    stroke-width: 0.7 !important;
   }
   :global(.well-group.is-selected .well-outline) {
-    stroke: var(--color-park-green) !important;
-    stroke-width: 0.5 !important;
+    stroke: #ffd60a !important;
+    stroke-width: 0.7 !important;
     fill: none !important;
   }
 
   /* ----- Inspector ----- */
   .plate-inspector {
-    background: var(--color-concrete-50);
-    border: 1px solid var(--color-concrete-200);
-    border-radius: 10px;
-    padding: 1rem;
+    background: #fff;
+    border: 2px solid var(--bh-rule);
+    border-radius: 0;
+    padding: 0;
     position: sticky;
     top: 5rem;
+    box-shadow: 6px 6px 0 var(--bh-black);
+  }
+  .plate-inspector .ins-empty {
+    padding: 1rem;
+  }
+  .plate-inspector > .ins-content {
+    padding: 1rem;
   }
   .ins-empty {
-    color: var(--color-concrete-500);
-    font-size: 0.85rem;
+    color: #555;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
     margin: 0;
   }
   .ins-meta {
     display: flex;
     align-items: center;
-    margin-bottom: 0.75rem;
+    background: var(--bh-black);
+    color: #fff;
+    margin: -1rem -1rem 0.9rem;
+    padding: 0.55rem 0.9rem;
+    border-bottom: 2px solid var(--bh-rule);
   }
   .ins-pill {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--color-concrete-700);
-    background: white;
-    border: 1px solid var(--color-concrete-200);
-    padding: 0.2rem 0.55rem;
-    border-radius: 999px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: #fff;
+    background: transparent;
+    border: none;
+    padding: 0;
+    border-radius: 0;
+    text-transform: uppercase;
   }
-  .ins-field { display: block; margin-bottom: 0.9rem; }
+  .ins-field { display: block; margin-bottom: 1rem; }
   .ins-field-label {
     display: block;
-    font-size: 0.72rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.7rem;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--color-concrete-500);
-    margin-bottom: 0.35rem;
+    color: var(--bh-ink);
+    margin-bottom: 0.45rem;
   }
   .ins-input {
     width: 100%;
-    padding: 0.55rem 0.75rem;
-    background: white;
-    border: 1px solid var(--color-concrete-200);
-    border-radius: 6px;
-    font-family: var(--font-mono);
+    padding: 0.6rem 0.75rem;
+    background: #fff;
+    border: 2px solid var(--bh-rule);
+    border-radius: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.9rem;
-    color: var(--color-concrete-900);
+    color: var(--bh-black);
   }
   .ins-input:focus {
     outline: none;
-    border-color: var(--color-park-green);
-    box-shadow: 0 0 0 3px rgba(12, 94, 59, 0.12);
+    background: var(--bh-yellow);
+    border-color: var(--bh-black);
   }
   .ins-segments {
     display: flex;
@@ -438,50 +560,56 @@ const i18n = {
   :global(.ins-segment) {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    background: white;
-    border: 1px solid #d8d6cf;
-    border-radius: 6px;
-    padding: 0.35rem 0.45rem;
+    gap: 0.55rem;
+    background: #fff;
+    border: 2px solid #0a0a0a;
+    border-radius: 0;
+    padding: 0.45rem 0.5rem;
   }
   :global(.ins-segment-swatch) {
-    width: 1.2rem;
-    height: 1.2rem;
-    border-radius: 50%;
-    border: 1px solid #c8c5be;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 0;
+    border: 2px solid #0a0a0a;
     flex: none;
   }
   :global(.ins-segment-palette) {
     display: inline-flex;
     flex-wrap: wrap;
-    gap: 0.2rem;
+    gap: 0.25rem;
     flex: 1;
   }
   :global(.ins-segment-palette .tb-swatch) {
-    width: 1.1rem;
-    height: 1.1rem;
+    width: 1.2rem;
+    height: 1.2rem;
   }
   :global(.ins-segment-remove) {
     background: none;
     border: none;
-    color: #888;
-    font-size: 0.95rem;
+    color: #0a0a0a;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
     line-height: 1;
     cursor: pointer;
-    padding: 0.2rem 0.4rem;
+    padding: 0.2rem 0.45rem;
   }
-  :global(.ins-segment-remove:hover) { color: #8a2a24; }
+  :global(.ins-segment-remove:hover) { color: #e63946; }
   .ins-seg-add {
     width: 100%;
-    padding: 0.4rem;
-    font-size: 0.8rem;
-    color: var(--color-concrete-700);
-    background: white;
-    border: 1px dashed var(--color-concrete-300);
-    border-radius: 6px;
+    padding: 0.55rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--bh-ink);
+    background: #fff;
+    border: 2px dashed var(--bh-rule);
+    border-radius: 0;
     cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
   }
-  .ins-seg-add:hover { background: var(--color-concrete-100); }
+  .ins-seg-add:hover { background: var(--bh-yellow); color: var(--bh-black); border-style: solid; }
   .ins-actions {
     display: flex;
     flex-wrap: wrap;
