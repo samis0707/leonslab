@@ -113,11 +113,11 @@ const i18n = {
           </div>
         </div>
       </aside>
-    </div>
 
-    <div class="plate-legend" data-legend aria-hidden="true">
-      <p class="plate-legend-title">{i18n.printLegend}</p>
-      <ul class="plate-legend-list" data-legend-list></ul>
+      <div class="plate-legend" data-legend aria-hidden="true">
+        <p class="plate-legend-title">{i18n.printLegend}</p>
+        <ul class="plate-legend-list" data-legend-list></ul>
+      </div>
     </div>
 
     <div class="plate-calibration" aria-hidden="true">
@@ -494,11 +494,8 @@ const i18n = {
 
   /* ----- Print ----- */
   @media print {
-    /* Explicit A4 with zero browser-side margins — we control whitespace
-       inside the page, so the plate prints at its true mm size no matter
-       which "Margins" the browser dialog defaults to. The user still has
-       to set scaling to 100% in the dialog; the calibration bar below
-       lets them verify that. */
+    /* Explicit A4 with zero browser-side margins; we control inner padding,
+       so the plate prints at its true mm size regardless of dialog defaults. */
     @page { size: 210mm 297mm; margin: 0; }
     :global(html), :global(body) {
       background: white !important;
@@ -513,31 +510,44 @@ const i18n = {
       margin: 0 !important;
       max-width: none !important;
     }
-    .plate-stage { display: block; }
+    /* Plate and color legend sit side by side on paper, calibration below. */
+    .plate-stage {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: flex-start !important;
+      gap: 8mm !important;
+    }
     .plate-svg-wrap {
       background: white;
       border: none;
       padding: 0;
       overflow: visible;
       width: auto;
+      flex: 0 0 auto;
     }
-    /* Don't override the SVG width/height — they are set in real mm on the
-       element itself (width="XXmm" height="YYmm"), which is the most
-       reliable way to force true scale. Just make sure CSS doesn't shrink
-       or stretch them. */
-    .plate-svg-wrap svg {
-      width: auto !important;
-      height: auto !important;
+    /* Force the SVG to its real mm size via the CSS variables we set on
+       the wrap (true plate width/height). Screen sizing (width: 100%) is
+       fully overridden here. */
+    :global(.plate-svg-wrap > svg) {
+      width: var(--plate-print-w, 99mm) !important;
+      height: var(--plate-print-h, 63mm) !important;
       max-width: none !important;
       max-height: none !important;
     }
-    .well-group.is-selected .well-circle {
+    /* Suppress on-screen selection visuals in the printout. The SVG group
+       carrying .is-selected is JS-created, so reach it via :global(). */
+    :global(.well-group.is-selected .well-circle) {
       stroke: #bdbab2 !important;
       stroke-width: 0.25 !important;
     }
-    .well-group.is-selected .well-outline { display: none !important; }
+    :global(.well-group.is-selected .well-outline) { display: none !important; }
+    :global(.well-outline) { display: none !important; }
     .plate-calibration { display: flex !important; }
-    .plate-legend:not(:empty) { display: flex !important; }
+    .plate-legend {
+      display: flex !important;
+      flex: 1 1 auto;
+      margin-top: 0 !important;
+    }
     .plate-legend[hidden] { display: none !important; }
   }
 </style>
@@ -698,10 +708,9 @@ const i18n = {
       const svgNS = 'http://www.w3.org/2000/svg';
       const svg = document.createElementNS(svgNS, 'svg');
       svg.setAttribute('viewBox', `0 0 ${vbW} ${vbH}`);
-      // Intrinsic mm sizing: the viewBox numbers are mm, so 1 user unit = 1 mm.
-      // This is what gives a true-to-scale print regardless of CSS.
-      svg.setAttribute('width', `${vbW}mm`);
-      svg.setAttribute('height', `${vbH}mm`);
+      // No intrinsic width/height: screen size is controlled by CSS
+      // (width: 100% of the wrap), print size is forced to real mm via
+      // CSS vars set on the wrap (see @media print below).
       svg.setAttribute('xmlns', svgNS);
       svg.setAttribute('role', 'application');
       svg.setAttribute('aria-label', 'Well plate');
