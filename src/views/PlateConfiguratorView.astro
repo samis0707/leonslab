@@ -164,23 +164,26 @@ const i18n = {
     flex-wrap: wrap;
     gap: 0.3rem;
   }
-  .tb-swatch {
+  /* Palette swatches are created in JS, so Astro's scoped attribute is
+     missing on them — use :global() to reach them. */
+  :global(.tb-swatch) {
     width: 1.6rem;
     height: 1.6rem;
     border-radius: 50%;
     border: 2px solid white;
-    box-shadow: 0 0 0 1px var(--color-concrete-300);
+    box-shadow: 0 0 0 1px #c8c5be;
     cursor: pointer;
     padding: 0;
+    background-color: transparent;
     transition: transform 140ms ease, box-shadow 140ms ease;
   }
-  .tb-swatch:hover { transform: scale(1.08); }
-  .tb-swatch.is-active {
-    box-shadow: 0 0 0 2px var(--color-concrete-900);
+  :global(.tb-swatch:hover) { transform: scale(1.08); }
+  :global(.tb-swatch.is-active) {
+    box-shadow: 0 0 0 2px #1a1a1a;
   }
-  .tb-swatch.is-none {
+  :global(.tb-swatch.is-none) {
     background:
-      linear-gradient(45deg, transparent 45%, var(--color-concrete-500) 45%, var(--color-concrete-500) 55%, transparent 55%) center / 100% 100% no-repeat,
+      linear-gradient(45deg, transparent 45%, #888 45%, #888 55%, transparent 55%) center / 100% 100% no-repeat,
       white;
   }
   .tb-btn {
@@ -322,41 +325,43 @@ const i18n = {
     gap: 0.4rem;
     margin-bottom: 0.5rem;
   }
-  .ins-segment {
+  /* Inspector segment rows are JS-created — globalize. */
+  :global(.ins-segment) {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     background: white;
-    border: 1px solid var(--color-concrete-200);
+    border: 1px solid #d8d6cf;
     border-radius: 6px;
     padding: 0.35rem 0.45rem;
   }
-  .ins-segment-swatch {
+  :global(.ins-segment-swatch) {
     width: 1.2rem;
     height: 1.2rem;
     border-radius: 50%;
-    border: 1px solid var(--color-concrete-300);
+    border: 1px solid #c8c5be;
     flex: none;
   }
-  .ins-segment-palette {
+  :global(.ins-segment-palette) {
     display: inline-flex;
     flex-wrap: wrap;
     gap: 0.2rem;
     flex: 1;
   }
-  .ins-segment-palette .tb-swatch {
+  :global(.ins-segment-palette .tb-swatch) {
     width: 1.1rem;
     height: 1.1rem;
   }
-  .ins-segment-remove {
+  :global(.ins-segment-remove) {
     background: none;
     border: none;
-    color: var(--color-concrete-500);
-    font-size: 0.75rem;
+    color: #888;
+    font-size: 0.95rem;
+    line-height: 1;
     cursor: pointer;
     padding: 0.2rem 0.4rem;
   }
-  .ins-segment-remove:hover { color: #8a2a24; }
+  :global(.ins-segment-remove:hover) { color: #8a2a24; }
   .ins-seg-add {
     width: 100%;
     padding: 0.4rem;
