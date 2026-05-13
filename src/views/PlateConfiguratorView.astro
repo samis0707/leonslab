@@ -420,23 +420,29 @@ const i18n = {
   type Geom = {
     rows: number;
     cols: number;
-    pitch: number;   // mm
-    wellR: number;   // mm
-    plateW: number;  // mm (well-center bbox)
-    plateH: number;  // mm
+    pitch: number;     // mm — center-to-center spacing (preserves real plate geometry)
+    wellR: number;     // mm
+    margin: number;    // mm — distance from plate edge to first well center (room for labels)
+    headerFs: number;  // mm — font size for row/column headers
+    plateW: number;    // mm
+    plateH: number;    // mm
   };
 
   const GEOMS: Record<Format, Geom> = {
-    '96': { rows: 8, cols: 12, pitch: 9.0, wellR: 3.25, plateW: 99, plateH: 63 },
-    '48': { rows: 6, cols: 8,  pitch: 13.0, wellR: 5.0,  plateW: 91, plateH: 65 },
-    '24': { rows: 4, cols: 6,  pitch: 19.3, wellR: 8.0,  plateW: 96.5, plateH: 57.9 },
+    '96': { rows: 8, cols: 12, pitch: 9.0,  wellR: 3.25, margin: 0, headerFs: 0, plateW: 0, plateH: 0 },
+    '48': { rows: 6, cols: 8,  pitch: 13.0, wellR: 5.0,  margin: 0, headerFs: 0, plateW: 0, plateH: 0 },
+    '24': { rows: 4, cols: 6,  pitch: 19.3, wellR: 8.0,  margin: 0, headerFs: 0, plateW: 0, plateH: 0 },
   };
 
-  // Final plateW/plateH so well centers are inset by margin = pitch (label area + frame)
+  // Derive a comfortable margin (well radius + clear gap + room for header text)
+  // so labels never crowd the wells. Pitch — i.e. the physical well positions —
+  // stays exact, only the frame grows a bit.
   for (const f of Object.keys(GEOMS) as Format[]) {
     const g = GEOMS[f];
-    g.plateW = g.pitch * (g.cols - 1) + g.pitch * 2;
-    g.plateH = g.pitch * (g.rows - 1) + g.pitch * 2;
+    g.headerFs = Math.max(2.5, g.pitch * 0.32);
+    g.margin = g.wellR + g.headerFs * 1.8 + 1.2;
+    g.plateW = g.margin * 2 + g.pitch * (g.cols - 1);
+    g.plateH = g.margin * 2 + g.pitch * (g.rows - 1);
   }
 
   // ---------- Palette ----------
@@ -507,8 +513,13 @@ const i18n = {
     // ---------- Plate rendering ----------
     function renderPlate() {
       const g = GEOMS[format];
-      // viewBox: leave space for headers (top + left)
-      const headerSpace = g.pitch; // 1 pitch
+      // Well centers are inset by `margin` from the plate edge. That margin
+      // (well radius + gap + header text height) gives row/column labels
+      // breathing room without changing pitch.
+      const margin = g.margin;
+      const headerFs = g.headerFs;
+      // Header center sits halfway between well edge and plate edge.
+      const headerOffset = (g.wellR + margin) / 2;
       const vbW = g.plateW;
       const vbH = g.plateH;
 
@@ -531,14 +542,12 @@ const i18n = {
       frame.setAttribute('stroke-width', '0.4');
       svg.appendChild(frame);
 
-      const headerFs = Math.max(2.5, g.pitch * 0.32);
-
       // Column headers
       for (let c = 0; c < g.cols; c++) {
-        const cx = headerSpace + c * g.pitch;
+        const cx = margin + c * g.pitch;
         const txt = document.createElementNS(svgNS, 'text');
         txt.setAttribute('x', String(cx));
-        txt.setAttribute('y', String(headerSpace * 0.55));
+        txt.setAttribute('y', String(headerOffset));
         txt.setAttribute('text-anchor', 'middle');
         txt.setAttribute('dominant-baseline', 'central');
         txt.setAttribute('font-size', String(headerFs));
@@ -551,9 +560,9 @@ const i18n = {
       }
       // Row headers
       for (let r = 0; r < g.rows; r++) {
-        const cy = headerSpace + r * g.pitch;
+        const cy = margin + r * g.pitch;
         const txt = document.createElementNS(svgNS, 'text');
-        txt.setAttribute('x', String(headerSpace * 0.55));
+        txt.setAttribute('x', String(headerOffset));
         txt.setAttribute('y', String(cy));
         txt.setAttribute('text-anchor', 'middle');
         txt.setAttribute('dominant-baseline', 'central');
@@ -570,8 +579,8 @@ const i18n = {
       for (let r = 0; r < g.rows; r++) {
         for (let c = 0; c < g.cols; c++) {
           const id = wellId(r, c);
-          const cx = headerSpace + c * g.pitch;
-          const cy = headerSpace + r * g.pitch;
+          const cx = margin + c * g.pitch;
+          const cy = margin + r * g.pitch;
           const w = getWell(id);
           const group = document.createElementNS(svgNS, 'g');
           group.setAttribute('class', 'well-group' + (selection.has(id) ? ' is-selected' : ''));
