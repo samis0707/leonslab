@@ -41,21 +41,32 @@ const i18n = {
 <BaseLayout title={title} description={subtitle}>
   <section class="plate-page max-w-6xl mx-auto px-6 pt-20 md:pt-28 pb-32" data-i18n={JSON.stringify(i18n)}>
     <header class="plate-hero no-print" aria-hidden="false">
-      <div class="plate-hero-blocks" aria-hidden="true">
-        <span class="phb phb-square"></span>
-        <span class="phb phb-circle"></span>
-        <span class="phb phb-bar"></span>
-      </div>
-      <p class="plate-eyebrow">Tools — 01</p>
+      <p class="plate-eyebrow"><span class="pixel-diamond" aria-hidden="true"></span> Level 01</p>
       <h1 class="plate-title">
-        <span>Plate</span>
-        <span>Configurator<span class="plate-title-dot">.</span></span>
+        <span class="plate-title-line">Plate</span>
+        <span class="plate-title-line">
+          Configurator<span class="plate-title-dot" aria-hidden="true"></span>
+        </span>
       </h1>
       <p class="plate-subtitle">{subtitle}</p>
-      <span class="plate-hero-aside" aria-hidden="true"></span>
     </header>
 
     <div class="plate-toolbar no-print" role="toolbar" aria-label={title}>
+      <div class="pixel-pipette" aria-hidden="true">
+        <svg viewBox="0 0 12 24" width="32" height="64" shape-rendering="crispEdges">
+          <rect x="3" y="0" width="6" height="1" fill="#0a0a0a"/>
+          <rect x="2" y="1" width="8" height="1" fill="#0a0a0a"/>
+          <rect x="2" y="2" width="8" height="3" fill="#1e4ed8"/>
+          <rect x="2" y="5" width="8" height="1" fill="#0a0a0a"/>
+          <rect x="4" y="6" width="4" height="1" fill="#0a0a0a"/>
+          <rect x="3" y="7" width="1" height="9" fill="#0a0a0a"/>
+          <rect x="4" y="7" width="4" height="9" fill="#fafaf7"/>
+          <rect x="8" y="7" width="1" height="9" fill="#0a0a0a"/>
+          <rect x="4" y="16" width="4" height="1" fill="#0a0a0a"/>
+          <rect x="5" y="17" width="2" height="1" fill="#0a0a0a"/>
+        </svg>
+        <span class="pixel-drop" aria-hidden="true"></span>
+      </div>
       <div class="tb-group">
         <span class="tb-label">{i18n.formatLabel}</span>
         <div class="tb-segmented" role="radiogroup" aria-label={i18n.formatLabel}>
@@ -74,7 +85,6 @@ const i18n = {
       </div>
 
       <div class="tb-group tb-group-end">
-        <button type="button" class="tb-btn" data-action="reset-labels">{i18n.actionResetLabels}</button>
         <button type="button" class="tb-btn tb-btn-danger" data-action="reset-all">{i18n.actionReset}</button>
         <button type="button" class="tb-btn tb-btn-primary" data-action="print">{i18n.actionPrint}</button>
       </div>
@@ -145,6 +155,8 @@ const i18n = {
 </BaseLayout>
 
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
   /* ----- Bauhaus palette (local to this page) ----- */
   .plate-page {
     --bh-black: #0a0a0a;
@@ -159,77 +171,122 @@ const i18n = {
   }
   .plate-page :global(.eyebrow) { display: none; }
 
-  /* ----- Hero ----- */
+  /* ----- Hero (Arcade 8-bit) ----- */
   .plate-hero {
     position: relative;
-    padding: 1rem 0 2.5rem;
+    padding: 1rem 0 2.25rem;
     border-bottom: 2px solid var(--bh-rule);
     margin-bottom: 2rem;
     isolation: isolate;
   }
-  .plate-hero-blocks {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: -1;
-  }
-  .phb {
-    position: absolute;
-    display: block;
-  }
-  .phb-square {
-    width: clamp(80px, 14vw, 160px);
-    aspect-ratio: 1 / 1;
-    background: var(--bh-red);
-    top: 1.5rem;
-    right: 18%;
-    transform: rotate(0deg);
-  }
-  .phb-circle {
-    width: clamp(60px, 10vw, 120px);
-    aspect-ratio: 1 / 1;
-    background: var(--bh-blue);
-    border-radius: 50%;
-    top: 4rem;
-    right: 6%;
-  }
-  .phb-bar {
-    width: clamp(40px, 6vw, 70px);
-    height: clamp(80px, 14vw, 160px);
-    background: var(--bh-yellow);
-    top: 0;
-    right: 32%;
-  }
   .plate-eyebrow {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.22em;
+    font-family: 'Press Start 2P', ui-monospace, monospace;
+    font-size: 0.7rem;
+    font-weight: 400;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--bh-ink);
-    margin: 0 0 0.65rem;
+    margin: 0 0 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .pixel-diamond {
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    background: var(--bh-red);
+    transform: rotate(45deg);
   }
   .plate-title {
-    font-family: var(--font-display, "Fraunces", "Times New Roman", serif);
-    font-weight: 900;
-    font-size: clamp(2.6rem, 8.4vw, 6.4rem);
-    line-height: 0.92;
-    letter-spacing: -0.035em;
+    font-family: 'Press Start 2P', ui-monospace, monospace;
+    font-weight: 400;
+    font-size: clamp(1.4rem, 4.4vw, 2.6rem);
+    line-height: 1.4;
+    letter-spacing: 0.02em;
     margin: 0;
     color: var(--bh-black);
     display: flex;
     flex-direction: column;
+    gap: 0.35em;
     text-transform: uppercase;
   }
+  .plate-title-line {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.05em;
+  }
+  /* Bouncing pixel droplet replacing the final period */
   .plate-title-dot {
-    color: var(--bh-red);
+    display: inline-block;
+    width: 0.6em;
+    height: 0.6em;
+    margin-left: 0.12em;
+    background:
+      conic-gradient(from 0deg at 50% 0%, transparent 0 25%, #e63946 25% 75%, transparent 75% 100%);
+    clip-path: polygon(50% 0%, 100% 60%, 80% 100%, 20% 100%, 0% 60%);
+    background: #e63946;
+    animation: pixelDropBounce 1.4s cubic-bezier(.5,0,.5,1) infinite;
+  }
+  @keyframes pixelDropBounce {
+    0%, 100% { transform: translateY(0); }
+    45%      { transform: translateY(-0.35em); }
+    55%      { transform: translateY(-0.35em); }
   }
   .plate-subtitle {
-    margin: 1.2rem 0 0;
-    max-width: 36rem;
-    font-size: 0.95rem;
+    margin: 1.4rem 0 0;
+    max-width: 100%;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.86rem;
     color: #3a3a3a;
-    line-height: 1.55;
+    line-height: 1.45;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  @media (max-width: 720px) {
+    .plate-subtitle { white-space: normal; }
+  }
+
+  /* Pixel pipette sitting in the toolbar (left) */
+  .pixel-pipette {
+    position: relative;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    width: 32px;
+    height: 64px;
+    margin-right: 0.4rem;
+    pointer-events: none;
+  }
+  .pixel-pipette svg {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    display: block;
+  }
+  .pixel-drop {
+    position: absolute;
+    left: calc(50% - 3px);
+    top: 50px;
+    width: 6px;
+    height: 6px;
+    background: var(--bh-blue);
+    clip-path: polygon(50% 0%, 100% 60%, 80% 100%, 20% 100%, 0% 60%);
+    image-rendering: pixelated;
+    animation: pixelPipetteDrip 4.6s infinite;
+    opacity: 0;
+  }
+  /* Speed the drip up while the user hovers over the Print button. */
+  .plate-toolbar:has(.tb-btn-primary:hover) .pixel-drop {
+    animation-duration: 1.4s;
+  }
+  @keyframes pixelPipetteDrip {
+    0%   { opacity: 0; transform: translateY(0)    scale(1); }
+    8%   { opacity: 1; transform: translateY(0)    scale(1); }
+    50%  { opacity: 1; transform: translateY(20px) scale(1); }
+    58%  { opacity: 1; transform: translateY(20px) scale(0.4); }
+    62%  { opacity: 0; transform: translateY(20px) scale(0.4); }
+    100% { opacity: 0; transform: translateY(20px) scale(0.4); }
   }
 
   /* ----- Toolbar ----- */
@@ -463,7 +520,11 @@ const i18n = {
   :global(.well-header) { cursor: pointer; user-select: none; }
   :global(.well-header:hover) { fill: #1a1a1a !important; }
   :global(.well-circle) { cursor: pointer; transition: stroke 120ms ease; }
-  :global(.well-circle:hover) { stroke: #555 !important; }
+  :global(.well-circle:hover) {
+    stroke: #0a0a0a !important;
+    stroke-width: 0.45 !important;
+    stroke-dasharray: 0.5 0.5 !important;
+  }
   :global(.well-segment) { cursor: pointer; }
   :global(.well-label) {
     pointer-events: none;
@@ -1326,17 +1387,6 @@ const i18n = {
       renderPlate();
       renderInspector();
     });
-    root.querySelector('[data-action="reset-labels"]')?.addEventListener('click', () => {
-      Object.keys(wells).forEach((id) => {
-        const w = wells[id];
-        if (w.segments.length === 0) delete wells[id];
-        else wells[id] = { label: defaultLabel(id), segments: w.segments };
-      });
-      saveFormat();
-      renderPlate();
-      renderInspector();
-    });
-
     // ---------- Init ----------
     wells = loadFormat(format);
     renderPlate();
