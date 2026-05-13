@@ -241,46 +241,26 @@ const i18n = {
     max-width: 100%;
   }
 
-  /* SVG nodes */
-  .well-header {
-    fill: var(--color-concrete-500);
-    font-family: var(--font-mono);
-    font-size: 3.2px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .well-header:hover { fill: var(--color-concrete-900); }
-  .well-circle {
-    fill: white;
-    stroke: var(--color-concrete-300);
-    stroke-width: 0.3;
-    cursor: pointer;
-    transition: stroke 120ms ease;
-  }
-  .well-circle:hover { stroke: var(--color-concrete-700); }
-  .well-segment { cursor: pointer; }
-  .well-label {
-    fill: var(--color-concrete-800);
-    font-family: var(--font-mono);
-    text-anchor: middle;
-    dominant-baseline: central;
+  /* SVG nodes — selectors are :global() because the SVG is built in JS
+     (createElementNS) and would otherwise miss Astro's scope attribute. */
+  :global(.well-header) { cursor: pointer; user-select: none; }
+  :global(.well-header:hover) { fill: #1a1a1a !important; }
+  :global(.well-circle) { cursor: pointer; transition: stroke 120ms ease; }
+  :global(.well-circle:hover) { stroke: #555 !important; }
+  :global(.well-segment) { cursor: pointer; }
+  :global(.well-label) {
     pointer-events: none;
     user-select: none;
-  }
-  .well-group.is-selected .well-circle {
-    stroke: var(--color-park-green);
-    stroke-width: 0.6;
-  }
-  .well-group.is-selected .well-outline {
-    stroke: var(--color-park-green);
-    stroke-width: 0.5;
-    fill: none;
-  }
-  .well-group.has-fill .well-label {
-    fill: #fff;
     paint-order: stroke;
-    stroke: rgba(0,0,0,0.25);
-    stroke-width: 0.15;
+  }
+  :global(.well-group.is-selected .well-circle) {
+    stroke: var(--color-park-green) !important;
+    stroke-width: 0.6 !important;
+  }
+  :global(.well-group.is-selected .well-outline) {
+    stroke: var(--color-park-green) !important;
+    stroke-width: 0.5 !important;
+    fill: none !important;
   }
 
   /* ----- Inspector ----- */
@@ -598,6 +578,8 @@ const i18n = {
       frame.setAttribute('stroke-width', '0.4');
       svg.appendChild(frame);
 
+      const headerFs = Math.max(2.5, g.pitch * 0.32);
+
       // Column headers
       for (let c = 0; c < g.cols; c++) {
         const cx = headerSpace + c * g.pitch;
@@ -606,7 +588,10 @@ const i18n = {
         txt.setAttribute('y', String(headerSpace * 0.55));
         txt.setAttribute('text-anchor', 'middle');
         txt.setAttribute('dominant-baseline', 'central');
-        txt.setAttribute('class', 'well-header no-print-header');
+        txt.setAttribute('font-size', String(headerFs));
+        txt.setAttribute('font-family', 'ui-monospace, SFMono-Regular, Menlo, monospace');
+        txt.setAttribute('fill', '#6b6b6b');
+        txt.setAttribute('class', 'well-header');
         txt.textContent = String(c + 1);
         txt.dataset.headerCol = String(c);
         svg.appendChild(txt);
@@ -619,6 +604,9 @@ const i18n = {
         txt.setAttribute('y', String(cy));
         txt.setAttribute('text-anchor', 'middle');
         txt.setAttribute('dominant-baseline', 'central');
+        txt.setAttribute('font-size', String(headerFs));
+        txt.setAttribute('font-family', 'ui-monospace, SFMono-Regular, Menlo, monospace');
+        txt.setAttribute('fill', '#6b6b6b');
         txt.setAttribute('class', 'well-header');
         txt.textContent = rowLetter(r);
         txt.dataset.headerRow = String(r);
@@ -633,42 +621,54 @@ const i18n = {
           const cy = headerSpace + r * g.pitch;
           const w = getWell(id);
           const group = document.createElementNS(svgNS, 'g');
-          group.setAttribute('class', 'well-group' + (selection.has(id) ? ' is-selected' : '') + (w.segments.length ? ' has-fill' : ''));
+          group.setAttribute('class', 'well-group' + (selection.has(id) ? ' is-selected' : ''));
           group.dataset.wellId = id;
 
-          // Base circle (background or single-fill)
+          // Base circle (background, always white-ish for readability)
           const circle = document.createElementNS(svgNS, 'circle');
           circle.setAttribute('cx', String(cx));
           circle.setAttribute('cy', String(cy));
           circle.setAttribute('r', String(g.wellR));
+          circle.setAttribute('fill', '#ffffff');
+          circle.setAttribute('stroke', '#bdbab2');
+          circle.setAttribute('stroke-width', '0.25');
           circle.setAttribute('class', 'well-circle');
-          if (w.segments.length === 1) {
-            circle.setAttribute('fill', w.segments[0].color);
-          }
           group.appendChild(circle);
 
-          // Multi-segment sectors (over the circle)
-          if (w.segments.length >= 2) {
+          // Color fills — translucent so labels stay readable
+          const FILL_OPACITY = 0.5;
+          if (w.segments.length === 1) {
+            const fill = document.createElementNS(svgNS, 'circle');
+            fill.setAttribute('cx', String(cx));
+            fill.setAttribute('cy', String(cy));
+            fill.setAttribute('r', String(g.wellR - 0.15));
+            fill.setAttribute('fill', w.segments[0].color);
+            fill.setAttribute('fill-opacity', String(FILL_OPACITY));
+            fill.setAttribute('class', 'well-segment');
+            group.appendChild(fill);
+          } else if (w.segments.length >= 2) {
             const n = w.segments.length;
             const step = (Math.PI * 2) / n;
-            const start0 = -Math.PI / 2; // start at top
+            const start0 = -Math.PI / 2;
+            const rIn = g.wellR - 0.15;
             for (let i = 0; i < n; i++) {
               const a0 = start0 + i * step;
               const a1 = start0 + (i + 1) * step;
               const p = document.createElementNS(svgNS, 'path');
-              p.setAttribute('d', sectorPath(cx, cy, g.wellR, a0, a1));
+              p.setAttribute('d', sectorPath(cx, cy, rIn, a0, a1));
               p.setAttribute('fill', w.segments[i].color);
+              p.setAttribute('fill-opacity', String(FILL_OPACITY));
               p.setAttribute('class', 'well-segment');
               group.appendChild(p);
             }
-            // Outline ring back on top for clean edge
+            // Hairline outline so sector edges stay crisp
             const ring = document.createElementNS(svgNS, 'circle');
             ring.setAttribute('cx', String(cx));
             ring.setAttribute('cy', String(cy));
             ring.setAttribute('r', String(g.wellR));
             ring.setAttribute('fill', 'none');
-            ring.setAttribute('stroke', 'rgba(0,0,0,0.18)');
-            ring.setAttribute('stroke-width', '0.25');
+            ring.setAttribute('stroke', 'rgba(0,0,0,0.2)');
+            ring.setAttribute('stroke-width', '0.2');
             group.appendChild(ring);
           }
 
@@ -680,17 +680,26 @@ const i18n = {
             sel.setAttribute('r', String(g.wellR + 0.6));
             sel.setAttribute('class', 'well-outline');
             sel.setAttribute('fill', 'none');
+            sel.setAttribute('stroke', 'var(--color-park-green, #0c5e3b)');
+            sel.setAttribute('stroke-width', '0.5');
             group.appendChild(sel);
           }
 
-          // Label
+          // Label — always dark with thin white halo for contrast
           if (w.label) {
             const txt = document.createElementNS(svgNS, 'text');
             txt.setAttribute('x', String(cx));
             txt.setAttribute('y', String(cy));
             txt.setAttribute('class', 'well-label');
-            const fontSize = Math.max(1.6, g.wellR * 0.7);
+            const fontSize = Math.max(1.6, g.wellR * 0.62);
             txt.setAttribute('font-size', String(fontSize));
+            txt.setAttribute('font-family', 'ui-monospace, SFMono-Regular, Menlo, monospace');
+            txt.setAttribute('text-anchor', 'middle');
+            txt.setAttribute('dominant-baseline', 'central');
+            txt.setAttribute('fill', '#1a1a1a');
+            txt.setAttribute('stroke', '#ffffff');
+            txt.setAttribute('stroke-width', String(fontSize * 0.18));
+            txt.setAttribute('stroke-linejoin', 'round');
             txt.textContent = w.label;
             group.appendChild(txt);
           }
