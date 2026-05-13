@@ -499,18 +499,10 @@ const i18n = {
     } catch {}
 
     // ---------- Persistence ----------
-    const storageKey = (f: Format) => `leonslab.plate.${f}`;
-
-    function loadFormat(f: Format) {
-      try {
-        const raw = localStorage.getItem(storageKey(f));
-        if (raw) return JSON.parse(raw) as Record<string, Well>;
-      } catch {}
-      return {};
-    }
-    function saveFormat() {
-      try { localStorage.setItem(storageKey(format), JSON.stringify(wells)); } catch {}
-    }
+    // The plate intentionally resets on every page load — only the user's
+    // toolbar prefs (labels on/off, current format) persist.
+    function loadFormat(_f: Format): Record<string, Well> { return {}; }
+    function saveFormat() { /* no-op: state lives only for this session */ }
 
     // ---------- Helpers ----------
     const rowLetter = (r: number) => String.fromCharCode(65 + r);
