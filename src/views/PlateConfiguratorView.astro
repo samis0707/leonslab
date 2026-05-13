@@ -274,7 +274,9 @@ const i18n = {
     font-weight: 600;
     color: #000;
   }
-  .plate-legend-list {
+  /* Rows + swatch + line are created in JS, so they sit outside Astro's
+     scope — globalize their layout rules. */
+  :global(.plate-legend-list) {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -282,20 +284,25 @@ const i18n = {
     flex-direction: column;
     gap: 3mm;
   }
-  .plate-legend-row {
+  :global(.plate-legend-row) {
     display: flex;
     align-items: center;
     gap: 3mm;
   }
-  .plate-legend-swatch {
+  :global(.plate-legend-swatch) {
+    display: inline-block;
     width: 6mm;
     height: 6mm;
     border-radius: 50%;
     border: 0.3mm solid #555;
     flex: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  .plate-legend-line {
-    flex: 1;
+  :global(.plate-legend-line) {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 40mm;
     max-width: 80mm;
     height: 0;
     border-bottom: 0.3mm solid #000;
