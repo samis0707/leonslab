@@ -328,10 +328,13 @@ const i18n = {
     border: 1px solid var(--color-concrete-200);
     border-radius: 10px;
     padding: 1rem;
-    overflow: auto;
+    overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
+  }
+  .plate-svg-wrap :global(svg) {
+    -webkit-user-drag: none;
   }
   /* JS-created SVG misses Astro's scope attribute, so globalize the sizing.
      Width/height attributes on the SVG carry the true mm size for print;
@@ -1042,23 +1045,28 @@ const i18n = {
       setSelection([], null);
     });
 
-    // Drag-select: pointer events on wrap, hit-test via SVG bbox
+    // Drag-select: pointer events on wrap, hit-test via SVG bbox.
+    // We capture the pointer on the wrap (not on the SVG child) so subsequent
+    // pointermove/up events always reach this handler, and call preventDefault
+    // to suppress the browser's native image/text drag on the SVG.
     wrap.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
       if ((e.target as Element).closest('[data-header-col],[data-header-row]')) return;
-      // start drag
+      e.preventDefault();
       const rect = wrap.getBoundingClientRect();
       dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       dragAdditive = e.shiftKey;
       dragInitialSelection = new Set(selection);
       dragging = false;
-      (e.target as Element).setPointerCapture?.(e.pointerId);
+      try { wrap.setPointerCapture(e.pointerId); } catch {}
     });
 
     wrap.addEventListener('pointermove', (e) => {
       if (!dragStart) return;
       const rect = wrap.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      // Clamp to wrap bounds so the marquee never extends past the box.
+      const x = Math.max(0, Math.min(rect.width,  e.clientX - rect.left));
+      const y = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
       const dx = x - dragStart.x;
       const dy = y - dragStart.y;
       if (!dragging && Math.hypot(dx, dy) < 5) return;
@@ -1073,16 +1081,16 @@ const i18n = {
       }
       const left = Math.min(dragStart.x, x);
       const top = Math.min(dragStart.y, y);
+      const w = Math.abs(dx);
+      const h = Math.abs(dy);
       marquee.style.left = `${left}px`;
       marquee.style.top = `${top}px`;
-      marquee.style.width = `${Math.abs(dx)}px`;
-      marquee.style.height = `${Math.abs(dy)}px`;
+      marquee.style.width = `${w}px`;
+      marquee.style.height = `${h}px`;
 
-      // Hit-test wells
-      const svg = wrap.querySelector('svg')!;
-      const svgRect = svg.getBoundingClientRect();
+      // Hit-test wells using viewport-space rects.
       const marqueeBox = {
-        l: rect.left + left, t: rect.top + top, r: rect.left + left + Math.abs(dx), b: rect.top + top + Math.abs(dy),
+        l: rect.left + left, t: rect.top + top, r: rect.left + left + w, b: rect.top + top + h,
       };
       const hit = new Set<string>(dragAdditive && dragInitialSelection ? dragInitialSelection : []);
       wrap.querySelectorAll<SVGGElement>('[data-well-id]').forEach((g) => {
@@ -1099,7 +1107,10 @@ const i18n = {
       selection = hit;
     });
 
-    function endDrag() {
+    function endDrag(e?: PointerEvent) {
+      if (e && e.pointerId !== undefined) {
+        try { wrap.releasePointerCapture(e.pointerId); } catch {}
+      }
       if (marquee) { marquee.remove(); marquee = null; }
       if (dragging) {
         primary = selection.size ? Array.from(selection)[selection.size - 1] : null;
@@ -1112,7 +1123,7 @@ const i18n = {
     }
     wrap.addEventListener('pointerup', endDrag);
     wrap.addEventListener('pointercancel', endDrag);
-    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointerup', () => endDrag());
 
     // Esc clears selection
     document.addEventListener('keydown', (e) => {
