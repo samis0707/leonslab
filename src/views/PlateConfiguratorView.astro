@@ -518,8 +518,10 @@ const i18n = {
       // breathing room without changing pitch.
       const margin = g.margin;
       const headerFs = g.headerFs;
-      // Header center sits halfway between well edge and plate edge.
-      const headerOffset = (g.wellR + margin) / 2;
+      // Header center sits halfway between the plate edge (0) and the
+      // outer well edge (margin - wellR), so labels hug the frame rather
+      // than the wells.
+      const headerOffset = (margin - g.wellR) / 2;
       const vbW = g.plateW;
       const vbH = g.plateH;
 
