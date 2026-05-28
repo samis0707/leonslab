@@ -87,7 +87,7 @@ P4_OFFSET_MAX: int = 150
 
 # Colony PCR buffer in upstream flank (positions 0 – COLONY_PCR_BUFFER-1 reserved for outside primer)
 COLONY_PCR_BUFFER: int = 200
-COLONY_PCR_OUTSIDE_SEARCH_MAX: int = 150   # search the first 150 nt of the buffer for outside primer
+COLONY_PCR_OUTSIDE_SEARCH_MAX: int = 200   # search the entire buffer zone for outside primer
 COLONY_PCR_INSIDE_SEARCH_MAX: int = 200    # search the first 200 nt of dn_flank for inside primer
 COLONY_PCR_TM_MIN_C: float = 53.0          # Taq Tm range (standard range – 5 °C)
 COLONY_PCR_TM_MAX_C: float = 61.0

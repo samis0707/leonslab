@@ -1,10 +1,10 @@
 {
   "lasB": {
     "outside": {
-      "body": "TTTCCCGAGCCGATGTTCCAC",
+      "body": "CGTCATCCCGGGCTGATCAG",
       "tm_body_C": 57.02,
-      "gc_body": 0.5714,
-      "flank_pos": 62
+      "gc_body": 0.65,
+      "flank_pos": 31
     },
     "inside": {
       "body": "AACTTTAGACCGGGTTCGCGG",
@@ -12,35 +12,35 @@
       "gc_body": 0.5714,
       "flank_pos": 127
     },
-    "expected_deletion_product_bp_min": 616,
-    "expected_deletion_product_bp_max": 753,
-    "expected_wt_product_bp": 2182,
-    "note": "conserved across 2/110 isolates (outside), 110/110 isolates (inside)"
+    "expected_deletion_product_bp_min": 824,
+    "expected_deletion_product_bp_max": 1007,
+    "expected_wt_product_bp": 2413,
+    "note": "outside primer: 110/110 isolates; inside primer: 110/110 isolates \u2014 fully conserved"
   },
   "lasR": {
     "outside": {
-      "body": "AAGTGGCTATGTCGCCGGG",
-      "tm_body_C": 56.99,
-      "gc_body": 0.6316,
-      "flank_pos": 111
+      "body": "GCAACCGCCAGGTCTTGC",
+      "tm_body_C": 56.97,
+      "gc_body": 0.6667,
+      "flank_pos": 144
     },
     "inside": {
-      "body": "AGAAGGGCAAATTACCGATCGCC",
-      "tm_body_C": 56.99,
-      "gc_body": 0.5217,
-      "flank_pos": 47
+      "body": "CAGCTCGCCGACCTGAGAG",
+      "tm_body_C": 57.02,
+      "gc_body": 0.6842,
+      "flank_pos": 25
     },
-    "expected_deletion_product_bp_min": 500,
-    "expected_deletion_product_bp_max": 611,
-    "expected_wt_product_bp": 1276,
-    "note": "conserved across 15/107 isolates (outside), 107/107 isolates (inside)"
+    "expected_deletion_product_bp_min": 630,
+    "expected_deletion_product_bp_max": 771,
+    "expected_wt_product_bp": 1421,
+    "note": "outside primer: 93/107 isolates (\u22641 mismatch); NOT suitable for: LB001, LB009, LB010, LB020, LB038, LB039, LB040, LB042, LB043, LB052, LB069, LB086, LB091, LB117 \u2014 these isolates have divergent upstream sequences; inside primer: 107/107 isolates"
   },
   "lasI": {
     "outside": {
-      "body": "ACCAGTTGGGAGATATCGGTTATCTGC",
-      "tm_body_C": 57.01,
-      "gc_body": 0.4815,
-      "flank_pos": 93
+      "body": "TGCTCAAGGACTACGCACTGC",
+      "tm_body_C": 57.0,
+      "gc_body": 0.5714,
+      "flank_pos": 174
     },
     "inside": {
       "body": "GGTGAACTCGAAGTACTGCGGG",
@@ -48,9 +48,45 @@
       "gc_body": 0.5909,
       "flank_pos": 196
     },
-    "expected_deletion_product_bp_min": 650,
-    "expected_deletion_product_bp_max": 795,
-    "expected_wt_product_bp": 1329,
-    "note": "conserved across 2/107 isolates (outside), 107/107 isolates (inside)"
+    "expected_deletion_product_bp_min": 757,
+    "expected_deletion_product_bp_max": 926,
+    "expected_wt_product_bp": 1448,
+    "note": "outside primer: 103/107 isolates (\u22641 mismatch); NOT suitable for: LB069, LB088, LB091, LB148 \u2014 these isolates have divergent upstream sequences; inside primer: 107/107 isolates"
+  },
+  "aprA": {
+    "outside": {
+      "body": "CGCCTACGAGATGACCGTGG",
+      "tm_body_C": 56.99,
+      "gc_body": 0.65,
+      "flank_pos": 96
+    },
+    "inside": {
+      "body": "CGCGCCACAGTTCACAACTTC",
+      "tm_body_C": 56.95,
+      "gc_body": 0.5714,
+      "flank_pos": 117
+    },
+    "expected_deletion_product_bp_min": 756,
+    "expected_deletion_product_bp_max": 925,
+    "expected_wt_product_bp": 2281,
+    "note": "outside primer: 107/110 isolates (\u22641 mismatch); NOT suitable for: LB018, LB021, LB061 \u2014 these isolates have divergent upstream sequences; inside primer: 110/110 isolates"
+  },
+  "rhlR": {
+    "outside": {
+      "body": "AACGCTTTCTCGATCAGGGCAG",
+      "tm_body_C": 56.99,
+      "gc_body": 0.5455,
+      "flank_pos": 125
+    },
+    "inside": {
+      "body": "CGGAGGACATACCAGCACACAC",
+      "tm_body_C": 56.98,
+      "gc_body": 0.5909,
+      "flank_pos": 104
+    },
+    "expected_deletion_product_bp_min": 719,
+    "expected_deletion_product_bp_max": 878,
+    "expected_wt_product_bp": 1525,
+    "note": "outside primer: 106/106 isolates; inside primer: 106/106 isolates \u2014 fully conserved"
   }
 }

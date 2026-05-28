@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
 
 from primer_design._bio_lite import tm_nn, reverse_complement
 from primer_design.config import (
-    BODY_LEN_MIN, BODY_LEN_MAX,
+    BODY_LEN_MIN,
     GC_MIN, GC_MAX,
     COLONY_PCR_TM_MIN_C, COLONY_PCR_TM_MAX_C, COLONY_PCR_TM_TARGET_C,
     COLONY_PCR_OUTSIDE_SEARCH_MAX, COLONY_PCR_INSIDE_SEARCH_MAX,
@@ -30,6 +30,8 @@ from primer_design.config import (
     POLYMERASE_OFFSETS_C,
     SUPPORTED_GENES,
 )
+
+BODY_LEN_MAX = 22   # colony PCR primers: max 22 bp
 from primer_design.gene_finder import get_gene_record, list_available_isolates
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
