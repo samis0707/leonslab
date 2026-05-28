@@ -1,0 +1,56 @@
+{
+  "lasB": {
+    "outside": {
+      "body": "TTTCCCGAGCCGATGTTCCAC",
+      "tm_body_C": 57.02,
+      "gc_body": 0.5714,
+      "flank_pos": 62
+    },
+    "inside": {
+      "body": "AACTTTAGACCGGGTTCGCGG",
+      "tm_body_C": 57.0,
+      "gc_body": 0.5714,
+      "flank_pos": 127
+    },
+    "expected_deletion_product_bp_min": 616,
+    "expected_deletion_product_bp_max": 753,
+    "expected_wt_product_bp": 2182,
+    "note": "conserved across 2/110 isolates (outside), 110/110 isolates (inside)"
+  },
+  "lasR": {
+    "outside": {
+      "body": "AAGTGGCTATGTCGCCGGG",
+      "tm_body_C": 56.99,
+      "gc_body": 0.6316,
+      "flank_pos": 111
+    },
+    "inside": {
+      "body": "AGAAGGGCAAATTACCGATCGCC",
+      "tm_body_C": 56.99,
+      "gc_body": 0.5217,
+      "flank_pos": 47
+    },
+    "expected_deletion_product_bp_min": 500,
+    "expected_deletion_product_bp_max": 611,
+    "expected_wt_product_bp": 1276,
+    "note": "conserved across 15/107 isolates (outside), 107/107 isolates (inside)"
+  },
+  "lasI": {
+    "outside": {
+      "body": "ACCAGTTGGGAGATATCGGTTATCTGC",
+      "tm_body_C": 57.01,
+      "gc_body": 0.4815,
+      "flank_pos": 93
+    },
+    "inside": {
+      "body": "GGTGAACTCGAAGTACTGCGGG",
+      "tm_body_C": 56.97,
+      "gc_body": 0.5909,
+      "flank_pos": 196
+    },
+    "expected_deletion_product_bp_min": 650,
+    "expected_deletion_product_bp_max": 795,
+    "expected_wt_product_bp": 1329,
+    "note": "conserved across 2/107 isolates (outside), 107/107 isolates (inside)"
+  }
+}
