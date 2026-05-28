@@ -187,6 +187,17 @@ class ExpressionPrimerSet:
     tm_spread: float
 
 
+@dataclass(frozen=True)
+class ColonyPCRPrimerSet:
+    """Pre-computed conserved colony PCR primers for pEXG2 deletion verification."""
+    gene: str
+    outside: Primer          # forward primer upstream of P1 buffer zone
+    inside: Primer           # reverse primer in downstream flank
+    expected_deletion_product_bp_min: int
+    expected_deletion_product_bp_max: int
+    note: str = ""           # e.g. "conserved across N/M isolates"
+
+
 PrimerSet = DeletionPrimerSet | TaggingPrimerSet | ExpressionPrimerSet
 
 
@@ -247,3 +258,4 @@ class DesignResult:
     final_plasmid: CircularPlasmid
     off_target: OffTargetReport
     warnings: list[str] = field(default_factory=list)
+    colony_pcr_primers: ColonyPCRPrimerSet | None = None

@@ -9,6 +9,7 @@ import uuid
 from . import config as cfg
 from ._bio_lite import translate_dna as _translate_dna
 from .types import (
+    ColonyPCRPrimerSet,
     DeletionPrimerSet,
     DesignResult,
     ExpressionPrimerSet,
@@ -59,6 +60,7 @@ def write_manifest(result: DesignResult) -> dict:
                 "passed": result.off_target.passed,
                 "violations_count": len(result.off_target.violations),
             },
+            "colony_pcr_primers": _colony_pcr_to_dict(result.colony_pcr_primers),
             "warnings": result.warnings,
         },
         "convention": {
@@ -109,6 +111,29 @@ def _primer_to_dict(p: Primer) -> dict:
         "gc_body_pct": round(p.gc_body * 100, 1),
         "length": p.length,
         "tail_kind": p.tail_kind,
+    }
+
+
+def _colony_pcr_to_dict(cpcr) -> dict | None:
+    if cpcr is None:
+        return None
+    return {
+        "gene": cpcr.gene,
+        "outside": {
+            "sequence": cpcr.outside.body,
+            "tm_body_C": round(cpcr.outside.tm_body_C, 2),
+            "gc_body_pct": round(cpcr.outside.gc_body * 100, 1),
+            "length": cpcr.outside.length,
+        },
+        "inside": {
+            "sequence": cpcr.inside.body,
+            "tm_body_C": round(cpcr.inside.tm_body_C, 2),
+            "gc_body_pct": round(cpcr.inside.gc_body * 100, 1),
+            "length": cpcr.inside.length,
+        },
+        "expected_deletion_product_bp_min": cpcr.expected_deletion_product_bp_min,
+        "expected_deletion_product_bp_max": cpcr.expected_deletion_product_bp_max,
+        "note": cpcr.note,
     }
 
 

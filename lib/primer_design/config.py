@@ -75,15 +75,23 @@ VECTOR_TAIL_LEN: int = 15            # all four tail rules use 15 nt
 # Flanks (gene record canonical extraction)
 # ============================================================================
 
-UP_FLANK_LEN: int = 600
+UP_FLANK_LEN: int = 800
 DN_FLANK_LEN: int = 600
 MIN_FLANK_LEN: int = 300             # shrink rather than overlap with neighbour gene
 
 # Primer body anchor offset window (within flank, 5'-most start position)
-P1_OFFSET_MIN: int = 0
-P1_OFFSET_MAX: int = 150
+P1_OFFSET_MIN: int = 200
+P1_OFFSET_MAX: int = 350
 P4_OFFSET_MIN: int = 0
 P4_OFFSET_MAX: int = 150
+
+# Colony PCR buffer in upstream flank (positions 0 – COLONY_PCR_BUFFER-1 reserved for outside primer)
+COLONY_PCR_BUFFER: int = 200
+COLONY_PCR_OUTSIDE_SEARCH_MAX: int = 150   # search the first 150 nt of the buffer for outside primer
+COLONY_PCR_INSIDE_SEARCH_MAX: int = 200    # search the first 200 nt of dn_flank for inside primer
+COLONY_PCR_TM_MIN_C: float = 53.0          # Taq Tm range (standard range – 5 °C)
+COLONY_PCR_TM_MAX_C: float = 61.0
+COLONY_PCR_TM_TARGET_C: float = 57.0
 
 # ============================================================================
 # RBS for plasmid expression (D6.1.v2 — fixed, no UI dropdown)

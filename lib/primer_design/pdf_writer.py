@@ -235,6 +235,7 @@ def _render(result: DesignResult, output_path: Path) -> None:
     _section_warnings(story, result, styles)
     _section_konstrukt_ueberblick(story, result, styles)
     _section_primer_tabelle(story, result, styles)
+    _section_colony_pcr(story, result, styles)
     _section_pcr_conditions(story, result, styles)
     _section_construct_summary(story, result, styles)
 
@@ -416,6 +417,64 @@ def _section_primer_tabelle(story, result, styles):
         ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
     ]))
     story.append(t)
+
+
+def _section_colony_pcr(story, result, styles):
+    """Colony PCR verification section — only shown for deletion when primers are available."""
+    if result.request.application != "deletion" or result.colony_pcr_primers is None:
+        return
+
+    cpcr = result.colony_pcr_primers
+    g = result.gene_record.gene
+
+    story.append(Paragraph("3   Colony-PCR Verifikation (pEXG2)", styles["section"]))
+
+    header = [
+        Paragraph("Primer", styles["th"]),
+        Paragraph("Rolle", styles["th"]),
+        Paragraph("Sequenz (5'→3')", styles["th"]),
+        Paragraph("Tm", styles["th"]),
+        Paragraph("GC%", styles["th"]),
+    ]
+
+    def _row(p, label):
+        return [
+            Paragraph(label, styles["body"]),
+            Paragraph(p.role, styles["body"]),
+            Paragraph(f"<font name='DejaVuMono'>{p.body.upper()}</font>", styles["mono"]),
+            Paragraph(f"{p.tm_body_C:.1f} °C", styles["body"]),
+            Paragraph(f"{p.gc_body * 100:.0f} %", styles["body"]),
+        ]
+
+    rows = [header, _row(cpcr.outside, f"OUT_{g}"), _row(cpcr.inside, f"IN_{g}")]
+
+    t = Table(rows, colWidths=[28 * mm, 22 * mm, None, 17 * mm, 11 * mm])
+    t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("FONTNAME", (0, 0), (-1, 0), "DejaVu-Bold"),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, SOFT_GREY]),
+        ("LINEBELOW", (0, 0), (-1, 0), 0.6, ACCENT),
+        ("BOX", (0, 0), (-1, -1), 0.4, ACCENT),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN", (3, 0), (-1, -1), "RIGHT"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+    ]))
+    story.append(t)
+
+    story.append(Spacer(1, 4))
+    story.append(Paragraph(
+        f"Erwartete Produktgröße: "
+        f"Deletion ~{cpcr.expected_deletion_product_bp_min}–{cpcr.expected_deletion_product_bp_max} bp "
+        f"&nbsp;|&nbsp; "
+        f"Wildtyp &gt;&gt; {cpcr.expected_deletion_product_bp_max} bp",
+        styles["body"],
+    ))
+    if cpcr.note:
+        story.append(Paragraph(cpcr.note, styles["small"]))
 
 
 def _section_pcr_conditions(story, result, styles):

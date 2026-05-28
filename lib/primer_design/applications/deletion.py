@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 from typing import Callable
 
+from .. import colony_pcr as _colony_pcr
 from .. import gene_finder, primer_designer, storage_adapter, vectors, verification
 from ..config import (
     JUNCTION_LEN_DEFAULT,
@@ -136,6 +137,7 @@ def run(
             f"native protein product is already absent or non-functional in this "
             f"isolate. Verify your experimental design accounts for this."
         )
+    result.colony_pcr_primers = _colony_pcr.get_colony_pcr_primers(request.gene)
     verification.verify(result)
     return result
 

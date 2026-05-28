@@ -11,6 +11,7 @@ from io import StringIO
 from ._bio_lite import Seq
 
 from .types import (
+    ColonyPCRPrimerSet,
     DeletionPrimerSet,
     DesignResult,
     ExpressionPrimerSet,
@@ -70,6 +71,22 @@ def write_fasta(result: DesignResult) -> str:
         _write_record(buf, f"{base}_expressed_CDS", cds,
                       extra=f"len={len(cds)} translation={protein}")
 
+    # 6. Colony PCR primers (deletion only)
+    if app == "deletion" and result.colony_pcr_primers is not None:
+        cpcr = result.colony_pcr_primers
+        buf.write(f"\n; ---- Colony PCR verification primers (pEXG2, {gene}) ----\n")
+        _write_primer_simple(buf, cpcr.outside, gene)
+        buf.write("\n")
+        _write_primer_simple(buf, cpcr.inside, gene)
+        buf.write("\n")
+        buf.write(
+            f"; Expected product sizes: "
+            f"deletion ~{cpcr.expected_deletion_product_bp_min}–{cpcr.expected_deletion_product_bp_max} bp  |  "
+            f"WT >> {cpcr.expected_deletion_product_bp_max} bp\n"
+        )
+        if cpcr.note:
+            buf.write(f"; {cpcr.note}\n")
+
     return buf.getvalue()
 
 
@@ -98,6 +115,14 @@ def _write_primer(buf: StringIO, p: Primer, app: str, base: str) -> None:
         f"tail_kind={p.tail_kind}\n"
     )
     buf.write(p.annotated_sequence + "\n")
+
+
+def _write_primer_simple(buf: StringIO, p: Primer, gene: str) -> None:
+    buf.write(
+        f">{p.name}_{gene}_{p.role} Tm_body={p.tm_body_C:.1f}C GC_body={int(p.gc_body * 100)}% "
+        f"len={p.length}\n"
+    )
+    buf.write(p.body.upper() + "\n")
 
 
 def _write_record(buf: StringIO, header: str, sequence: str, extra: str = "", line_width: int = 60) -> None:
