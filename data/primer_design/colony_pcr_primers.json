@@ -33,7 +33,7 @@
     "expected_deletion_product_bp_min": 630,
     "expected_deletion_product_bp_max": 771,
     "expected_wt_product_bp": 1421,
-    "note": "outside primer: 93/107 isolates (\u22641 mismatch); NOT suitable for: LB001, LB009, LB010, LB020, LB038, LB039, LB040, LB042, LB043, LB052, LB069, LB086, LB091, LB117 \u2014 these isolates have divergent upstream sequences; inside primer: 107/107 isolates"
+    "note": "outside primer: 106/107 isolates (\u22641 mismatch); NOT suitable for: LB010 \u2014 divergent upstream sequence; inside primer: 107/107 isolates"
   },
   "lasI": {
     "outside": {
@@ -51,7 +51,7 @@
     "expected_deletion_product_bp_min": 757,
     "expected_deletion_product_bp_max": 926,
     "expected_wt_product_bp": 1448,
-    "note": "outside primer: 103/107 isolates (\u22641 mismatch); NOT suitable for: LB069, LB088, LB091, LB148 \u2014 these isolates have divergent upstream sequences; inside primer: 107/107 isolates"
+    "note": "outside primer: 103/107 isolates (\u22641 mismatch); NOT suitable for: LB069, LB088, LB091, LB148 \u2014 divergent upstream sequence; inside primer: 107/107 isolates"
   },
   "aprA": {
     "outside": {
@@ -69,7 +69,7 @@
     "expected_deletion_product_bp_min": 756,
     "expected_deletion_product_bp_max": 925,
     "expected_wt_product_bp": 2281,
-    "note": "outside primer: 107/110 isolates (\u22641 mismatch); NOT suitable for: LB018, LB021, LB061 \u2014 these isolates have divergent upstream sequences; inside primer: 110/110 isolates"
+    "note": "outside primer: 107/110 isolates (\u22641 mismatch); NOT suitable for: LB018, LB021, LB061 \u2014 divergent upstream sequence; inside primer: 110/110 isolates"
   },
   "rhlR": {
     "outside": {
