@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from .. import gene_finder, primer_designer, vectors, verification
+from .. import cross_isolate_checker, gene_finder, primer_designer, vectors, verification
 from ..config import OFFTARGET_PRODUCT_SIZE_MAX_BP
 from ..exceptions import OffTargetDetected
 from ..plasmid_builder import assemble
@@ -112,6 +112,9 @@ def run(
         insert=insert,
         final_plasmid=final_plasmid,
         off_target=off_target,
+    )
+    result.compatible_isolates = cross_isolate_checker.find_compatible_isolates(
+        best, request.gene, request.isolate_id
     )
     verification.verify(result)
     return result

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Callable
 
 from .. import colony_pcr as _colony_pcr
-from .. import gene_finder, primer_designer, storage_adapter, vectors, verification
+from .. import cross_isolate_checker, gene_finder, primer_designer, storage_adapter, vectors, verification
 from ..config import (
     JUNCTION_LEN_DEFAULT,
     JUNCTION_LEN_PER_PRIMER_DEFAULT,
@@ -138,6 +138,9 @@ def run(
             f"isolate. Verify your experimental design accounts for this."
         )
     result.colony_pcr_primers = _colony_pcr.get_colony_pcr_primers(request.gene)
+    result.compatible_isolates = cross_isolate_checker.find_compatible_isolates(
+        best, request.gene, request.isolate_id
+    )
     verification.verify(result)
     return result
 

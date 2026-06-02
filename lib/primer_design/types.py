@@ -259,3 +259,4 @@ class DesignResult:
     off_target: OffTargetReport
     warnings: list[str] = field(default_factory=list)
     colony_pcr_primers: ColonyPCRPrimerSet | None = None
+    compatible_isolates: list[str] = field(default_factory=list)

@@ -238,6 +238,7 @@ def _render(result: DesignResult, output_path: Path) -> None:
     _section_colony_pcr(story, result, styles)
     _section_pcr_conditions(story, result, styles)
     _section_construct_summary(story, result, styles)
+    _section_primer_kompatibilitaet(story, result, styles)
 
     doc.build(story)
 
@@ -584,6 +585,23 @@ def _section_construct_summary(story, result, styles):
         f"&nbsp;•&nbsp; <font color='#5A6470'>{enzyme}-Sites in finalem "
         f"Plasmid: {site_count} (erwartet {expected_sites})</font>",
         styles["body"]))
+
+
+def _section_primer_kompatibilitaet(story, result, styles):
+    story.append(Paragraph("5   Primer-Kompatibilität", styles["section"]))
+    compatible = result.compatible_isolates
+    if compatible:
+        isolate_text = ", ".join(compatible)
+        story.append(Paragraph(
+            f"Diese Primer binden identisch in <b>{len(compatible)}</b> weiterem/n "
+            f"Isolat(en): <font name='DejaVuMono'>{isolate_text}</font>",
+            styles["body"],
+        ))
+    else:
+        story.append(Paragraph(
+            "Kein weiteres Isolat hat identische Bindestellen für alle Primer.",
+            styles["small"],
+        ))
 
 
 # ---------------------------------------------------------------------------
