@@ -680,6 +680,83 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     refreshEdges(iid);
   }
 
+  /* ── Block move (multi-cell selection + arrow keys) ── */
+  function moveBlock(dir) {
+    const cells = [...selected].map(id => {
+      const [iid, ri, ci] = id.split('-').map(Number);
+      return { id, iid, ri, ci };
+    });
+
+    // Only move within a single item
+    const iids = new Set(cells.map(c => c.iid));
+    if (iids.size !== 1) return;
+
+    const iid  = cells[0].iid;
+    const item = itemById(iid);
+    if (!item || item.type !== 'rows') return;
+
+    const dri = dir === 'ArrowUp' ? -1 : dir === 'ArrowDown' ? 1 : 0;
+    const dci = dir === 'ArrowLeft' ? -1 : dir === 'ArrowRight' ? 1 : 0;
+
+    // All target positions must be within the grid
+    for (const { ri, ci } of cells) {
+      const nri = ri + dri, nci = ci + dci;
+      if (nri < 0 || nri >= item.rowCount || nci < 0 || nci >= item.colCount) return;
+    }
+
+    const selSet = new Set(cells.map(c => c.id));
+
+    // Target cells must be empty or part of the selection (which will vacate)
+    for (const { iid: ciid, ri, ci } of cells) {
+      const nid = cid(ciid, ri + dri, ci + dci);
+      if (!selSet.has(nid) && letters[nid]) return;
+    }
+
+    // Collect all red edge keys touching any selected cell
+    const edgesToMove = new Set();
+    for (const { iid: ciid, ri, ci } of cells) {
+      for (const k of [
+        eid('h', ciid, ri - 1, ci),
+        eid('h', ciid, ri, ci),
+        eid('v', ciid, ri, ci - 1),
+        eid('v', ciid, ri, ci),
+      ]) { if (redEdges.has(k)) edgesToMove.add(k); }
+    }
+
+    // Two-pass move: clear sources, then write targets (handles overlapping shifts)
+    const moves = cells.map(({ id, iid: ciid, ri, ci }) => ({
+      from: id, to: cid(ciid, ri + dri, ci + dci),
+      letter: letters[id], color: cellColors[id],
+    }));
+    moves.forEach(({ from }) => { delete letters[from]; delete cellColors[from]; });
+    moves.forEach(({ to, letter, color }) => {
+      if (letter) letters[to] = letter; else delete letters[to];
+      if (color)  cellColors[to] = color; else delete cellColors[to];
+    });
+
+    // Move edge keys
+    const newEdgeKeys = [...edgesToMove].map(k => {
+      const parts = k.split('-');
+      return eid(parts[0], iid, Number(parts[2]) + dri, Number(parts[3]) + dci);
+    });
+    edgesToMove.forEach(k => redEdges.delete(k));
+    newEdgeKeys.forEach(k => redEdges.add(k));
+
+    // Update cell content in DOM
+    const affected = new Set([...moves.map(m => m.from), ...moves.map(m => m.to)]);
+    for (const id of affected) {
+      const el = canvas.querySelector(`[data-cid="${id}"]`);
+      if (!el) continue;
+      const ltr = letters[id];
+      el.textContent = ltr || '';
+      el.style.color = ltr ? (cellColors[id] || TEXT_COLORS[0]) : '';
+    }
+
+    // Refresh edge rendering for entire item, then update selection
+    refreshEdges(iid);
+    select(new Set(moves.map(m => m.to)));
+  }
+
   /* ── Keyboard ── */
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -728,6 +805,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     } else if (e.key === 'Escape') {
       select([]); hidePopup();
     } else if (e.key.startsWith('Arrow') && !e.ctrlKey && !e.metaKey) {
+      if (selected.size > 1 && !e.shiftKey) {
+        moveBlock(e.key);
+        e.preventDefault();
+        return;
+      }
       const id = [...selected].at(-1);
       if (!id) return;
       const [iid, ri, ci] = id.split('-').map(Number);
