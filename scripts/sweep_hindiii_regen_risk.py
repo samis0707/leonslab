@@ -5,8 +5,8 @@ Authoritative HindIII-regen sweep: invokes the TOOL's actual designer
 AAGCTT in the final plasmid.
 
 Trap mechanism (pEXG2 + HindIII + site_destroyed, see comparison_round1.md §5):
-  - P1 tail = CATAAATGTAAAGCA (ends in 'A'). If P1 body starts with AGCTT,
-    the left vector junction reads ...AAAGCAAGCTT... → AAGCTT regenerated.
+  - P1 tail = AATGTAAAGCAAGCT (ends with AAGCT). If P1 body starts with 'T',
+    the left vector junction reads ...AAGCTT... → AAGCTT regenerated.
   - P4 tail (RC into top strand of insert) = AGCTTCTGCAGGTCG. If RC(P4_body)
     ends with 'A' (i.e. P4 body starts with 'T'), the right junction reads
     ...AAGCTTCTGCAG... → AAGCTT regenerated.
@@ -42,9 +42,9 @@ def sweep_one(gene: str, isolate: str) -> dict:
 
     p1_body = best.p1.body
     p4_body = best.p4.body
-    p1_trap = p1_body.startswith("AGCTT")
+    p1_trap = p1_body.startswith("T")
     p4_trap = p4_body.startswith("T")
-    insert_top_left  = "CATAAATGTAAAGCA" + p1_body[:6]
+    insert_top_left  = "AATGTAAAGCAAGCT" + p1_body[:2]
     from primer_design.vectors import reverse_complement
     insert_top_right = reverse_complement(p4_body)[-6:] + "AGCTTCTGCAGGTCG"
     regen_left  = "AAGCTT" in insert_top_left
