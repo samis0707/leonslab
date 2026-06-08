@@ -18,10 +18,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <!-- Toolbar -->
   <div class="gt-topbar">
     <button id="gt-edge-btn" type="button" class="gt-btn gt-btn-mode">Kanten auswählen</button>
-    <div class="gt-col-ctrl">
-      <span class="gt-col-label">Spalten</span>
-      <input type="number" id="gt-col-count" class="gt-col-input" min="1" max="60" value="30">
-    </div>
+    <span class="gt-hint">Rechtsklick auf Auswahl → Farbe</span>
   </div>
 
   <!-- Canvas -->
@@ -31,11 +28,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   <!-- Actions -->
   <div class="gt-actions">
-    <button id="gt-more-text"  type="button" class="gt-btn">mehr Text</button>
-    <button id="gt-more-cells" type="button" class="gt-btn">mehr Kästchen</button>
+    <button id="gt-more-text"  type="button" class="gt-btn">+ Textfeld</button>
+    <button id="gt-more-cells" type="button" class="gt-btn">+ Kästchenreihe</button>
   </div>
 
-  <!-- Floating color popup -->
+  <!-- Floating color popup (right-click) -->
   <div id="gt-popup" class="gt-popup" hidden></div>
 
 </div>
@@ -90,7 +87,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     display: block;
     font-weight: 900;
     color: #1a1a1a;
-    /* green underline accent */
     text-decoration: underline;
     text-decoration-color: #0c5e3b;
     text-decoration-thickness: 4px;
@@ -107,12 +103,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .gt-topbar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 1rem;
     flex-wrap: wrap;
-    gap: 0.75rem;
     margin-bottom: 1.5rem;
     padding: 0.6rem 0;
     border-bottom: 1px solid #d4d0c8;
+  }
+  .gt-hint {
+    font-size: 0.72rem;
+    color: #aaa;
+    letter-spacing: 0.01em;
   }
 
   /* ── Buttons ── */
@@ -129,37 +129,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     transition: background 100ms, border-color 100ms, color 100ms;
   }
   .gt-btn:hover { background: #f4f4f2; border-color: #888; }
-  .gt-btn.is-active {
-    background: #e63946;
-    color: #fff;
-    border-color: #e63946;
-  }
+  .gt-btn.is-active { background: #e63946; color: #fff; border-color: #e63946; }
   .gt-btn.is-active:hover { background: #c62833; border-color: #c62833; }
-
-  /* ── Column count ── */
-  .gt-col-ctrl {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .gt-col-label {
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #888;
-  }
-  .gt-col-input {
-    width: 3.5rem;
-    padding: 0.3rem 0.4rem;
-    font-family: ui-monospace, monospace;
-    font-size: 0.82rem;
-    border: 1px solid #bbb;
-    border-radius: 4px;
-    background: #fff;
-    text-align: center;
-  }
-  .gt-col-input:focus { outline: 2px solid #0c5e3b; outline-offset: 1px; }
 
   /* ── Canvas wrapper ── */
   .gt-canvas-outer {
@@ -176,7 +147,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     flex-wrap: wrap;
   }
 
-  /* ── Color popup (static elements only; swatches are :global below) ── */
+  /* ── Color popup ── */
   .gt-popup {
     position: absolute;
     z-index: 200;
@@ -192,27 +163,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   /*
-   * ── All elements below are created dynamically in JS and therefore
-   *    MUST use :global() to escape Astro's CSS scoping. ──
+   * Everything below is built in JS → needs :global() to escape Astro's
+   * CSS scoping (which only applies to elements in the template above).
    */
 
-  /* Canvas flex column */
+  /* Canvas */
   :global(.gt-canvas) {
     display: flex;
     flex-direction: column;
-    gap: 1.75rem;
     width: max-content;
     min-width: 100%;
   }
 
-  /* Section wrapper */
-  :global(.gt-section) {
-    display: flex;
-    flex-direction: column;
-    width: max-content;
-  }
-
-  /* Text field */
+  /* Text field item */
   :global(.gt-text) {
     display: block;
     height: 22px;
@@ -225,21 +188,34 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     background: #fff;
     box-sizing: border-box;
     color: #1a1a1a;
-    /* width set by JS */
+    margin-top: 1.5rem; /* default gap above text fields */
   }
+  /* First text item needs no top gap */
+  :global(.gt-canvas > .gt-text:first-child) { margin-top: 0; }
+  /* Text immediately after a rows-wrap also gets the gap */
+  :global(.gt-rows-wrap + .gt-text) { margin-top: 1.75rem; }
   :global(.gt-text:focus) {
     outline: none;
     border-color: #0c5e3b;
     background: #f0faf4;
   }
 
+  /* Rows wrapper (grid + side control) */
+  :global(.gt-rows-wrap) {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-top: 1.5rem; /* default gap */
+  }
+  :global(.gt-canvas > .gt-rows-wrap:first-child) { margin-top: 0; }
+  /* Rows directly after a text field: share the border (no gap, -1px) */
+  :global(.gt-text + .gt-rows-wrap) { margin-top: -1px; }
+
   /* Grid */
   :global(.gt-grid) {
     display: flex;
     flex-direction: column;
     position: relative;
-    margin-top: -1px;   /* share border with text field */
-    z-index: 1;
   }
 
   /* Row */
@@ -268,19 +244,44 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
   :global(.gt-cell:not(:first-child)) { margin-left: -1px; }
   :global(.gt-cell:hover) { background: #f4f4f2; z-index: 1; }
-
-  /* Selected cell */
   :global(.gt-cell.is-sel) {
     z-index: 2;
     box-shadow: inset 0 0 0 2px #0c5e3b;
     background: #f0faf4;
   }
-
-  /* Edge mode */
   :global(.gt-canvas.gt-edge-mode .gt-cell) { cursor: crosshair; }
   :global(.gt-canvas.gt-edge-mode .gt-cell:hover) {
     background: rgba(230, 57, 70, 0.05);
   }
+
+  /* Rows side control (column count) */
+  :global(.gt-rows-side) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding-top: 2px;
+    flex-shrink: 0;
+  }
+  :global(.gt-col-label) {
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #aaa;
+  }
+  :global(.gt-col-input) {
+    width: 3.2rem;
+    padding: 0.25rem 0.35rem;
+    font-family: ui-monospace, monospace;
+    font-size: 0.8rem;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    background: #fff;
+    text-align: center;
+    color: #1a1a1a;
+  }
+  :global(.gt-col-input:focus) { outline: 2px solid #0c5e3b; outline-offset: 1px; }
 
   /* Color swatches */
   :global(.gt-swatch) {
@@ -308,35 +309,32 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   const EDGE_THRESH = 5;
 
   const TEXT_COLORS = [
-    '#1a1a1a',
-    '#e63946',
-    '#fb8c00',
-    '#f4c20d',
-    '#43a047',
-    '#1e88e5',
-    '#7b1fa2',
-    '#e91e63',
-    '#00838f',
+    '#1a1a1a','#e63946','#fb8c00','#f4c20d',
+    '#43a047','#1e88e5','#7b1fa2','#e91e63','#00838f',
   ];
 
   /* ── State ── */
-  let colCount = 30;
-  let sections = [{ text: '', rowCount: 1 }];
-  let letters   = {};
-  let cellColors = {};
-  let selected  = new Set();
-  let redEdges  = new Set();
-  let edgeMode  = false;
-  let dragData  = null;
+  // items: flat list of { type:'text', id, value } | { type:'rows', id, colCount, rowCount }
+  let items = [
+    { type: 'text', id: 0, value: '' },
+    { type: 'rows', id: 1, colCount: 30, rowCount: 1 },
+  ];
+  let idCtr = 2;
+
+  let letters    = {};   // `${itemId}-${ri}-${ci}` -> letter
+  let cellColors = {};   // same key -> color
+  let selected   = new Set();
+  let redEdges   = new Set();
+  let edgeMode   = false;
+  let dragData   = null;
 
   /* ── DOM ── */
-  const root     = document.getElementById('gt-root');
-  const canvas   = document.getElementById('gt-canvas');
-  const edgeBtn  = document.getElementById('gt-edge-btn');
-  const colInput = document.getElementById('gt-col-count');
-  const popup    = document.getElementById('gt-popup');
+  const root    = document.getElementById('gt-root');
+  const canvas  = document.getElementById('gt-canvas');
+  const edgeBtn = document.getElementById('gt-edge-btn');
+  const popup   = document.getElementById('gt-popup');
 
-  /* ── Build swatches ── */
+  /* ── Color popup swatches ── */
   TEXT_COLORS.forEach(c => {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -346,7 +344,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     btn.title = c;
     popup.appendChild(btn);
   });
-
   popup.addEventListener('click', e => {
     const btn = e.target.closest('.gt-swatch');
     if (!btn) return;
@@ -359,76 +356,124 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     hidePopup();
   });
 
-  /* ── Helpers ── */
-  const cid = (s, r, c) => `${s}-${r}-${c}`;
-  const eid = (t, s, r, c) => `${t}-${s}-${r}-${c}`;
+  /* ── ID helpers ── */
+  const cid = (iid, r, c) => `${iid}-${r}-${c}`;
+  const eid = (t, iid, r, c) => `${t}-${iid}-${r}-${c}`;
 
-  /* ── Render ── */
-  function fullRender() {
-    canvas.innerHTML = '';
-    sections.forEach((_, si) => canvas.appendChild(buildSection(si)));
+  function itemById(id) { return items.find(it => it.id === id); }
+
+  /* ── Next cell (for auto-advance) ── */
+  function nextCellId(id) {
+    const [iid, ri, ci] = id.split('-').map(Number);
+    const item = itemById(iid);
+    if (!item || item.type !== 'rows') return null;
+    if (ci + 1 < item.colCount) return cid(iid, ri, ci + 1);
+    if (ri + 1 < item.rowCount) return cid(iid, ri + 1, 0);
+    return null;
   }
 
-  function buildSection(si) {
-    const sec  = sections[si];
-    const wrap = document.createElement('div');
-    wrap.className  = 'gt-section';
-    wrap.dataset.si = si;
+  /* ── Full render ── */
+  function fullRender() {
+    canvas.innerHTML = '';
+    items.forEach((_, idx) => canvas.appendChild(buildItemEl(idx)));
+  }
 
+  function buildItemEl(idx) {
+    const item = items[idx];
+    if (item.type === 'text') return buildTextEl(idx);
+    if (item.type === 'rows') return buildRowsEl(idx);
+  }
+
+  /* Build text field element */
+  function buildTextEl(idx) {
+    const item = items[idx];
+    // Width: match the following rows block if adjacent
+    const nextItem = items[idx + 1];
+    const colCount = (nextItem && nextItem.type === 'rows') ? nextItem.colCount : 30;
     const inp = document.createElement('input');
     inp.type = 'text';
     inp.className = 'gt-text';
-    inp.value = sec.text;
+    inp.value = item.value;
     inp.style.width = `${colCount * CELL_W + 1}px`;
-    inp.dataset.si = si;
-    wrap.appendChild(inp);
+    inp.dataset.iid = item.id;
+    return inp;
+  }
 
+  /* Build rows wrapper (grid + side control) */
+  function buildRowsEl(idx) {
+    const item = items[idx];
+    const wrap = document.createElement('div');
+    wrap.className  = 'gt-rows-wrap';
+    wrap.dataset.iid = item.id;
+
+    // Grid
     const grid = document.createElement('div');
     grid.className  = 'gt-grid';
-    grid.dataset.si = si;
-    for (let ri = 0; ri < sec.rowCount; ri++) {
-      grid.appendChild(buildRow(si, ri));
+    grid.dataset.iid = item.id;
+    for (let ri = 0; ri < item.rowCount; ri++) {
+      grid.appendChild(buildRow(item.id, ri, item.colCount));
     }
     wrap.appendChild(grid);
+
+    // Side: column count control
+    const side  = document.createElement('div');
+    side.className = 'gt-rows-side';
+    const lbl   = document.createElement('span');
+    lbl.className = 'gt-col-label';
+    lbl.textContent = 'Spalten';
+    const colInp = document.createElement('input');
+    colInp.type = 'number';
+    colInp.className = 'gt-col-input';
+    colInp.value = item.colCount;
+    colInp.min = 1;
+    colInp.max = 60;
+    colInp.dataset.iid = item.id;
+    side.appendChild(lbl);
+    side.appendChild(colInp);
+    wrap.appendChild(side);
+
     return wrap;
   }
 
-  function buildRow(si, ri) {
+  function buildRow(iid, ri, colCount) {
     const row = document.createElement('div');
     row.className  = 'gt-row';
     row.dataset.ri = ri;
-    for (let ci = 0; ci < colCount; ci++) row.appendChild(buildCell(si, ri, ci));
+    for (let ci = 0; ci < colCount; ci++) row.appendChild(buildCell(iid, ri, ci));
     return row;
   }
 
-  function buildCell(si, ri, ci) {
-    const id = cid(si, ri, ci);
+  function buildCell(iid, ri, ci) {
+    const id = cid(iid, ri, ci);
     const el = document.createElement('div');
     el.className   = 'gt-cell' + (selected.has(id) ? ' is-sel' : '');
     el.dataset.cid = id;
-    el.dataset.si  = si;
+    el.dataset.iid = iid;
     el.dataset.ri  = ri;
     el.dataset.ci  = ci;
     const letter = letters[id];
     if (letter) { el.textContent = letter; el.style.color = cellColors[id] || TEXT_COLORS[0]; }
-    applyEdgeColors(el, si, ri, ci);
+    applyEdgeColors(el, iid, ri, ci);
     return el;
   }
 
-  function applyEdgeColors(el, si, ri, ci) {
-    const topKey  = ri > 0 ? eid('h', si, ri - 1, ci) : null;
+  /* ── Edge coloring ── */
+  function applyEdgeColors(el, iid, ri, ci) {
+    const topKey  = ri > 0 ? eid('h', iid, ri - 1, ci) : null;
     el.style.borderTopColor  = topKey  && redEdges.has(topKey)  ? '#e63946' : '';
     el.style.borderTopWidth  = topKey  && redEdges.has(topKey)  ? '2px'     : '';
-    const leftKey = ci > 0 ? eid('v', si, ri, ci - 1) : null;
+    const leftKey = ci > 0 ? eid('v', iid, ri, ci - 1) : null;
     el.style.borderLeftColor = leftKey && redEdges.has(leftKey) ? '#e63946' : '';
     el.style.borderLeftWidth = leftKey && redEdges.has(leftKey) ? '2px'     : '';
   }
 
-  function refreshSectionEdges(si) {
-    for (let ri = 0; ri < sections[si].rowCount; ri++)
-      for (let ci = 0; ci < colCount; ci++) {
-        const el = canvas.querySelector(`[data-cid="${cid(si, ri, ci)}"]`);
-        if (el) applyEdgeColors(el, si, ri, ci);
+  function refreshEdges(iid) {
+    const item = itemById(iid);
+    if (!item || item.type !== 'rows') return;
+    for (let ri = 0; ri < item.rowCount; ri++)
+      for (let ci = 0; ci < item.colCount; ci++) {
+        const el = canvas.querySelector(`[data-cid="${cid(iid, ri, ci)}"]`);
+        if (el) applyEdgeColors(el, iid, ri, ci);
       }
   }
 
@@ -437,52 +482,69 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     selected.forEach(id => canvas.querySelector(`[data-cid="${id}"]`)?.classList.remove('is-sel'));
     selected = new Set(ids);
     selected.forEach(id => canvas.querySelector(`[data-cid="${id}"]`)?.classList.add('is-sel'));
-    selected.size > 0 ? showPopup() : hidePopup();
+    // Color popup is shown only on right-click, not here
   }
 
-  function showPopup() {
-    const last = [...selected].at(-1);
-    if (!last) return;
-    const el = canvas.querySelector(`[data-cid="${last}"]`);
-    if (!el) return;
-    const cr = el.getBoundingClientRect();
+  /* ── Color popup (right-click only) ── */
+  function showPopupAt(px, py) {
     const pr = root.getBoundingClientRect();
-    popup.style.left = `${cr.left - pr.left}px`;
-    popup.style.top  = `${cr.bottom - pr.top + 6}px`;
+    popup.style.left = `${px - pr.left}px`;
+    popup.style.top  = `${py - pr.top + 6}px`;
     popup.hidden = false;
   }
   function hidePopup() { popup.hidden = true; }
 
-  /* ── Pointer ── */
+  // Right-click on a cell
+  canvas.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    const cell = e.target.closest('.gt-cell');
+    if (!cell) { hidePopup(); return; }
+    const id = cell.dataset.cid;
+    if (!selected.has(id)) select([id]); // auto-select if not already
+    showPopupAt(e.clientX, e.clientY);
+  });
+
+  // Dismiss popup when clicking outside
+  document.addEventListener('pointerdown', e => {
+    if (popup.hidden) return;
+    if (!popup.contains(e.target) && !e.target.closest('.gt-cell')) {
+      hidePopup();
+    }
+  }, true);
+
+  /* ── Pointer events (selection + drag) ── */
   canvas.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
     const cell = e.target.closest('.gt-cell');
-    if (!cell) { select([]); return; }
+    if (!cell) { select([]); hidePopup(); return; }
 
-    const si = Number(cell.dataset.si);
-    const ri = Number(cell.dataset.ri);
-    const ci = Number(cell.dataset.ci);
+    const iid = Number(cell.dataset.iid);
+    const ri  = Number(cell.dataset.ri);
+    const ci  = Number(cell.dataset.ci);
+    const id  = cid(iid, ri, ci);
 
     if (edgeMode) {
       const r = cell.getBoundingClientRect();
-      clickEdge(si, ri, ci, e.clientX - r.left, e.clientY - r.top, e.shiftKey);
+      clickEdge(iid, ri, ci, e.clientX - r.left, e.clientY - r.top, e.shiftKey);
       e.preventDefault();
       return;
     }
 
-    dragData = { startX: e.clientX, startY: e.clientY,
-                 pointerId: e.pointerId, shiftKey: e.shiftKey,
-                 initSel: new Set(selected), moved: false };
+    dragData = {
+      startX: e.clientX, startY: e.clientY,
+      pointerId: e.pointerId, shiftKey: e.shiftKey,
+      initSel: new Set(selected), moved: false,
+    };
     canvas.setPointerCapture(e.pointerId);
     e.preventDefault();
+    hidePopup();
 
     if (e.shiftKey) {
       const ns = new Set(selected);
-      const id = cid(si, ri, ci);
       if (ns.has(id)) ns.delete(id); else ns.add(id);
       select(ns);
     } else {
-      select([cid(si, ri, ci)]);
+      select([id]);
     }
   });
 
@@ -508,14 +570,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   });
 
   /* ── Edge click ── */
-  function clickEdge(si, ri, ci, cx, cy, shift) {
-    const rowCount = sections[si].rowCount;
+  function clickEdge(iid, ri, ci, cx, cy, shift) {
+    const item = itemById(iid);
+    if (!item) return;
     let key = null, minDist = Infinity;
     const checks = [
-      { dist: cy,           cond: ri > 0,            k: () => eid('h', si, ri - 1, ci) },
-      { dist: CELL_H - cy,  cond: ri < rowCount - 1, k: () => eid('h', si, ri, ci)     },
-      { dist: cx,           cond: ci > 0,            k: () => eid('v', si, ri, ci - 1) },
-      { dist: CELL_W - cx,  cond: ci < colCount - 1, k: () => eid('v', si, ri, ci)     },
+      { dist: cy,           cond: ri > 0,                  k: () => eid('h', iid, ri - 1, ci) },
+      { dist: CELL_H - cy,  cond: ri < item.rowCount - 1,  k: () => eid('h', iid, ri, ci)     },
+      { dist: cx,           cond: ci > 0,                  k: () => eid('v', iid, ri, ci - 1) },
+      { dist: CELL_W - cx,  cond: ci < item.colCount - 1,  k: () => eid('v', iid, ri, ci)     },
     ];
     for (const ch of checks)
       if (ch.cond && ch.dist <= EDGE_THRESH && ch.dist < minDist) { minDist = ch.dist; key = ch.k(); }
@@ -526,13 +589,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     } else {
       if (redEdges.has(key)) redEdges.delete(key); else redEdges.add(key);
     }
-    refreshSectionEdges(si);
+    refreshEdges(iid);
   }
 
   /* ── Keyboard ── */
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (selected.size === 0) return;
+
     const up = e.key.toUpperCase();
     if (up.length === 1 && /^[A-Z]$/.test(up)) {
       selected.forEach(id => {
@@ -540,6 +604,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         const el = canvas.querySelector(`[data-cid="${id}"]`);
         if (el) { el.textContent = up; el.style.color = cellColors[id] || TEXT_COLORS[0]; }
       });
+      // Auto-advance: only when a single cell was selected
+      if (selected.size === 1) {
+        const next = nextCellId([...selected][0]);
+        select(next ? [next] : []);
+      }
       e.preventDefault();
     } else if (e.key === 'Backspace' || e.key === 'Delete') {
       selected.forEach(id => {
@@ -548,52 +617,84 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         if (el) { el.textContent = ''; el.style.color = ''; }
       });
       e.preventDefault();
-    } else if (e.key === 'Escape') select([]);
+    } else if (e.key === 'Escape') {
+      select([]); hidePopup();
+    }
   });
 
-  /* ── Text input ── */
+  /* ── Text input changes ── */
   canvas.addEventListener('input', e => {
     const inp = e.target.closest('.gt-text');
-    if (inp) sections[Number(inp.dataset.si)].text = inp.value;
+    if (!inp) return;
+    const item = itemById(Number(inp.dataset.iid));
+    if (item) item.value = inp.value;
   });
 
-  /* ── Edge mode ── */
+  /* ── Column count change (per block) ── */
+  canvas.addEventListener('change', e => {
+    const inp = e.target.closest('.gt-col-input');
+    if (!inp) return;
+    const iid = Number(inp.dataset.iid);
+    const item = itemById(iid);
+    if (!item || item.type !== 'rows') return;
+    const v = Math.max(1, Math.min(60, parseInt(inp.value) || 30));
+    inp.value = v;
+    item.colCount = v;
+
+    // Prune invalid selections and edges for this block
+    selected.forEach(id => { const [i,,c] = id.split('-').map(Number); if (i===iid && c>=v) selected.delete(id); });
+    redEdges.forEach(k => { const p=k.split('-'); if(p[0]==='v' && Number(p[1])===iid && Number(p[3])>=v-1) redEdges.delete(k); });
+
+    // Re-render this block
+    const wrap = canvas.querySelector(`.gt-rows-wrap[data-iid="${iid}"]`);
+    const idx  = items.findIndex(it => it.id === iid);
+    if (wrap && idx !== -1) {
+      const newWrap = buildRowsEl(idx);
+      wrap.replaceWith(newWrap);
+    }
+
+    // Update width of preceding text field if adjacent
+    const idx2 = items.findIndex(it => it.id === iid);
+    if (idx2 > 0 && items[idx2 - 1].type === 'text') {
+      const textEl = canvas.querySelector(`.gt-text[data-iid="${items[idx2-1].id}"]`);
+      if (textEl) textEl.style.width = `${v * CELL_W + 1}px`;
+    }
+  });
+
+  /* ── Edge mode toggle ── */
   edgeBtn.addEventListener('click', () => {
     edgeMode = !edgeMode;
     edgeBtn.classList.toggle('is-active', edgeMode);
     canvas.classList.toggle('gt-edge-mode', edgeMode);
-    if (edgeMode) select([]);
+    if (edgeMode) { select([]); hidePopup(); }
   });
 
-  /* ── Column count ── */
-  colInput.addEventListener('change', () => {
-    const v = Math.max(1, Math.min(60, parseInt(colInput.value) || 30));
-    colInput.value = v;
-    colCount = v;
-    redEdges.forEach(k => { const p = k.split('-'); if (p[0]==='v' && Number(p[3]) >= colCount-1) redEdges.delete(k); });
-    selected.forEach(id => { if (Number(id.split('-')[2]) >= colCount) selected.delete(id); });
-    fullRender();
-  });
-
-  /* ── Buttons ── */
+  /* ── + Textfeld ── */
   document.getElementById('gt-more-text').addEventListener('click', () => {
-    sections.push({ text: '', rowCount: 1 });
-    canvas.appendChild(buildSection(sections.length - 1));
+    const item = { type: 'text', id: idCtr++, value: '' };
+    items.push(item);
+    const idx = items.length - 1;
+    canvas.appendChild(buildItemEl(idx));
   });
 
+  /* ── + Kästchenreihe ── */
   document.getElementById('gt-more-cells').addEventListener('click', () => {
-    const si = sections.length - 1;
-    sections[si].rowCount++;
-    const grid = canvas.querySelector(`.gt-grid[data-si="${si}"]`);
-    if (!grid) return;
-    grid.appendChild(buildRow(si, sections[si].rowCount - 1));
-  });
+    const lastItem = items[items.length - 1];
 
-  /* ── Dismiss popup on outside click ── */
-  document.addEventListener('pointerdown', e => {
-    if (popup.hidden) return;
-    if (!popup.contains(e.target) && !e.target.closest('.gt-cell')) { hidePopup(); select([]); }
-  }, true);
+    if (lastItem && lastItem.type === 'rows') {
+      // Append a row to the existing last block
+      const ri   = lastItem.rowCount;
+      lastItem.rowCount++;
+      const grid = canvas.querySelector(`.gt-grid[data-iid="${lastItem.id}"]`);
+      if (grid) grid.appendChild(buildRow(lastItem.id, ri, lastItem.colCount));
+    } else {
+      // Create a new rows block
+      const item = { type: 'rows', id: idCtr++, colCount: 30, rowCount: 1 };
+      items.push(item);
+      const idx = items.length - 1;
+      canvas.appendChild(buildItemEl(idx));
+    }
+  });
 
   /* ── Init ── */
   fullRender();
