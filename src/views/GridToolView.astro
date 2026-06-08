@@ -650,6 +650,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       e.preventDefault();
     } else if (e.key === 'Escape') {
       select([]); hidePopup();
+    } else if (e.key.startsWith('Arrow') && !e.ctrlKey && !e.metaKey) {
+      const id = [...selected].at(-1);
+      if (!id) return;
+      const [iid, ri, ci] = id.split('-').map(Number);
+      const item = itemById(iid);
+      if (!item || item.type !== 'rows') { e.preventDefault(); return; }
+      let nri = ri, nci = ci;
+      if (e.key === 'ArrowLeft'  && ci > 0)                nci--;
+      if (e.key === 'ArrowRight' && ci < item.colCount - 1) nci++;
+      if (e.key === 'ArrowUp'    && ri > 0)                nri--;
+      if (e.key === 'ArrowDown'  && ri < item.rowCount - 1) nri++;
+      const nid = cid(iid, nri, nci);
+      if (e.shiftKey) { const ns = new Set(selected); ns.add(nid); select(ns); }
+      else select([nid]);
+      e.preventDefault();
     }
   });
 
@@ -740,6 +755,77 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       const idx = items.length - 1;
       canvas.appendChild(buildItemEl(idx));
     }
+  });
+
+  /* ── Copy / Paste ── */
+  function buildCopyText() {
+    if (selected.size === 0) return '';
+    const cells = [...selected].map(id => {
+      const [iid, ri, ci] = id.split('-').map(Number);
+      return { id, iid, ri, ci, idx: items.findIndex(it => it.id === iid) };
+    }).sort((a, b) => a.idx - b.idx || a.ri - b.ri || a.ci - b.ci);
+    let text = '', prevIid = cells[0].iid, prevRi = cells[0].ri;
+    for (const cell of cells) {
+      if (cell.iid !== prevIid || cell.ri !== prevRi) {
+        text += '\n';
+        prevIid = cell.iid; prevRi = cell.ri;
+      }
+      text += letters[cell.id] || ' ';
+    }
+    return text.trim();
+  }
+
+  document.addEventListener('copy', e => {
+    if (document.activeElement?.tagName === 'INPUT') return;
+    if (selected.size === 0) return;
+    const text = buildCopyText();
+    if (!text) return;
+    e.clipboardData.setData('text/plain', text);
+    e.preventDefault();
+  });
+
+  function doPaste(text) {
+    if (selected.size === 0) return;
+    // Top-left starting cell
+    const start = [...selected].map(id => {
+      const [iid, ri, ci] = id.split('-').map(Number);
+      return { iid, ri, ci, idx: items.findIndex(it => it.id === iid) };
+    }).sort((a, b) => a.idx - b.idx || a.ri - b.ri || a.ci - b.ci)[0];
+
+    let { iid, ri, ci } = start;
+    let item = itemById(iid);
+    if (!item || item.type !== 'rows') return;
+    let lastId = null;
+
+    for (const ch of text) {
+      if (!item || ri >= item.rowCount) break;
+      const up = ch.toUpperCase();
+      if (ch === '\n') {
+        if (ri + 1 < item.rowCount) { ri++; ci = 0; } else break;
+      } else if (/^[A-Z]$/.test(up)) {
+        const id = cid(iid, ri, ci);
+        letters[id] = up;
+        if (!cellColors[id]) cellColors[id] = TEXT_COLORS[0];
+        const el = canvas.querySelector(`[data-cid="${id}"]`);
+        if (el) { el.textContent = up; el.style.color = cellColors[id]; }
+        lastId = id;
+        if (++ci >= item.colCount) { ci = 0; ri++; }
+      } else if (ch === ' ' || ch === '-' || ch === '_' || ch === '.') {
+        // skip cell but advance
+        if (++ci >= item.colCount) { ci = 0; ri++; }
+      }
+      // all other chars ignored
+    }
+    if (lastId) select([lastId]);
+  }
+
+  document.addEventListener('paste', e => {
+    if (document.activeElement?.tagName === 'INPUT') return;
+    if (selected.size === 0) return;
+    const text = e.clipboardData.getData('text/plain');
+    if (!text) return;
+    e.preventDefault();
+    doPaste(text);
   });
 
   /* ── Init ── */
