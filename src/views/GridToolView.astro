@@ -5,17 +5,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <div class="gt-page" id="gt-root">
 
-  <!-- Hero title -->
+  <!-- Hero -->
   <header class="gt-hero">
-    <p class="gt-hero-eyebrow">Grid Tool</p>
+    <span class="gt-hero-tag">Grid Tool</span>
     <h1 class="gt-hero-title">
-      <span class="gt-hero-line">SHOW ME</span>
-      <span class="gt-hero-line gt-hero-line-accent">YOUR DNA BRO<span class="gt-hero-dot" aria-hidden="true"></span></span>
+      <span class="gt-hl-thin">SHOW ME YOUR</span>
+      <span class="gt-hl-bold">DNA BRO</span>
     </h1>
-    <p class="gt-hero-sub">Sequenzen tippen · Kanten markieren · Farben setzen</p>
+    <p class="gt-hero-sub">Sequenzen eingeben &middot; Kanten einfärben &middot; Buchstaben setzen</p>
   </header>
 
-  <!-- Tool bar: edge-mode toggle left, col-count right -->
+  <!-- Toolbar -->
   <div class="gt-topbar">
     <button id="gt-edge-btn" type="button" class="gt-btn gt-btn-mode">Kanten auswählen</button>
     <div class="gt-col-ctrl">
@@ -24,12 +24,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </div>
   </div>
 
-  <!-- Scrollable canvas area -->
+  <!-- Canvas -->
   <div class="gt-canvas-outer">
     <div id="gt-canvas" class="gt-canvas"></div>
   </div>
 
-  <!-- Action buttons -->
+  <!-- Actions -->
   <div class="gt-actions">
     <button id="gt-more-text"  type="button" class="gt-btn">mehr Text</button>
     <button id="gt-more-cells" type="button" class="gt-btn">mehr Kästchen</button>
@@ -43,121 +43,100 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </BaseLayout>
 
 <style>
-  /* ---------- Page shell ---------- */
+  /* ── Page ── */
   .gt-page {
     position: relative;
     max-width: 100%;
     margin: 0 auto;
-    padding: 4.5rem 1.5rem 4rem;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    padding: 4.5rem 2rem 5rem;
+    font-family: system-ui, -apple-system, 'Helvetica Neue', sans-serif;
     color: #1a1a1a;
     min-height: 100vh;
   }
 
-  /* ---------- Hero ---------- */
+  /* ── Hero ── */
   .gt-hero {
-    padding: 2rem 0 2.5rem;
-    border-bottom: 3px solid #1a1a1a;
-    margin-bottom: 1.75rem;
+    padding: 2.5rem 0 2.75rem;
+    border-bottom: 1px solid #d4d0c8;
+    margin-bottom: 2rem;
   }
-  .gt-hero-eyebrow {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  .gt-hero-tag {
+    display: block;
     font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.22em;
+    font-weight: 600;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: #888;
-    margin: 0 0 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-  }
-  .gt-hero-eyebrow::before {
-    content: '';
-    display: inline-block;
-    width: 0.5rem;
-    height: 0.5rem;
-    background: #e63946;
-    transform: rotate(45deg);
-    flex-shrink: 0;
+    color: #0c5e3b;
+    margin-bottom: 1.1rem;
   }
   .gt-hero-title {
-    font-family: 'Impact', 'Arial Narrow', 'Arial Black', sans-serif;
-    font-weight: 900;
-    font-size: clamp(2.8rem, 9vw, 6.5rem);
-    line-height: 0.92;
-    letter-spacing: -0.01em;
+    font-size: clamp(2.8rem, 8vw, 6.5rem);
+    line-height: 0.93;
+    letter-spacing: -0.02em;
     text-transform: uppercase;
-    color: #1a1a1a;
-    margin: 0 0 1.25rem;
+    margin: 0 0 1.1rem;
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 0.05em;
   }
-  .gt-hero-line {
+  .gt-hl-thin {
     display: block;
-  }
-  .gt-hero-line-accent {
-    color: #1a1a1a;
-    /* Outlined / hollow effect on the accent line */
-    -webkit-text-stroke: 2px #1a1a1a;
-    color: transparent;
-  }
-  /* Small animated dot at the end of the second line */
-  .gt-hero-dot {
-    display: inline-block;
-    width: 0.55em;
-    height: 0.55em;
-    margin-left: 0.08em;
-    background: #e63946;
-    -webkit-text-stroke: 0;
-    clip-path: polygon(50% 0%, 100% 60%, 80% 100%, 20% 100%, 0% 60%);
-    animation: gtDotBounce 1.6s cubic-bezier(.5,0,.5,1) infinite;
-    vertical-align: middle;
-    margin-bottom: 0.05em;
-  }
-  @keyframes gtDotBounce {
-    0%, 100% { transform: translateY(0); }
-    45%, 55% { transform: translateY(-0.3em); }
-  }
-  .gt-hero-sub {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 0.82rem;
-    color: #555;
-    margin: 0;
+    font-weight: 200;
+    color: #888;
+    font-size: 0.72em;
     letter-spacing: 0.04em;
   }
+  .gt-hl-bold {
+    display: block;
+    font-weight: 900;
+    color: #1a1a1a;
+    /* green underline accent */
+    text-decoration: underline;
+    text-decoration-color: #0c5e3b;
+    text-decoration-thickness: 4px;
+    text-underline-offset: 6px;
+  }
+  .gt-hero-sub {
+    font-size: 0.82rem;
+    color: #888;
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
 
-  /* ---------- Top bar ---------- */
+  /* ── Toolbar ── */
   .gt-topbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 0.75rem;
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.9rem;
-    border-bottom: 2px solid #1a1a1a;
+    margin-bottom: 1.5rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #d4d0c8;
   }
 
-  /* ---------- Shared button base ---------- */
+  /* ── Buttons ── */
   .gt-btn {
-    padding: 0.45rem 1rem;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    padding: 0.4rem 0.9rem;
+    font-family: inherit;
     font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
+    font-weight: 500;
     color: #1a1a1a;
     background: #fff;
-    border: 1.5px solid #1a1a1a;
+    border: 1px solid #bbb;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background 100ms, color 100ms;
+    transition: background 100ms, border-color 100ms, color 100ms;
   }
-  .gt-btn:hover { background: #1a1a1a; color: #fff; }
-  .gt-btn.is-active { background: #e63946; color: #fff; border-color: #e63946; }
+  .gt-btn:hover { background: #f4f4f2; border-color: #888; }
+  .gt-btn.is-active {
+    background: #e63946;
+    color: #fff;
+    border-color: #e63946;
+  }
   .gt-btn.is-active:hover { background: #c62833; border-color: #c62833; }
 
-  /* ---------- Column count control ---------- */
+  /* ── Column count ── */
   .gt-col-ctrl {
     display: flex;
     align-items: center;
@@ -166,85 +145,112 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .gt-col-label {
     font-size: 0.72rem;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: #555;
+    color: #888;
   }
   .gt-col-input {
-    width: 4rem;
+    width: 3.5rem;
     padding: 0.3rem 0.4rem;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: ui-monospace, monospace;
     font-size: 0.82rem;
-    border: 1.5px solid #1a1a1a;
+    border: 1px solid #bbb;
+    border-radius: 4px;
     background: #fff;
     text-align: center;
-    -moz-appearance: textfield;
   }
-  .gt-col-input::-webkit-inner-spin-button,
-  .gt-col-input::-webkit-outer-spin-button { opacity: 1; }
-  .gt-col-input:focus { outline: none; background: #fffbe6; }
+  .gt-col-input:focus { outline: 2px solid #0c5e3b; outline-offset: 1px; }
 
-  /* ---------- Canvas scroll wrapper ---------- */
+  /* ── Canvas wrapper ── */
   .gt-canvas-outer {
     overflow-x: auto;
     overflow-y: visible;
-    padding-bottom: 4px; /* room for box-shadow on selected cells */
+    padding-bottom: 6px;
   }
 
-  /* ---------- Canvas ---------- */
-  .gt-canvas {
+  /* ── Actions ── */
+  .gt-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  /* ── Color popup (static elements only; swatches are :global below) ── */
+  .gt-popup {
+    position: absolute;
+    z-index: 200;
+    display: flex;
+    gap: 4px;
+    padding: 6px 7px;
+    background: #fff;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    flex-wrap: wrap;
+    max-width: 220px;
+  }
+
+  /*
+   * ── All elements below are created dynamically in JS and therefore
+   *    MUST use :global() to escape Astro's CSS scoping. ──
+   */
+
+  /* Canvas flex column */
+  :global(.gt-canvas) {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.75rem;
     width: max-content;
     min-width: 100%;
   }
 
-  /* ---------- Section ---------- */
-  .gt-section {
+  /* Section wrapper */
+  :global(.gt-section) {
     display: flex;
     flex-direction: column;
     width: max-content;
   }
 
-  /* ---------- Text field ---------- */
-  .gt-text {
+  /* Text field */
+  :global(.gt-text) {
     display: block;
     height: 22px;
-    padding: 2px 4px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    padding: 2px 5px;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
     font-size: 11px;
     line-height: 18px;
-    border: 1px solid #333;
-    background: #fafaf7;
+    border: 1px solid #bbb;
+    border-radius: 3px 3px 0 0;
+    background: #fff;
     box-sizing: border-box;
-    /* width is set by JS to match grid */
+    color: #1a1a1a;
+    /* width set by JS */
   }
-  .gt-text:focus { outline: none; background: #fffbe6; }
+  :global(.gt-text:focus) {
+    outline: none;
+    border-color: #0c5e3b;
+    background: #f0faf4;
+  }
 
-  /* ---------- Grid ---------- */
-  .gt-grid {
+  /* Grid */
+  :global(.gt-grid) {
     display: flex;
     flex-direction: column;
-    position: relative; /* for edge overlay */
-    /* top border collapses with text field bottom border */
-    margin-top: -1px;
+    position: relative;
+    margin-top: -1px;   /* share border with text field */
     z-index: 1;
   }
 
-  /* ---------- Row ---------- */
-  .gt-row {
-    display: flex;
-  }
-  .gt-row:not(:first-child) {
-    margin-top: -1px; /* collapse horizontal borders between rows */
-  }
+  /* Row */
+  :global(.gt-row) { display: flex; }
+  :global(.gt-row:not(:first-child)) { margin-top: -1px; }
 
-  /* ---------- Cell ---------- */
-  .gt-cell {
+  /* Cell */
+  :global(.gt-cell) {
     width: 28px;
     height: 28px;
-    border: 1px solid #333;
+    border: 1px solid #bbb;
     box-sizing: border-box;
     flex-shrink: 0;
     display: flex;
@@ -252,63 +258,44 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     justify-content: center;
     font-size: 13px;
     font-weight: 700;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
     color: #1a1a1a;
     cursor: pointer;
     user-select: none;
     position: relative;
-    /* default z-index so borders of later cells overlap earlier cells */
-  }
-  .gt-cell:not(:first-child) {
-    margin-left: -1px;
-  }
-  .gt-cell.is-sel {
-    z-index: 2;
-    box-shadow: inset 0 0 0 2px #1e88e5;
-  }
-
-  /* Edge mode: crosshair cursor on cells */
-  .gt-canvas.gt-edge-mode .gt-cell {
-    cursor: crosshair;
-  }
-  /* In edge mode, show subtle hover on cells to indicate edge proximity */
-  .gt-canvas.gt-edge-mode .gt-cell:hover {
-    background: rgba(30, 136, 229, 0.06);
-  }
-
-  /* ---------- Action buttons ---------- */
-  .gt-actions {
-    display: flex;
-    gap: 0.6rem;
-    margin-top: 1.25rem;
-    flex-wrap: wrap;
-  }
-
-  /* ---------- Color popup ---------- */
-  .gt-popup {
-    position: absolute;
-    z-index: 100;
-    display: flex;
-    gap: 4px;
-    padding: 5px 6px;
     background: #fff;
-    border: 1.5px solid #1a1a1a;
-    box-shadow: 3px 3px 0 #1a1a1a;
-    flex-wrap: wrap;
-    max-width: 200px;
+    transition: background 60ms;
   }
-  .gt-swatch {
-    width: 20px;
-    height: 20px;
-    border: 1.5px solid #1a1a1a;
+  :global(.gt-cell:not(:first-child)) { margin-left: -1px; }
+  :global(.gt-cell:hover) { background: #f4f4f2; z-index: 1; }
+
+  /* Selected cell */
+  :global(.gt-cell.is-sel) {
+    z-index: 2;
+    box-shadow: inset 0 0 0 2px #0c5e3b;
+    background: #f0faf4;
+  }
+
+  /* Edge mode */
+  :global(.gt-canvas.gt-edge-mode .gt-cell) { cursor: crosshair; }
+  :global(.gt-canvas.gt-edge-mode .gt-cell:hover) {
+    background: rgba(230, 57, 70, 0.05);
+  }
+
+  /* Color swatches */
+  :global(.gt-swatch) {
+    width: 22px;
+    height: 22px;
+    border: 1px solid rgba(0,0,0,0.18);
+    border-radius: 4px;
     cursor: pointer;
     padding: 0;
     flex-shrink: 0;
     transition: transform 80ms, box-shadow 80ms;
   }
-  .gt-swatch:hover {
-    transform: translate(-1px, -1px);
-    box-shadow: 2px 2px 0 #1a1a1a;
+  :global(.gt-swatch:hover) {
+    transform: scale(1.18);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
   }
 </style>
 
@@ -318,42 +305,38 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   const CELL_W = 28;
   const CELL_H = 28;
-  const EDGE_THRESH = 5; // px from border to trigger edge click
+  const EDGE_THRESH = 5;
 
   const TEXT_COLORS = [
-    '#1a1a1a', // near-black
-    '#e63946', // red
-    '#fb8c00', // orange
-    '#f4c20d', // yellow
-    '#43a047', // green
-    '#1e88e5', // blue
-    '#7b1fa2', // purple
-    '#e91e63', // pink
-    '#00838f', // teal
+    '#1a1a1a',
+    '#e63946',
+    '#fb8c00',
+    '#f4c20d',
+    '#43a047',
+    '#1e88e5',
+    '#7b1fa2',
+    '#e91e63',
+    '#00838f',
   ];
 
   /* ── State ── */
   let colCount = 30;
-  let sections: { text: string; rowCount: number }[] = [{ text: '', rowCount: 1 }];
-  let letters: Record<string, string> = {};    // "si-ri-ci" -> letter
-  let cellColors: Record<string, string> = {}; // "si-ri-ci" -> color
-  let selected = new Set<string>();
-  let redEdges = new Set<string>();
-  let edgeMode = false;
-  let dragData: {
-    startX: number; startY: number;
-    pointerId: number; shiftKey: boolean;
-    initSel: Set<string>; moved: boolean;
-  } | null = null;
+  let sections = [{ text: '', rowCount: 1 }];
+  let letters   = {};
+  let cellColors = {};
+  let selected  = new Set();
+  let redEdges  = new Set();
+  let edgeMode  = false;
+  let dragData  = null;
 
-  /* ── DOM refs ── */
-  const root    = document.getElementById('gt-root')!;
-  const canvas  = document.getElementById('gt-canvas')!;
-  const edgeBtn = document.getElementById('gt-edge-btn') as HTMLButtonElement;
-  const colInput= document.getElementById('gt-col-count') as HTMLInputElement;
-  const popup   = document.getElementById('gt-popup')!;
+  /* ── DOM ── */
+  const root     = document.getElementById('gt-root');
+  const canvas   = document.getElementById('gt-canvas');
+  const edgeBtn  = document.getElementById('gt-edge-btn');
+  const colInput = document.getElementById('gt-col-count');
+  const popup    = document.getElementById('gt-popup');
 
-  /* ── Build color popup ── */
+  /* ── Build swatches ── */
   TEXT_COLORS.forEach(c => {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -365,46 +348,44 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   });
 
   popup.addEventListener('click', e => {
-    const btn = (e.target as Element).closest<HTMLElement>('.gt-swatch');
-    if (!btn?.dataset.color) return;
+    const btn = e.target.closest('.gt-swatch');
+    if (!btn) return;
     const color = btn.dataset.color;
     selected.forEach(id => {
       cellColors[id] = color;
-      const el = canvas.querySelector<HTMLElement>(`[data-cid="${id}"]`);
-      if (el) el.style.color = color;
+      const el = canvas.querySelector(`[data-cid="${id}"]`);
+      if (el && el.textContent) el.style.color = color;
     });
     hidePopup();
   });
 
-  /* ── ID helpers ── */
-  const cid = (s: number, r: number, c: number) => `${s}-${r}-${c}`;
-  const eid = (type: string, s: number, r: number, c: number) => `${type}-${s}-${r}-${c}`;
+  /* ── Helpers ── */
+  const cid = (s, r, c) => `${s}-${r}-${c}`;
+  const eid = (t, s, r, c) => `${t}-${s}-${r}-${c}`;
 
-  /* ── Full render ── */
+  /* ── Render ── */
   function fullRender() {
     canvas.innerHTML = '';
     sections.forEach((_, si) => canvas.appendChild(buildSection(si)));
   }
 
-  function buildSection(si: number): HTMLElement {
-    const sec = sections[si];
+  function buildSection(si) {
+    const sec  = sections[si];
     const wrap = document.createElement('div');
-    wrap.className = 'gt-section';
-    wrap.dataset.si = String(si);
+    wrap.className  = 'gt-section';
+    wrap.dataset.si = si;
 
-    // Text field
     const inp = document.createElement('input');
     inp.type = 'text';
     inp.className = 'gt-text';
     inp.value = sec.text;
     inp.style.width = `${colCount * CELL_W + 1}px`;
-    inp.dataset.si = String(si);
+    inp.dataset.si = si;
     wrap.appendChild(inp);
 
-    // Grid
     const grid = document.createElement('div');
-    grid.className = 'gt-grid';
-    grid.dataset.si = String(si);
+    grid.className  = 'gt-grid';
+    grid.dataset.si = si;
     for (let ri = 0; ri < sec.rowCount; ri++) {
       grid.appendChild(buildRow(si, ri));
     }
@@ -412,72 +393,57 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     return wrap;
   }
 
-  function buildRow(si: number, ri: number): HTMLElement {
+  function buildRow(si, ri) {
     const row = document.createElement('div');
-    row.className = 'gt-row';
-    row.dataset.ri = String(ri);
-    for (let ci = 0; ci < colCount; ci++) {
-      row.appendChild(buildCell(si, ri, ci));
-    }
+    row.className  = 'gt-row';
+    row.dataset.ri = ri;
+    for (let ci = 0; ci < colCount; ci++) row.appendChild(buildCell(si, ri, ci));
     return row;
   }
 
-  function buildCell(si: number, ri: number, ci: number): HTMLElement {
+  function buildCell(si, ri, ci) {
     const id = cid(si, ri, ci);
     const el = document.createElement('div');
-    el.className = 'gt-cell' + (selected.has(id) ? ' is-sel' : '');
+    el.className   = 'gt-cell' + (selected.has(id) ? ' is-sel' : '');
     el.dataset.cid = id;
-    el.dataset.si  = String(si);
-    el.dataset.ri  = String(ri);
-    el.dataset.ci  = String(ci);
+    el.dataset.si  = si;
+    el.dataset.ri  = ri;
+    el.dataset.ci  = ci;
     const letter = letters[id];
-    if (letter) {
-      el.textContent = letter;
-      el.style.color = cellColors[id] ?? TEXT_COLORS[0];
-    }
+    if (letter) { el.textContent = letter; el.style.color = cellColors[id] || TEXT_COLORS[0]; }
     applyEdgeColors(el, si, ri, ci);
     return el;
   }
 
-  /* Apply red border styles based on redEdges */
-  function applyEdgeColors(el: HTMLElement, si: number, ri: number, ci: number) {
-    // Top border controlled by horizontal edge h-si-(ri-1)-ci
+  function applyEdgeColors(el, si, ri, ci) {
     const topKey  = ri > 0 ? eid('h', si, ri - 1, ci) : null;
-    el.style.borderTopColor    = topKey  && redEdges.has(topKey)  ? '#e63946' : '';
-    el.style.borderTopWidth    = topKey  && redEdges.has(topKey)  ? '2px'     : '';
-    // Left border controlled by vertical edge v-si-ri-(ci-1)
+    el.style.borderTopColor  = topKey  && redEdges.has(topKey)  ? '#e63946' : '';
+    el.style.borderTopWidth  = topKey  && redEdges.has(topKey)  ? '2px'     : '';
     const leftKey = ci > 0 ? eid('v', si, ri, ci - 1) : null;
-    el.style.borderLeftColor   = leftKey && redEdges.has(leftKey) ? '#e63946' : '';
-    el.style.borderLeftWidth   = leftKey && redEdges.has(leftKey) ? '2px'     : '';
+    el.style.borderLeftColor = leftKey && redEdges.has(leftKey) ? '#e63946' : '';
+    el.style.borderLeftWidth = leftKey && redEdges.has(leftKey) ? '2px'     : '';
   }
 
-  function refreshSectionEdges(si: number) {
-    const rows = sections[si].rowCount;
-    for (let ri = 0; ri < rows; ri++) {
+  function refreshSectionEdges(si) {
+    for (let ri = 0; ri < sections[si].rowCount; ri++)
       for (let ci = 0; ci < colCount; ci++) {
-        const el = canvas.querySelector<HTMLElement>(`[data-cid="${cid(si, ri, ci)}"]`);
+        const el = canvas.querySelector(`[data-cid="${cid(si, ri, ci)}"]`);
         if (el) applyEdgeColors(el, si, ri, ci);
       }
-    }
   }
 
   /* ── Selection ── */
-  function select(ids: Iterable<string>) {
-    selected.forEach(id => {
-      canvas.querySelector(`[data-cid="${id}"]`)?.classList.remove('is-sel');
-    });
+  function select(ids) {
+    selected.forEach(id => canvas.querySelector(`[data-cid="${id}"]`)?.classList.remove('is-sel'));
     selected = new Set(ids);
-    selected.forEach(id => {
-      canvas.querySelector(`[data-cid="${id}"]`)?.classList.add('is-sel');
-    });
-    if (selected.size > 0) showPopup();
-    else hidePopup();
+    selected.forEach(id => canvas.querySelector(`[data-cid="${id}"]`)?.classList.add('is-sel'));
+    selected.size > 0 ? showPopup() : hidePopup();
   }
 
   function showPopup() {
     const last = [...selected].at(-1);
     if (!last) return;
-    const el = canvas.querySelector<HTMLElement>(`[data-cid="${last}"]`);
+    const el = canvas.querySelector(`[data-cid="${last}"]`);
     if (!el) return;
     const cr = el.getBoundingClientRect();
     const pr = root.getBoundingClientRect();
@@ -485,70 +451,56 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     popup.style.top  = `${cr.bottom - pr.top + 6}px`;
     popup.hidden = false;
   }
-
   function hidePopup() { popup.hidden = true; }
 
-  /* ── Pointer events (cell selection + drag) ── */
-  canvas.addEventListener('pointerdown', (e: PointerEvent) => {
+  /* ── Pointer ── */
+  canvas.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
-    const cell = (e.target as Element).closest<HTMLElement>('.gt-cell');
+    const cell = e.target.closest('.gt-cell');
     if (!cell) { select([]); return; }
 
     const si = Number(cell.dataset.si);
     const ri = Number(cell.dataset.ri);
     const ci = Number(cell.dataset.ci);
-    const id = cid(si, ri, ci);
 
     if (edgeMode) {
-      const rect = cell.getBoundingClientRect();
-      clickEdge(si, ri, ci, e.clientX - rect.left, e.clientY - rect.top, e.shiftKey);
+      const r = cell.getBoundingClientRect();
+      clickEdge(si, ri, ci, e.clientX - r.left, e.clientY - r.top, e.shiftKey);
       e.preventDefault();
       return;
     }
 
-    dragData = {
-      startX: e.clientX,
-      startY: e.clientY,
-      pointerId: e.pointerId,
-      shiftKey: e.shiftKey,
-      initSel: new Set(selected),
-      moved: false,
-    };
+    dragData = { startX: e.clientX, startY: e.clientY,
+                 pointerId: e.pointerId, shiftKey: e.shiftKey,
+                 initSel: new Set(selected), moved: false };
     canvas.setPointerCapture(e.pointerId);
     e.preventDefault();
 
     if (e.shiftKey) {
       const ns = new Set(selected);
+      const id = cid(si, ri, ci);
       if (ns.has(id)) ns.delete(id); else ns.add(id);
       select(ns);
     } else {
-      select([id]);
+      select([cid(si, ri, ci)]);
     }
   });
 
-  canvas.addEventListener('pointermove', (e: PointerEvent) => {
+  canvas.addEventListener('pointermove', e => {
     if (!dragData || !(e.buttons & 1)) return;
-    const dx = e.clientX - dragData.startX;
-    const dy = e.clientY - dragData.startY;
-    if (!dragData.moved && Math.hypot(dx, dy) < 4) return;
+    if (!dragData.moved && Math.hypot(e.clientX - dragData.startX, e.clientY - dragData.startY) < 4) return;
     dragData.moved = true;
-
-    const minX = Math.min(dragData.startX, e.clientX);
-    const maxX = Math.max(dragData.startX, e.clientX);
-    const minY = Math.min(dragData.startY, e.clientY);
-    const maxY = Math.max(dragData.startY, e.clientY);
-
-    const ns: Set<string> = dragData.shiftKey ? new Set(dragData.initSel) : new Set();
-    canvas.querySelectorAll<HTMLElement>('.gt-cell').forEach(el => {
+    const minX = Math.min(dragData.startX, e.clientX), maxX = Math.max(dragData.startX, e.clientX);
+    const minY = Math.min(dragData.startY, e.clientY), maxY = Math.max(dragData.startY, e.clientY);
+    const ns = dragData.shiftKey ? new Set(dragData.initSel) : new Set();
+    canvas.querySelectorAll('.gt-cell').forEach(el => {
       const r = el.getBoundingClientRect();
-      if (r.left < maxX && r.right > minX && r.top < maxY && r.bottom > minY) {
-        ns.add(el.dataset.cid!);
-      }
+      if (r.left < maxX && r.right > minX && r.top < maxY && r.bottom > minY) ns.add(el.dataset.cid);
     });
     select(ns);
   });
 
-  canvas.addEventListener('pointerup', (e: PointerEvent) => {
+  canvas.addEventListener('pointerup', e => {
     if (dragData?.pointerId === e.pointerId) {
       try { canvas.releasePointerCapture(e.pointerId); } catch {}
       dragData = null;
@@ -556,69 +508,56 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   });
 
   /* ── Edge click ── */
-  function clickEdge(si: number, ri: number, ci: number, cx: number, cy: number, shift: boolean) {
+  function clickEdge(si, ri, ci, cx, cy, shift) {
     const rowCount = sections[si].rowCount;
-    let key: string | null = null;
-    let minDist = Infinity;
-
-    const checks: Array<{ dist: number; cond: boolean; k: () => string }> = [
-      { dist: cy,            cond: ri > 0,            k: () => eid('h', si, ri - 1, ci) },
-      { dist: CELL_H - cy,   cond: ri < rowCount - 1, k: () => eid('h', si, ri, ci)     },
-      { dist: cx,            cond: ci > 0,            k: () => eid('v', si, ri, ci - 1) },
-      { dist: CELL_W - cx,   cond: ci < colCount - 1, k: () => eid('v', si, ri, ci)     },
+    let key = null, minDist = Infinity;
+    const checks = [
+      { dist: cy,           cond: ri > 0,            k: () => eid('h', si, ri - 1, ci) },
+      { dist: CELL_H - cy,  cond: ri < rowCount - 1, k: () => eid('h', si, ri, ci)     },
+      { dist: cx,           cond: ci > 0,            k: () => eid('v', si, ri, ci - 1) },
+      { dist: CELL_W - cx,  cond: ci < colCount - 1, k: () => eid('v', si, ri, ci)     },
     ];
-    for (const ch of checks) {
-      if (ch.cond && ch.dist <= EDGE_THRESH && ch.dist < minDist) {
-        minDist = ch.dist; key = ch.k();
-      }
-    }
+    for (const ch of checks)
+      if (ch.cond && ch.dist <= EDGE_THRESH && ch.dist < minDist) { minDist = ch.dist; key = ch.k(); }
     if (!key) return;
-
     if (!shift) {
-      // Without shift: clear all, toggle this one
       if (redEdges.size === 1 && redEdges.has(key)) redEdges.clear();
       else { redEdges.clear(); redEdges.add(key); }
     } else {
-      // With shift: add/remove without clearing
       if (redEdges.has(key)) redEdges.delete(key); else redEdges.add(key);
     }
     refreshSectionEdges(si);
   }
 
-  /* ── Keyboard input ── */
-  document.addEventListener('keydown', (e: KeyboardEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+  /* ── Keyboard ── */
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (selected.size === 0) return;
-
     const up = e.key.toUpperCase();
     if (up.length === 1 && /^[A-Z]$/.test(up)) {
       selected.forEach(id => {
         letters[id] = up;
-        const el = canvas.querySelector<HTMLElement>(`[data-cid="${id}"]`);
-        if (el) { el.textContent = up; el.style.color = cellColors[id] ?? TEXT_COLORS[0]; }
+        const el = canvas.querySelector(`[data-cid="${id}"]`);
+        if (el) { el.textContent = up; el.style.color = cellColors[id] || TEXT_COLORS[0]; }
       });
       e.preventDefault();
     } else if (e.key === 'Backspace' || e.key === 'Delete') {
       selected.forEach(id => {
         delete letters[id];
-        const el = canvas.querySelector<HTMLElement>(`[data-cid="${id}"]`);
+        const el = canvas.querySelector(`[data-cid="${id}"]`);
         if (el) { el.textContent = ''; el.style.color = ''; }
       });
       e.preventDefault();
-    } else if (e.key === 'Escape') {
-      select([]);
-    }
+    } else if (e.key === 'Escape') select([]);
   });
 
-  /* ── Text field changes ── */
-  canvas.addEventListener('input', (e: Event) => {
-    const inp = (e.target as Element).closest<HTMLInputElement>('.gt-text');
-    if (!inp) return;
-    sections[Number(inp.dataset.si)].text = inp.value;
+  /* ── Text input ── */
+  canvas.addEventListener('input', e => {
+    const inp = e.target.closest('.gt-text');
+    if (inp) sections[Number(inp.dataset.si)].text = inp.value;
   });
 
-  /* ── Edge mode toggle ── */
+  /* ── Edge mode ── */
   edgeBtn.addEventListener('click', () => {
     edgeMode = !edgeMode;
     edgeBtn.classList.toggle('is-active', edgeMode);
@@ -626,45 +565,34 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     if (edgeMode) select([]);
   });
 
-  /* ── Column count change ── */
+  /* ── Column count ── */
   colInput.addEventListener('change', () => {
     const v = Math.max(1, Math.min(60, parseInt(colInput.value) || 30));
-    colInput.value = String(v);
+    colInput.value = v;
     colCount = v;
-    // Prune invalid edges & selections
-    redEdges.forEach(k => {
-      const p = k.split('-');
-      const type = p[0]; const c = Number(p[3]);
-      if (type === 'v' && c >= colCount - 1) redEdges.delete(k);
-    });
+    redEdges.forEach(k => { const p = k.split('-'); if (p[0]==='v' && Number(p[3]) >= colCount-1) redEdges.delete(k); });
     selected.forEach(id => { if (Number(id.split('-')[2]) >= colCount) selected.delete(id); });
     fullRender();
   });
 
-  /* ── mehr Text ── */
-  document.getElementById('gt-more-text')!.addEventListener('click', () => {
+  /* ── Buttons ── */
+  document.getElementById('gt-more-text').addEventListener('click', () => {
     sections.push({ text: '', rowCount: 1 });
     canvas.appendChild(buildSection(sections.length - 1));
   });
 
-  /* ── mehr Kästchen ── */
-  document.getElementById('gt-more-cells')!.addEventListener('click', () => {
+  document.getElementById('gt-more-cells').addEventListener('click', () => {
     const si = sections.length - 1;
     sections[si].rowCount++;
-    const grid = canvas.querySelector<HTMLElement>(`.gt-grid[data-si="${si}"]`);
+    const grid = canvas.querySelector(`.gt-grid[data-si="${si}"]`);
     if (!grid) return;
-    const ri = sections[si].rowCount - 1;
-    grid.appendChild(buildRow(si, ri));
+    grid.appendChild(buildRow(si, sections[si].rowCount - 1));
   });
 
-  /* ── Click outside popup & canvas → deselect ── */
-  document.addEventListener('pointerdown', (e: PointerEvent) => {
+  /* ── Dismiss popup on outside click ── */
+  document.addEventListener('pointerdown', e => {
     if (popup.hidden) return;
-    const t = e.target as Element;
-    if (!popup.contains(t) && !t.closest('.gt-cell')) {
-      hidePopup();
-      select([]);
-    }
+    if (!popup.contains(e.target) && !e.target.closest('.gt-cell')) { hidePopup(); select([]); }
   }, true);
 
   /* ── Init ── */
