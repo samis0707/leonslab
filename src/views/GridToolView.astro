@@ -1,0 +1,897 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Show Me Your DNA Bro" description="Interaktives Gitter-Werkzeug zum Beschriften von DNA-Sequenzen und Kanten">
+
+<div class="gt-page" id="gt-root">
+
+  <!-- Hero -->
+  <header class="gt-hero">
+    <span class="gt-hero-tag">Base to Base</span>
+    <h1 class="gt-hero-title">
+      <span class="gt-hl-thin">SHOW ME YOUR</span>
+      <span class="gt-hl-bold">DNA BRO</span>
+    </h1>
+    <p class="gt-hero-sub">Display and Edit Nucleotide Sequences</p>
+  </header>
+
+  <!-- Toolbar -->
+  <div class="gt-topbar">
+    <button id="gt-edge-btn" type="button" class="gt-btn gt-btn-mode">Kanten auswählen</button>
+    <span class="gt-hint">Rechtsklick auf Auswahl → Farbe</span>
+    <button id="gt-reset-btn" type="button" class="gt-btn gt-btn-reset">Reset</button>
+  </div>
+
+  <!-- Canvas -->
+  <div class="gt-canvas-outer">
+    <div id="gt-canvas" class="gt-canvas"></div>
+  </div>
+
+  <!-- Actions -->
+  <div class="gt-actions">
+    <button id="gt-more-text"  type="button" class="gt-btn">+ Textfeld</button>
+    <button id="gt-more-cells" type="button" class="gt-btn">+ Kästchenreihe</button>
+  </div>
+
+  <!-- Floating color popup (right-click) -->
+  <div id="gt-popup" class="gt-popup" hidden></div>
+
+</div>
+
+</BaseLayout>
+
+<style>
+  /* ── Page ── */
+  .gt-page {
+    position: relative;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 4.5rem 2rem 5rem;
+    font-family: system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+
+  /* ── Hero ── */
+  .gt-hero {
+    padding: 2.5rem 0 2.75rem;
+    border-bottom: 1px solid #d4d0c8;
+    margin-bottom: 2rem;
+  }
+  .gt-hero-tag {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #0c5e3b;
+    margin-bottom: 1.1rem;
+  }
+  .gt-hero-title {
+    font-size: clamp(2.8rem, 8vw, 6.5rem);
+    line-height: 0.93;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    margin: 0 0 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.05em;
+  }
+  .gt-hl-thin {
+    display: block;
+    font-weight: 200;
+    color: #888;
+    font-size: 0.72em;
+    letter-spacing: 0.04em;
+  }
+  .gt-hl-bold {
+    display: block;
+    font-weight: 900;
+    color: #1a1a1a;
+    text-decoration: underline;
+    text-decoration-color: #0c5e3b;
+    text-decoration-thickness: 4px;
+    text-underline-offset: 6px;
+  }
+  .gt-hero-sub {
+    font-size: 0.82rem;
+    color: #888;
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Toolbar ── */
+  .gt-topbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #d4d0c8;
+  }
+  .gt-hint {
+    font-size: 0.72rem;
+    color: #aaa;
+    letter-spacing: 0.01em;
+    flex: 1; /* push reset button to the right */
+  }
+  .gt-btn-reset {
+    color: #b91c1c;
+    border-color: #fca5a5;
+  }
+  .gt-btn-reset:hover { background: #fef2f2; border-color: #b91c1c; }
+
+  /* ── Buttons ── */
+  .gt-btn {
+    padding: 0.4rem 0.9rem;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #1a1a1a;
+    background: #fff;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 100ms, border-color 100ms, color 100ms;
+  }
+  .gt-btn:hover { background: #f4f4f2; border-color: #888; }
+  .gt-btn.is-active { background: #e63946; color: #fff; border-color: #e63946; }
+  .gt-btn.is-active:hover { background: #c62833; border-color: #c62833; }
+
+  /* ── Canvas wrapper ── */
+  .gt-canvas-outer {
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 6px;
+  }
+
+  /* ── Actions ── */
+  .gt-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  /* ── Color popup ── */
+  .gt-popup {
+    position: absolute;
+    z-index: 200;
+    display: flex;
+    gap: 4px;
+    padding: 6px 7px;
+    background: #fff;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    flex-wrap: wrap;
+    max-width: 220px;
+  }
+
+  /*
+   * Everything below is built in JS → needs :global() to escape Astro's
+   * CSS scoping (which only applies to elements in the template above).
+   */
+
+  /* Canvas */
+  :global(.gt-canvas) {
+    display: flex;
+    flex-direction: column;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  /* Text field item */
+  :global(.gt-text) {
+    display: block;
+    height: 22px;
+    padding: 2px 5px;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    font-size: 11px;
+    line-height: 18px;
+    border: 1px solid #bbb;
+    border-radius: 0;
+    background: #fff;
+    box-sizing: border-box;
+    color: #1a1a1a;
+    margin-top: 1.5rem;
+  }
+  /* First text item needs no top gap */
+  :global(.gt-canvas > .gt-text:first-child) { margin-top: 0; }
+  /* Text immediately after a rows-wrap also gets the gap */
+  :global(.gt-rows-wrap + .gt-text) { margin-top: 1.75rem; }
+  :global(.gt-text:focus) {
+    outline: none;
+    border-color: #0c5e3b;
+    background: #f0faf4;
+  }
+
+  /* Rows wrapper (grid + side control) */
+  :global(.gt-rows-wrap) {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-top: 1.5rem; /* default gap */
+  }
+  :global(.gt-canvas > .gt-rows-wrap:first-child) { margin-top: 0; }
+  /* Rows directly after a text field: share the border (no gap, -1px) */
+  :global(.gt-text + .gt-rows-wrap) { margin-top: -1px; }
+
+  /* Grid */
+  :global(.gt-grid) {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* Row */
+  :global(.gt-row) { display: flex; }
+  :global(.gt-row:not(:first-child)) { margin-top: -1px; }
+
+  /* Cell */
+  :global(.gt-cell) {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #bbb;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    color: #1a1a1a;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    background: #fff;
+    transition: background 60ms;
+  }
+  :global(.gt-cell + .gt-cell) { margin-left: -1px; }
+  :global(.gt-cell:hover) { background: #f4f4f2; z-index: 1; }
+  :global(.gt-cell.is-sel) {
+    z-index: 2;
+    box-shadow: inset 0 0 0 2px #0c5e3b;
+    background: #f0faf4;
+  }
+  :global(.gt-canvas.gt-edge-mode .gt-cell) { cursor: crosshair; }
+  :global(.gt-canvas.gt-edge-mode .gt-cell:hover) {
+    background: rgba(230, 57, 70, 0.05);
+  }
+
+  /* Paste button in popup */
+  :global(.gt-popup-paste) {
+    width: 100%;
+    margin-top: 5px;
+    padding: 4px 0;
+    font-family: inherit;
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: #1a1a1a;
+    background: #f4f4f2;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 80ms;
+  }
+  :global(.gt-popup-paste:hover) { background: #e8e8e4; }
+
+  /* 5'/3' strand label */
+  :global(.gt-strand-lbl) {
+    width: 22px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 4px;
+    font-size: 9px;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    color: #bbb;
+    user-select: none;
+    box-sizing: border-box;
+    letter-spacing: 0;
+    height: 28px;
+  }
+
+  /* DS button */
+  :global(.gt-ds-btn) {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #0c5e3b;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    letter-spacing: 0.04em;
+    color: #0c5e3b;
+    background: #f0faf4;
+    cursor: pointer;
+    user-select: none;
+    margin-left: -1px;
+    transition: background 80ms, color 80ms;
+  }
+  :global(.gt-ds-btn:hover) {
+    background: #0c5e3b;
+    color: #fff;
+  }
+
+  /* Color swatches */
+  :global(.gt-swatch) {
+    width: 22px;
+    height: 22px;
+    border: 1px solid rgba(0,0,0,0.18);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: transform 80ms, box-shadow 80ms;
+  }
+  :global(.gt-swatch:hover) {
+    transform: scale(1.18);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  }
+</style>
+
+<script>
+(() => {
+  'use strict';
+
+  const CELL_W = 28;
+  const CELL_H = 28;
+  const EDGE_THRESH = 5;
+  const LABEL_W = 22; // px – width of 5'/3' strand label column
+
+  const TEXT_COLORS = [
+    '#1a1a1a','#e63946','#fb8c00','#f4c20d',
+    '#43a047','#1e88e5','#7b1fa2','#e91e63','#00838f',
+  ];
+
+  /* ── State ── */
+  // items: flat list of { type:'text', id, value } | { type:'rows', id, colCount, rowCount }
+  let items = [
+    { type: 'text', id: 0, value: '' },
+    { type: 'rows', id: 1, colCount: 30, rowCount: 1 },
+  ];
+  let idCtr = 2;
+
+  let letters    = {};   // `${itemId}-${ri}-${ci}` -> letter
+  let cellColors = {};   // same key -> color
+  let selected   = new Set();
+  let redEdges   = new Set();
+  let edgeMode   = false;
+  let dragData   = null;
+
+  /* ── DOM ── */
+  const root    = document.getElementById('gt-root');
+  const canvas  = document.getElementById('gt-canvas');
+  const edgeBtn = document.getElementById('gt-edge-btn');
+  const popup   = document.getElementById('gt-popup');
+
+  /* ── Color popup swatches ── */
+  TEXT_COLORS.forEach(c => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'gt-swatch';
+    btn.style.background = c;
+    btn.dataset.color = c;
+    btn.title = c;
+    popup.appendChild(btn);
+  });
+  /* Paste button inside popup */
+  const pasteBtn = document.createElement('button');
+  pasteBtn.type = 'button';
+  pasteBtn.className = 'gt-popup-paste';
+  pasteBtn.textContent = 'Einfügen';
+  popup.appendChild(pasteBtn);
+
+  pasteBtn.addEventListener('click', () => {
+    navigator.clipboard.readText().then(text => {
+      if (text) doPaste(text);
+    }).catch(() => {});
+    hidePopup();
+  });
+
+  popup.addEventListener('click', e => {
+    const btn = e.target.closest('.gt-swatch');
+    if (!btn) return;
+    const color = btn.dataset.color;
+    selected.forEach(id => {
+      cellColors[id] = color;
+      const el = canvas.querySelector(`[data-cid="${id}"]`);
+      if (el && el.textContent) el.style.color = color;
+    });
+    hidePopup();
+  });
+
+  /* ── ID helpers ── */
+  const cid = (iid, r, c) => `${iid}-${r}-${c}`;
+  const eid = (t, iid, r, c) => `${t}-${iid}-${r}-${c}`;
+
+  function itemById(id) { return items.find(it => it.id === id); }
+
+  /* ── Next / prev cell (for auto-advance / backspace) ── */
+  function nextCellId(id) {
+    const [iid, ri, ci] = id.split('-').map(Number);
+    const item = itemById(iid);
+    if (!item || item.type !== 'rows') return null;
+    if (ci + 1 < item.colCount) return cid(iid, ri, ci + 1);
+    if (ri + 1 < item.rowCount) return cid(iid, ri + 1, 0);
+    return null;
+  }
+  function prevCellId(id) {
+    const [iid, ri, ci] = id.split('-').map(Number);
+    const item = itemById(iid);
+    if (!item || item.type !== 'rows') return null;
+    if (ci > 0) return cid(iid, ri, ci - 1);
+    if (ri > 0) return cid(iid, ri - 1, item.colCount - 1);
+    return null;
+  }
+
+  /* ── Full render ── */
+  function fullRender() {
+    canvas.innerHTML = '';
+    items.forEach((_, idx) => canvas.appendChild(buildItemEl(idx)));
+  }
+
+  function buildItemEl(idx) {
+    const item = items[idx];
+    if (item.type === 'text') return buildTextEl(idx);
+    if (item.type === 'rows') return buildRowsEl(idx);
+  }
+
+  /* Build text field element */
+  function buildTextEl(idx) {
+    const item = items[idx];
+    // Width: match the following rows block if adjacent
+    const nextItem = items[idx + 1];
+    const colCount = (nextItem && nextItem.type === 'rows') ? nextItem.colCount : 30;
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'gt-text';
+    inp.value = item.value;
+    inp.style.width = `${(CELL_W - 1) * colCount + CELL_W}px`;
+    inp.style.marginLeft = `${LABEL_W}px`;
+    inp.dataset.iid = item.id;
+    return inp;
+  }
+
+  /* Build rows wrapper (grid + side control) */
+  function buildRowsEl(idx) {
+    const item = items[idx];
+    const wrap = document.createElement('div');
+    wrap.className  = 'gt-rows-wrap';
+    wrap.dataset.iid = item.id;
+
+    // Grid
+    const grid = document.createElement('div');
+    grid.className  = 'gt-grid';
+    grid.dataset.iid = item.id;
+    for (let ri = 0; ri < item.rowCount; ri++) {
+      grid.appendChild(buildRow(item.id, ri, item.colCount));
+    }
+    wrap.appendChild(grid);
+
+    return wrap;
+  }
+
+  function buildRow(iid, ri, colCount) {
+    const row = document.createElement('div');
+    row.className  = 'gt-row';
+    row.dataset.ri = ri;
+    // 5'/3' strand label
+    const lbl = document.createElement('span');
+    lbl.className = 'gt-strand-lbl';
+    lbl.textContent = ri % 2 === 0 ? "5'" : "3'";
+    row.appendChild(lbl);
+    for (let ci = 0; ci < colCount; ci++) row.appendChild(buildCell(iid, ri, ci));
+    // DS button at end of each row
+    const ds = document.createElement('div');
+    ds.className = 'gt-ds-btn';
+    ds.textContent = 'DS';
+    ds.dataset.iid = iid;
+    ds.dataset.ri  = ri;
+    row.appendChild(ds);
+    return row;
+  }
+
+  function buildCell(iid, ri, ci) {
+    const id = cid(iid, ri, ci);
+    const el = document.createElement('div');
+    el.className   = 'gt-cell' + (selected.has(id) ? ' is-sel' : '');
+    el.dataset.cid = id;
+    el.dataset.iid = iid;
+    el.dataset.ri  = ri;
+    el.dataset.ci  = ci;
+    const letter = letters[id];
+    if (letter) { el.textContent = letter; el.style.color = cellColors[id] || TEXT_COLORS[0]; }
+    applyEdgeColors(el, iid, ri, ci);
+    return el;
+  }
+
+  /* ── DS complement fill ── */
+  const COMPLEMENT = { A:'T', T:'A', G:'C', C:'G', X:'X' };
+
+  function fillComplement(iid, ri) {
+    const item = itemById(iid);
+    if (!item || item.type !== 'rows') return;
+    const partnerRi = ri % 2 === 0 ? ri + 1 : ri - 1;
+    if (partnerRi < 0 || partnerRi >= item.rowCount) return;
+
+    for (let ci = 0; ci < item.colCount; ci++) {
+      const targetId = cid(iid, ri, ci);
+      if (letters[targetId]) continue; // keep existing letter
+
+      const sourceLetter = letters[cid(iid, partnerRi, ci)];
+      const comp = sourceLetter && COMPLEMENT[sourceLetter];
+      if (!comp) continue; // empty or unknown source → leave empty
+
+      letters[targetId] = comp;
+      if (!cellColors[targetId]) cellColors[targetId] = TEXT_COLORS[0];
+      const el = canvas.querySelector(`[data-cid="${targetId}"]`);
+      if (el) { el.textContent = comp; el.style.color = cellColors[targetId]; }
+    }
+  }
+
+  canvas.addEventListener('click', e => {
+    const ds = e.target.closest('.gt-ds-btn');
+    if (!ds) return;
+    fillComplement(Number(ds.dataset.iid), Number(ds.dataset.ri));
+  });
+
+  /* ── Edge coloring ── */
+  function applyEdgeColors(el, iid, ri, ci) {
+    const topKey  = ri > 0 ? eid('h', iid, ri - 1, ci) : null;
+    el.style.borderTopColor  = topKey  && redEdges.has(topKey)  ? '#e63946' : '';
+    el.style.borderTopWidth  = topKey  && redEdges.has(topKey)  ? '2px'     : '';
+    const leftKey = ci > 0 ? eid('v', iid, ri, ci - 1) : null;
+    el.style.borderLeftColor = leftKey && redEdges.has(leftKey) ? '#e63946' : '';
+    el.style.borderLeftWidth = leftKey && redEdges.has(leftKey) ? '2px'     : '';
+  }
+
+  function refreshEdges(iid) {
+    const item = itemById(iid);
+    if (!item || item.type !== 'rows') return;
+    for (let ri = 0; ri < item.rowCount; ri++)
+      for (let ci = 0; ci < item.colCount; ci++) {
+        const el = canvas.querySelector(`[data-cid="${cid(iid, ri, ci)}"]`);
+        if (el) applyEdgeColors(el, iid, ri, ci);
+      }
+  }
+
+  /* ── Selection ── */
+  function select(ids) {
+    selected.forEach(id => canvas.querySelector(`[data-cid="${id}"]`)?.classList.remove('is-sel'));
+    selected = new Set(ids);
+    selected.forEach(id => canvas.querySelector(`[data-cid="${id}"]`)?.classList.add('is-sel'));
+    // Color popup is shown only on right-click, not here
+  }
+
+  /* ── Color popup (right-click only) ── */
+  function showPopupAt(px, py) {
+    const pr = root.getBoundingClientRect();
+    popup.style.left = `${px - pr.left}px`;
+    popup.style.top  = `${py - pr.top + 6}px`;
+    popup.hidden = false;
+  }
+  function hidePopup() { popup.hidden = true; }
+
+  // Right-click on a cell
+  canvas.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    const cell = e.target.closest('.gt-cell');
+    if (!cell) { hidePopup(); return; }
+    const id = cell.dataset.cid;
+    if (!selected.has(id)) select([id]); // auto-select if not already
+    showPopupAt(e.clientX, e.clientY);
+  });
+
+  // Dismiss popup when clicking outside
+  document.addEventListener('pointerdown', e => {
+    if (popup.hidden) return;
+    if (!popup.contains(e.target) && !e.target.closest('.gt-cell')) {
+      hidePopup();
+    }
+  }, true);
+
+  /* ── Pointer events (selection + drag) ── */
+  canvas.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    if (e.target.closest('.gt-ds-btn')) return; // handled by click listener
+    const cell = e.target.closest('.gt-cell');
+    if (!cell) { select([]); hidePopup(); return; }
+
+    const iid = Number(cell.dataset.iid);
+    const ri  = Number(cell.dataset.ri);
+    const ci  = Number(cell.dataset.ci);
+    const id  = cid(iid, ri, ci);
+
+    if (edgeMode) {
+      const r = cell.getBoundingClientRect();
+      clickEdge(iid, ri, ci, e.clientX - r.left, e.clientY - r.top, e.shiftKey);
+      e.preventDefault();
+      return;
+    }
+
+    dragData = {
+      startX: e.clientX, startY: e.clientY,
+      pointerId: e.pointerId, shiftKey: e.shiftKey,
+      initSel: new Set(selected), moved: false,
+    };
+    canvas.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    hidePopup();
+
+    if (e.shiftKey) {
+      const ns = new Set(selected);
+      if (ns.has(id)) ns.delete(id); else ns.add(id);
+      select(ns);
+    } else {
+      select([id]);
+    }
+  });
+
+  canvas.addEventListener('pointermove', e => {
+    if (!dragData || !(e.buttons & 1)) return;
+    if (!dragData.moved && Math.hypot(e.clientX - dragData.startX, e.clientY - dragData.startY) < 4) return;
+    dragData.moved = true;
+    const minX = Math.min(dragData.startX, e.clientX), maxX = Math.max(dragData.startX, e.clientX);
+    const minY = Math.min(dragData.startY, e.clientY), maxY = Math.max(dragData.startY, e.clientY);
+    const ns = dragData.shiftKey ? new Set(dragData.initSel) : new Set();
+    canvas.querySelectorAll('.gt-cell').forEach(el => {
+      const r = el.getBoundingClientRect();
+      if (r.left < maxX && r.right > minX && r.top < maxY && r.bottom > minY) ns.add(el.dataset.cid);
+    });
+    select(ns);
+  });
+
+  canvas.addEventListener('pointerup', e => {
+    if (dragData?.pointerId === e.pointerId) {
+      try { canvas.releasePointerCapture(e.pointerId); } catch {}
+      dragData = null;
+    }
+  });
+
+  /* ── Edge click ── */
+  function clickEdge(iid, ri, ci, cx, cy, shift) {
+    const item = itemById(iid);
+    if (!item) return;
+    let key = null, minDist = Infinity;
+    const checks = [
+      { dist: cy,           cond: ri > 0,                  k: () => eid('h', iid, ri - 1, ci) },
+      { dist: CELL_H - cy,  cond: ri < item.rowCount - 1,  k: () => eid('h', iid, ri, ci)     },
+      { dist: cx,           cond: ci > 0,                  k: () => eid('v', iid, ri, ci - 1) },
+      { dist: CELL_W - cx,  cond: ci < item.colCount - 1,  k: () => eid('v', iid, ri, ci)     },
+    ];
+    for (const ch of checks)
+      if (ch.cond && ch.dist <= EDGE_THRESH && ch.dist < minDist) { minDist = ch.dist; key = ch.k(); }
+    if (!key) return;
+    if (!shift) {
+      if (redEdges.size === 1 && redEdges.has(key)) redEdges.clear();
+      else { redEdges.clear(); redEdges.add(key); }
+    } else {
+      if (redEdges.has(key)) redEdges.delete(key); else redEdges.add(key);
+    }
+    refreshEdges(iid);
+  }
+
+  /* ── Keyboard ── */
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (selected.size === 0) return;
+
+    const up = e.key.toUpperCase();
+    if (up.length === 1 && /^[A-Z]$/.test(up) && !e.ctrlKey && !e.metaKey) {
+      selected.forEach(id => {
+        letters[id] = up;
+        const el = canvas.querySelector(`[data-cid="${id}"]`);
+        if (el) { el.textContent = up; el.style.color = cellColors[id] || TEXT_COLORS[0]; }
+      });
+      // Auto-advance: only when a single cell was selected
+      if (selected.size === 1) {
+        const curId = [...selected][0];
+        const [ciid, , cci] = curId.split('-').map(Number);
+        const curItem = itemById(ciid);
+        if (curItem && cci + 1 >= curItem.colCount) expandColCount(ciid);
+        const next = nextCellId(curId);
+        select(next ? [next] : []);
+      }
+      e.preventDefault();
+    } else if (e.key === 'Backspace') {
+      if (selected.size === 1) {
+        const id = [...selected][0];
+        delete letters[id];
+        const el = canvas.querySelector(`[data-cid="${id}"]`);
+        if (el) { el.textContent = ''; el.style.color = ''; }
+        const prev = prevCellId(id);
+        select(prev ? [prev] : [id]);
+      } else {
+        selected.forEach(id => {
+          delete letters[id];
+          const el = canvas.querySelector(`[data-cid="${id}"]`);
+          if (el) { el.textContent = ''; el.style.color = ''; }
+        });
+      }
+      e.preventDefault();
+    } else if (e.key === 'Delete') {
+      selected.forEach(id => {
+        delete letters[id];
+        const el = canvas.querySelector(`[data-cid="${id}"]`);
+        if (el) { el.textContent = ''; el.style.color = ''; }
+      });
+      e.preventDefault();
+    } else if (e.key === 'Escape') {
+      select([]); hidePopup();
+    } else if (e.key.startsWith('Arrow') && !e.ctrlKey && !e.metaKey) {
+      const id = [...selected].at(-1);
+      if (!id) return;
+      const [iid, ri, ci] = id.split('-').map(Number);
+      const item = itemById(iid);
+      if (!item || item.type !== 'rows') { e.preventDefault(); return; }
+      let nri = ri, nci = ci;
+      if (e.key === 'ArrowLeft'  && ci > 0)                nci--;
+      if (e.key === 'ArrowRight' && ci < item.colCount - 1) nci++;
+      if (e.key === 'ArrowUp'    && ri > 0)                nri--;
+      if (e.key === 'ArrowDown'  && ri < item.rowCount - 1) nri++;
+      const nid = cid(iid, nri, nci);
+      if (e.shiftKey) { const ns = new Set(selected); ns.add(nid); select(ns); }
+      else select([nid]);
+      e.preventDefault();
+    }
+  });
+
+  /* ── Text input changes ── */
+  canvas.addEventListener('input', e => {
+    const inp = e.target.closest('.gt-text');
+    if (!inp) return;
+    const item = itemById(Number(inp.dataset.iid));
+    if (item) item.value = inp.value;
+  });
+
+  /* ── Auto-expand: add 10 columns to a block when the last column is reached ── */
+  function expandColCount(iid) {
+    const item = itemById(iid);
+    if (!item || item.type !== 'rows') return;
+    item.colCount += 10;
+    const wrap = canvas.querySelector(`.gt-rows-wrap[data-iid="${iid}"]`);
+    const idx  = items.findIndex(it => it.id === iid);
+    if (wrap && idx !== -1) wrap.replaceWith(buildRowsEl(idx));
+    // Keep preceding text field width in sync
+    if (idx > 0 && items[idx - 1].type === 'text') {
+      const textEl = canvas.querySelector(`.gt-text[data-iid="${items[idx - 1].id}"]`);
+      if (textEl) textEl.style.width = `${(CELL_W - 1) * item.colCount + CELL_W}px`;
+    }
+  }
+
+  /* ── Reset ── */
+  document.getElementById('gt-reset-btn').addEventListener('click', () => {
+    items     = [{ type: 'text', id: 0, value: '' }, { type: 'rows', id: 1, colCount: 30, rowCount: 1 }];
+    idCtr     = 2;
+    letters   = {};
+    cellColors = {};
+    selected  = new Set();
+    redEdges  = new Set();
+    edgeMode  = false;
+    edgeBtn.classList.remove('is-active');
+    canvas.classList.remove('gt-edge-mode');
+    hidePopup();
+    fullRender();
+  });
+
+  /* ── Edge mode toggle ── */
+  edgeBtn.addEventListener('click', () => {
+    edgeMode = !edgeMode;
+    edgeBtn.classList.toggle('is-active', edgeMode);
+    canvas.classList.toggle('gt-edge-mode', edgeMode);
+    if (edgeMode) { select([]); hidePopup(); }
+  });
+
+  /* ── + Textfeld ── */
+  document.getElementById('gt-more-text').addEventListener('click', () => {
+    const item = { type: 'text', id: idCtr++, value: '' };
+    items.push(item);
+    const idx = items.length - 1;
+    canvas.appendChild(buildItemEl(idx));
+  });
+
+  /* ── + Kästchenreihe ── */
+  document.getElementById('gt-more-cells').addEventListener('click', () => {
+    const lastItem = items[items.length - 1];
+
+    if (lastItem && lastItem.type === 'rows') {
+      // Append a row to the existing last block
+      const ri   = lastItem.rowCount;
+      lastItem.rowCount++;
+      const grid = canvas.querySelector(`.gt-grid[data-iid="${lastItem.id}"]`);
+      if (grid) grid.appendChild(buildRow(lastItem.id, ri, lastItem.colCount));
+    } else {
+      // Create a new rows block
+      const item = { type: 'rows', id: idCtr++, colCount: 30, rowCount: 1 };
+      items.push(item);
+      const idx = items.length - 1;
+      canvas.appendChild(buildItemEl(idx));
+    }
+  });
+
+  /* ── Copy / Paste ── */
+  function buildCopyText() {
+    if (selected.size === 0) return '';
+    const cells = [...selected].map(id => {
+      const [iid, ri, ci] = id.split('-').map(Number);
+      return { id, iid, ri, ci, idx: items.findIndex(it => it.id === iid) };
+    }).sort((a, b) => a.idx - b.idx || a.ri - b.ri || a.ci - b.ci);
+    let text = '', prevIid = cells[0].iid, prevRi = cells[0].ri;
+    for (const cell of cells) {
+      if (cell.iid !== prevIid || cell.ri !== prevRi) {
+        text += '\n';
+        prevIid = cell.iid; prevRi = cell.ri;
+      }
+      text += letters[cell.id] || ' ';
+    }
+    return text.trim();
+  }
+
+  document.addEventListener('copy', e => {
+    if (document.activeElement?.tagName === 'INPUT') return;
+    if (selected.size === 0) return;
+    const text = buildCopyText();
+    if (!text) return;
+    e.clipboardData.setData('text/plain', text);
+    e.preventDefault();
+  });
+
+  function doPaste(text) {
+    if (selected.size === 0) return;
+    // Top-left starting cell
+    const start = [...selected].map(id => {
+      const [iid, ri, ci] = id.split('-').map(Number);
+      return { iid, ri, ci, idx: items.findIndex(it => it.id === iid) };
+    }).sort((a, b) => a.idx - b.idx || a.ri - b.ri || a.ci - b.ci)[0];
+
+    let { iid, ri, ci } = start;
+    let item = itemById(iid);
+    if (!item || item.type !== 'rows') return;
+    let lastId = null;
+
+    for (const ch of text) {
+      if (!item || ri >= item.rowCount) break;
+      const up = ch.toUpperCase();
+      if (ch === '\n') {
+        if (ri + 1 < item.rowCount) { ri++; ci = 0; } else break;
+      } else if (/^[A-Z]$/.test(up)) {
+        const id = cid(iid, ri, ci);
+        letters[id] = up;
+        if (!cellColors[id]) cellColors[id] = TEXT_COLORS[0];
+        const el = canvas.querySelector(`[data-cid="${id}"]`);
+        if (el) { el.textContent = up; el.style.color = cellColors[id]; }
+        lastId = id;
+        ci++;
+        if (ci >= item.colCount) { expandColCount(iid); } // expand before wrapping
+        if (ci >= item.colCount) { ci = 0; ri++; }        // still wrap if row ended
+      } else if (ch === ' ' || ch === '-' || ch === '_' || ch === '.') {
+        ci++;
+        if (ci >= item.colCount) { ci = 0; ri++; }
+      }
+      // all other chars ignored
+    }
+    if (lastId) select([lastId]);
+  }
+
+  document.addEventListener('paste', e => {
+    if (document.activeElement?.tagName === 'INPUT') return;
+    if (selected.size === 0) return;
+    const text = e.clipboardData.getData('text/plain');
+    if (!text) return;
+    e.preventDefault();
+    doPaste(text);
+  });
+
+  /* ── Init ── */
+  fullRender();
+})();
+</script>

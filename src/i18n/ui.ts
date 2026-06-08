@@ -15,6 +15,7 @@ export const ui = {
     'nav.ideas': 'Ideen',
     'nav.primerDesign': 'Primer Design',
     'nav.plateConfigurator': 'Plate Configurator',
+    'nav.gridTool': 'Base to Base',
 
     'hero.eyebrow': 'LeonsLab',
     'hero.title.line1': 'Creative Space',
@@ -142,6 +143,7 @@ export const ui = {
     'nav.ideas': 'Ideas',
     'nav.primerDesign': 'Primer Design',
     'nav.plateConfigurator': 'Plate Configurator',
+    'nav.gridTool': 'Base to Base',
 
     'hero.eyebrow': 'LeonsLab',
     'hero.title.line1': 'Creative Space',
