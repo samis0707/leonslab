@@ -10,7 +10,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <span class="gt-hero-tag">Base to Base</span>
     <h1 class="gt-hero-title">
       <span class="gt-hl-thin">SHOW ME YOUR</span>
-      <span class="gt-hl-bold">DNA BRO</span>
+      <span class="gt-hl-bold"><span class="gt-hl-dna">DNA</span>,<span class="gt-hl-bro"> BRO</span></span>
     </h1>
     <p class="gt-hero-sub">Display and Edit Nucleotide Sequences</p>
   </header>
@@ -88,10 +88,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     display: block;
     font-weight: 900;
     color: #1a1a1a;
+  }
+  .gt-hl-dna {
     text-decoration: underline;
     text-decoration-color: #0c5e3b;
     text-decoration-thickness: 4px;
     text-underline-offset: 6px;
+  }
+  .gt-hl-bro {
+    font-weight: 200;
+    color: #888;
+    font-size: 0.72em;
+    letter-spacing: 0.04em;
   }
   .gt-hero-sub {
     font-size: 0.82rem;
