@@ -1,11 +1,21 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
-<BaseLayout title="Grid Tool" description="Interaktives Gitter-Werkzeug zum Beschriften von Sequenzen und Kanten">
+<BaseLayout title="Show Me Your DNA Bro" description="Interaktives Gitter-Werkzeug zum Beschriften von DNA-Sequenzen und Kanten">
 
 <div class="gt-page" id="gt-root">
 
-  <!-- Top bar: edge-mode toggle left, col-count right -->
+  <!-- Hero title -->
+  <header class="gt-hero">
+    <p class="gt-hero-eyebrow">Grid Tool</p>
+    <h1 class="gt-hero-title">
+      <span class="gt-hero-line">SHOW ME</span>
+      <span class="gt-hero-line gt-hero-line-accent">YOUR DNA BRO<span class="gt-hero-dot" aria-hidden="true"></span></span>
+    </h1>
+    <p class="gt-hero-sub">Sequenzen tippen · Kanten markieren · Farben setzen</p>
+  </header>
+
+  <!-- Tool bar: edge-mode toggle left, col-count right -->
   <div class="gt-topbar">
     <button id="gt-edge-btn" type="button" class="gt-btn gt-btn-mode">Kanten auswählen</button>
     <div class="gt-col-ctrl">
@@ -38,10 +48,84 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     position: relative;
     max-width: 100%;
     margin: 0 auto;
-    padding: 5.5rem 1.5rem 4rem;
+    padding: 4.5rem 1.5rem 4rem;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     color: #1a1a1a;
     min-height: 100vh;
+  }
+
+  /* ---------- Hero ---------- */
+  .gt-hero {
+    padding: 2rem 0 2.5rem;
+    border-bottom: 3px solid #1a1a1a;
+    margin-bottom: 1.75rem;
+  }
+  .gt-hero-eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #888;
+    margin: 0 0 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .gt-hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    background: #e63946;
+    transform: rotate(45deg);
+    flex-shrink: 0;
+  }
+  .gt-hero-title {
+    font-family: 'Impact', 'Arial Narrow', 'Arial Black', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2.8rem, 9vw, 6.5rem);
+    line-height: 0.92;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    color: #1a1a1a;
+    margin: 0 0 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .gt-hero-line {
+    display: block;
+  }
+  .gt-hero-line-accent {
+    color: #1a1a1a;
+    /* Outlined / hollow effect on the accent line */
+    -webkit-text-stroke: 2px #1a1a1a;
+    color: transparent;
+  }
+  /* Small animated dot at the end of the second line */
+  .gt-hero-dot {
+    display: inline-block;
+    width: 0.55em;
+    height: 0.55em;
+    margin-left: 0.08em;
+    background: #e63946;
+    -webkit-text-stroke: 0;
+    clip-path: polygon(50% 0%, 100% 60%, 80% 100%, 20% 100%, 0% 60%);
+    animation: gtDotBounce 1.6s cubic-bezier(.5,0,.5,1) infinite;
+    vertical-align: middle;
+    margin-bottom: 0.05em;
+  }
+  @keyframes gtDotBounce {
+    0%, 100% { transform: translateY(0); }
+    45%, 55% { transform: translateY(-0.3em); }
+  }
+  .gt-hero-sub {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.82rem;
+    color: #555;
+    margin: 0;
+    letter-spacing: 0.04em;
   }
 
   /* ---------- Top bar ---------- */
