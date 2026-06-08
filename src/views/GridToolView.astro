@@ -19,6 +19,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <div class="gt-topbar">
     <button id="gt-edge-btn" type="button" class="gt-btn gt-btn-mode">Kanten auswählen</button>
     <span class="gt-hint">Rechtsklick auf Auswahl → Farbe</span>
+    <button id="gt-reset-btn" type="button" class="gt-btn gt-btn-reset">Reset</button>
   </div>
 
   <!-- Canvas -->
@@ -113,7 +114,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-size: 0.72rem;
     color: #aaa;
     letter-spacing: 0.01em;
+    flex: 1; /* push reset button to the right */
   }
+  .gt-btn-reset {
+    color: #b91c1c;
+    border-color: #fca5a5;
+  }
+  .gt-btn-reset:hover { background: #fef2f2; border-color: #b91c1c; }
 
   /* ── Buttons ── */
   .gt-btn {
@@ -362,13 +369,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   function itemById(id) { return items.find(it => it.id === id); }
 
-  /* ── Next cell (for auto-advance) ── */
+  /* ── Next / prev cell (for auto-advance / backspace) ── */
   function nextCellId(id) {
     const [iid, ri, ci] = id.split('-').map(Number);
     const item = itemById(iid);
     if (!item || item.type !== 'rows') return null;
     if (ci + 1 < item.colCount) return cid(iid, ri, ci + 1);
     if (ri + 1 < item.rowCount) return cid(iid, ri + 1, 0);
+    return null;
+  }
+  function prevCellId(id) {
+    const [iid, ri, ci] = id.split('-').map(Number);
+    const item = itemById(iid);
+    if (!item || item.type !== 'rows') return null;
+    if (ci > 0) return cid(iid, ri, ci - 1);
+    if (ri > 0) return cid(iid, ri - 1, item.colCount - 1);
     return null;
   }
 
@@ -610,7 +625,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         select(next ? [next] : []);
       }
       e.preventDefault();
-    } else if (e.key === 'Backspace' || e.key === 'Delete') {
+    } else if (e.key === 'Backspace') {
+      if (selected.size === 1) {
+        const id = [...selected][0];
+        delete letters[id];
+        const el = canvas.querySelector(`[data-cid="${id}"]`);
+        if (el) { el.textContent = ''; el.style.color = ''; }
+        const prev = prevCellId(id);
+        select(prev ? [prev] : [id]);
+      } else {
+        selected.forEach(id => {
+          delete letters[id];
+          const el = canvas.querySelector(`[data-cid="${id}"]`);
+          if (el) { el.textContent = ''; el.style.color = ''; }
+        });
+      }
+      e.preventDefault();
+    } else if (e.key === 'Delete') {
       selected.forEach(id => {
         delete letters[id];
         const el = canvas.querySelector(`[data-cid="${id}"]`);
@@ -659,6 +690,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       const textEl = canvas.querySelector(`.gt-text[data-iid="${items[idx2-1].id}"]`);
       if (textEl) textEl.style.width = `${v * CELL_W + 1}px`;
     }
+  });
+
+  /* ── Reset ── */
+  document.getElementById('gt-reset-btn').addEventListener('click', () => {
+    items     = [{ type: 'text', id: 0, value: '' }, { type: 'rows', id: 1, colCount: 30, rowCount: 1 }];
+    idCtr     = 2;
+    letters   = {};
+    cellColors = {};
+    selected  = new Set();
+    redEdges  = new Set();
+    edgeMode  = false;
+    edgeBtn.classList.remove('is-active');
+    canvas.classList.remove('gt-edge-mode');
+    hidePopup();
+    fullRender();
   });
 
   /* ── Edge mode toggle ── */
