@@ -7,12 +7,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   <!-- Hero -->
   <header class="gt-hero">
-    <span class="gt-hero-tag">Grid Tool</span>
+    <span class="gt-hero-tag">Base to Base</span>
     <h1 class="gt-hero-title">
       <span class="gt-hl-thin">SHOW ME YOUR</span>
       <span class="gt-hl-bold">DNA BRO</span>
     </h1>
-    <p class="gt-hero-sub">Sequenzen eingeben &middot; Kanten einfärben &middot; Buchstaben setzen</p>
+    <p class="gt-hero-sub">Display and Edit Nucleotide Sequences</p>
   </header>
 
   <!-- Toolbar -->
@@ -191,11 +191,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-size: 11px;
     line-height: 18px;
     border: 1px solid #bbb;
-    border-radius: 3px 3px 0 0;
+    border-radius: 0;
     background: #fff;
     box-sizing: border-box;
     color: #1a1a1a;
-    margin-top: 1.5rem; /* default gap above text fields */
+    margin-top: 1.5rem;
   }
   /* First text item needs no top gap */
   :global(.gt-canvas > .gt-text:first-child) { margin-top: 0; }
@@ -249,7 +249,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     background: #fff;
     transition: background 60ms;
   }
-  :global(.gt-cell:not(:first-child)) { margin-left: -1px; }
+  :global(.gt-cell + .gt-cell) { margin-left: -1px; }
   :global(.gt-cell:hover) { background: #f4f4f2; z-index: 1; }
   :global(.gt-cell.is-sel) {
     z-index: 2;
@@ -260,35 +260,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   :global(.gt-canvas.gt-edge-mode .gt-cell:hover) {
     background: rgba(230, 57, 70, 0.05);
   }
-
-  /* Rows side control (column count) */
-  :global(.gt-rows-side) {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-    padding-top: 2px;
-    flex-shrink: 0;
-  }
-  :global(.gt-col-label) {
-    font-size: 0.64rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #aaa;
-  }
-  :global(.gt-col-input) {
-    width: 3.2rem;
-    padding: 0.25rem 0.35rem;
-    font-family: ui-monospace, monospace;
-    font-size: 0.8rem;
-    border: 1px solid #bbb;
-    border-radius: 4px;
-    background: #fff;
-    text-align: center;
-    color: #1a1a1a;
-  }
-  :global(.gt-col-input:focus) { outline: 2px solid #0c5e3b; outline-offset: 1px; }
 
   /* Paste button in popup */
   :global(.gt-popup-paste) {
@@ -342,7 +313,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     background: #f0faf4;
     cursor: pointer;
     user-select: none;
-    margin-left: 5px;
+    margin-left: -1px;
     transition: background 80ms, color 80ms;
   }
   :global(.gt-ds-btn:hover) {
@@ -484,8 +455,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     inp.type = 'text';
     inp.className = 'gt-text';
     inp.value = item.value;
-    inp.style.width = `${colCount * CELL_W + 1}px`;
-    // Indent to align text field with cells (strand labels sit to the left)
+    inp.style.width = `${(CELL_W - 1) * colCount + CELL_W}px`;
     inp.style.marginLeft = `${LABEL_W}px`;
     inp.dataset.iid = item.id;
     return inp;
@@ -506,23 +476,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       grid.appendChild(buildRow(item.id, ri, item.colCount));
     }
     wrap.appendChild(grid);
-
-    // Side: column count control
-    const side  = document.createElement('div');
-    side.className = 'gt-rows-side';
-    const lbl   = document.createElement('span');
-    lbl.className = 'gt-col-label';
-    lbl.textContent = 'Spalten';
-    const colInp = document.createElement('input');
-    colInp.type = 'number';
-    colInp.className = 'gt-col-input';
-    colInp.value = item.colCount;
-    colInp.min = 1;
-    colInp.max = 60;
-    colInp.dataset.iid = item.id;
-    side.appendChild(lbl);
-    side.appendChild(colInp);
-    wrap.appendChild(side);
 
     return wrap;
   }
@@ -741,7 +694,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       });
       // Auto-advance: only when a single cell was selected
       if (selected.size === 1) {
-        const next = nextCellId([...selected][0]);
+        const curId = [...selected][0];
+        const [ciid, , cci] = curId.split('-').map(Number);
+        const curItem = itemById(ciid);
+        if (curItem && cci + 1 >= curItem.colCount) expandColCount(ciid);
+        const next = nextCellId(curId);
         select(next ? [next] : []);
       }
       e.preventDefault();
@@ -796,36 +753,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     if (item) item.value = inp.value;
   });
 
-  /* ── Column count change (per block) ── */
-  canvas.addEventListener('change', e => {
-    const inp = e.target.closest('.gt-col-input');
-    if (!inp) return;
-    const iid = Number(inp.dataset.iid);
+  /* ── Auto-expand: add 10 columns to a block when the last column is reached ── */
+  function expandColCount(iid) {
     const item = itemById(iid);
     if (!item || item.type !== 'rows') return;
-    const v = Math.max(1, Math.min(60, parseInt(inp.value) || 30));
-    inp.value = v;
-    item.colCount = v;
-
-    // Prune invalid selections and edges for this block
-    selected.forEach(id => { const [i,,c] = id.split('-').map(Number); if (i===iid && c>=v) selected.delete(id); });
-    redEdges.forEach(k => { const p=k.split('-'); if(p[0]==='v' && Number(p[1])===iid && Number(p[3])>=v-1) redEdges.delete(k); });
-
-    // Re-render this block
+    item.colCount += 10;
     const wrap = canvas.querySelector(`.gt-rows-wrap[data-iid="${iid}"]`);
     const idx  = items.findIndex(it => it.id === iid);
-    if (wrap && idx !== -1) {
-      const newWrap = buildRowsEl(idx);
-      wrap.replaceWith(newWrap);
+    if (wrap && idx !== -1) wrap.replaceWith(buildRowsEl(idx));
+    // Keep preceding text field width in sync
+    if (idx > 0 && items[idx - 1].type === 'text') {
+      const textEl = canvas.querySelector(`.gt-text[data-iid="${items[idx - 1].id}"]`);
+      if (textEl) textEl.style.width = `${(CELL_W - 1) * item.colCount + CELL_W}px`;
     }
-
-    // Update width of preceding text field if adjacent
-    const idx2 = items.findIndex(it => it.id === iid);
-    if (idx2 > 0 && items[idx2 - 1].type === 'text') {
-      const textEl = canvas.querySelector(`.gt-text[data-iid="${items[idx2-1].id}"]`);
-      if (textEl) textEl.style.width = `${v * CELL_W + 1}px`;
-    }
-  });
+  }
 
   /* ── Reset ── */
   document.getElementById('gt-reset-btn').addEventListener('click', () => {
@@ -929,10 +870,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         const el = canvas.querySelector(`[data-cid="${id}"]`);
         if (el) { el.textContent = up; el.style.color = cellColors[id]; }
         lastId = id;
-        if (++ci >= item.colCount) { ci = 0; ri++; }
+        ci++;
+        if (ci >= item.colCount) { expandColCount(iid); } // expand before wrapping
+        if (ci >= item.colCount) { ci = 0; ri++; }        // still wrap if row ended
       } else if (ch === ' ' || ch === '-' || ch === '_' || ch === '.') {
-        // skip cell but advance
-        if (++ci >= item.colCount) { ci = 0; ri++; }
+        ci++;
+        if (ci >= item.colCount) { ci = 0; ri++; }
       }
       // all other chars ignored
     }
