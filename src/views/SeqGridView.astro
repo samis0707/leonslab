@@ -1,0 +1,535 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Sequenz-Grid"
+  description="DNA-Doppelstrang-Segmente visualisieren und annotieren — 30 Standardspalten, expandiert automatisch."
+>
+  <section class="sg-page max-w-5xl mx-auto px-6 pt-20 md:pt-28 pb-32">
+    <p class="eyebrow">Tools</p>
+    <h1 class="display text-[clamp(2rem,4.5vw,3.25rem)] mt-4 mb-4 text-[color:var(--color-concrete-900)]">
+      Sequenz-Grid
+    </h1>
+    <p class="text-base text-[color:var(--color-concrete-600)] leading-relaxed mb-10 max-w-xl">
+      Annotiere DNA-Doppelstrangsegmente — 5'- und 3'-Strang, Restriktionsstellen, Alignments.
+      Standard 30 Spalten; weitere entstehen automatisch beim Tippen.
+    </p>
+
+    <div class="sg-tool" id="sg-tool">
+      <div class="sg-blocks" id="sg-blocks">
+        <!-- rendered by JS -->
+      </div>
+
+      <div class="sg-toolbar">
+        <button type="button" class="sg-add-btn" id="sg-add-btn">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+            <path d="M5.5 1v9M1 5.5h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          Segment hinzufügen
+        </button>
+        <button type="button" class="sg-clear-btn" id="sg-clear-btn">
+          Alle zurücksetzen
+        </button>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* ─── Design tokens ─────────────────────────────────────────────────── */
+  .sg-tool {
+    --sg-cell:    28px;   /* nucleotide box: width = height */
+    --sg-ds:      34px;   /* DS badge width */
+    --sg-lbl:     28px;   /* strand-name column width (5' / 3') */
+    --sg-gap:      6px;   /* vertical gap between blocks */
+    --sg-radius:   3px;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--sg-gap);
+    overflow-x: auto;
+    padding-bottom: 4px;  /* so overflow scrollbar doesn't clip shadows */
+  }
+
+  /* ─── Block ─────────────────────────────────────────────────────────── */
+  /*
+   * Each block is a 2-column grid:
+   *   col 1  →  strand-name labels  (fixed: --sg-lbl)
+   *   col 2  →  label input / cell rows  (auto = max of all content)
+   *
+   * Row wrappers use display:contents so their children flow directly
+   * into the parent grid — this gives us the automatic width-matching
+   * between the label input (top row) and the nucleotide cells (lower rows)
+   * without any JavaScript measuring.
+   */
+  .sg-block {
+    display: grid;
+    grid-template-columns: var(--sg-lbl) auto;
+    width: max-content;
+  }
+
+  /* display:contents rows — invisible boxes, children are grid items */
+  .sg-row-label,
+  .sg-row-sense,
+  .sg-row-antisense {
+    display: contents;
+  }
+
+  /* ─── Column 1: strand names + spacer ──────────────────────────────── */
+  .sg-lbl-spacer {
+    /* occupies col 1, row 1 (label row) — purely structural */
+  }
+  .sg-strand-name {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 5px;
+    height: var(--sg-cell);
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--color-concrete-400);
+    user-select: none;
+  }
+
+  /* ─── Column 2, row 1: segment label input ──────────────────────────── */
+  .sg-label-input {
+    /* width: 100% fills col 2 — same intrinsic width as the cell row below */
+    width: 100%;
+    box-sizing: border-box;
+    height: 26px;
+    padding: 0 7px;
+    margin-bottom: 3px;
+
+    border: 1px solid var(--color-concrete-200);
+    border-radius: var(--sg-radius);
+    background: var(--color-concrete-50);
+
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    color: var(--color-concrete-700);
+    outline: none;
+    transition: border-color 150ms ease, background 150ms ease;
+  }
+  .sg-label-input::placeholder {
+    color: var(--color-concrete-300);
+    font-style: italic;
+  }
+  .sg-label-input:focus {
+    border-color: var(--color-park-green);
+    background: #fff;
+  }
+
+  /* ─── Column 2, rows 2+3: cell rows ──────────────────────────────────── */
+  .sg-cells {
+    display: flex;
+    flex-direction: row;
+    height: var(--sg-cell);
+  }
+
+  /* Nucleotide box
+   * margin-right: -1px collapses adjacent cell borders so they share a
+   * single 1 px line instead of doubling up. The DS badge renders on top
+   * (z-index: 1) and its green border visually replaces the last cell's
+   * grey right border — making DS appear directly attached, no gap.
+   */
+  .sg-cell {
+    width: var(--sg-cell);
+    height: var(--sg-cell);
+    box-sizing: border-box;
+    flex-shrink: 0;
+    margin-right: -1px;
+
+    border: 1px solid var(--color-concrete-200);
+
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-concrete-800);
+    outline: none;
+    cursor: text;
+    user-select: none;
+    text-transform: uppercase;
+    position: relative;
+
+    transition: background 100ms ease;
+  }
+
+  .sg-cell:focus {
+    background: #f0faf5;
+    border-color: var(--color-park-green);
+    z-index: 2;
+  }
+
+  /* 3' antisense cells — read-only, softer appearance */
+  .sg-cell[data-antisense] {
+    cursor: default;
+    background: var(--color-concrete-50);
+    color: var(--color-concrete-500);
+    font-weight: 500;
+  }
+
+  /* First cell in a row: rounded left corner */
+  .sg-cell:first-child {
+    border-radius: var(--sg-radius) 0 0 var(--sg-radius);
+  }
+
+  /* DS badge
+   * Comes last in the flex container, z-index:1 renders its green border
+   * on top of the last cell's grey right border → seamless, gap-free join.
+   */
+  .sg-ds-cell {
+    width: var(--sg-ds);
+    height: var(--sg-cell);
+    box-sizing: border-box;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+
+    border: 1.5px solid var(--color-park-green);
+
+    background: rgba(12, 94, 59, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--color-park-green);
+    user-select: none;
+    cursor: default;
+    border-radius: 0 var(--sg-radius) var(--sg-radius) 0;
+  }
+
+  /* ─── Toolbar ─────────────────────────────────────────────────────── */
+  .sg-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  .sg-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.55rem 1.1rem;
+    background: var(--color-concrete-900);
+    color: var(--color-concrete-50);
+    border: none;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 150ms ease, transform 150ms ease;
+  }
+  .sg-add-btn:hover {
+    background: var(--color-park-green);
+    transform: translateY(-1px);
+  }
+  .sg-add-btn:active { transform: none; }
+
+  .sg-clear-btn {
+    padding: 0.5rem 1rem;
+    background: none;
+    color: var(--color-concrete-500);
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: color 150ms ease, border-color 150ms ease;
+  }
+  .sg-clear-btn:hover {
+    color: var(--color-concrete-800);
+    border-color: var(--color-concrete-400);
+  }
+
+  /* ─── Responsive: horizontal scroll on small screens ─────────────── */
+  @media (max-width: 640px) {
+    .sg-tool {
+      margin: 0 -1.5rem;  /* bleed to screen edge */
+      padding: 0 1.5rem 4px;
+    }
+  }
+</style>
+
+<script>
+  // ─── Constants ──────────────────────────────────────────────────────────
+  const DEFAULT_COLS = 30;
+  const COMPLEMENT: Record<string, string> = { A: 'T', T: 'A', G: 'C', C: 'G' };
+
+  type BlockData = { label: string; sense: string[] };
+
+  // ─── State ──────────────────────────────────────────────────────────────
+  let blocks: BlockData[] = [];
+
+  // ─── Bootstrap ──────────────────────────────────────────────────────────
+  function init(): void {
+    const saved = tryLoad();
+    blocks = saved ?? [makeBlock()];
+    renderAll();
+    bindToolbar();
+  }
+
+  function makeBlock(cols = DEFAULT_COLS): BlockData {
+    return { label: '', sense: Array(cols).fill('') };
+  }
+
+  // ─── Render ─────────────────────────────────────────────────────────────
+  function renderAll(): void {
+    const container = document.getElementById('sg-blocks')!;
+    container.innerHTML = '';
+    blocks.forEach((b, idx) => container.appendChild(buildBlock(b, idx)));
+  }
+
+  function buildBlock(data: BlockData, idx: number): HTMLElement {
+    const block = document.createElement('div');
+    block.className = 'sg-block';
+    block.dataset.idx = String(idx);
+
+    // ── Row 1: label ──────────────────────────────────────────────────
+    const labelRow = document.createElement('div');
+    labelRow.className = 'sg-row-label';
+
+    const spacer = document.createElement('div');
+    spacer.className = 'sg-lbl-spacer';
+
+    const labelInput = document.createElement('input');
+    labelInput.type = 'text';
+    labelInput.className = 'sg-label-input';
+    labelInput.placeholder = 'Segment-Bezeichnung…';
+    labelInput.value = data.label;
+    labelInput.addEventListener('input', () => {
+      blocks[idx].label = labelInput.value;
+      save();
+    });
+
+    labelRow.appendChild(spacer);
+    labelRow.appendChild(labelInput);
+    block.appendChild(labelRow);
+
+    // ── Row 2: 5' sense ───────────────────────────────────────────────
+    block.appendChild(buildStrandRow(data.sense, "5'", idx, false));
+
+    // ── Row 3: 3' antisense ───────────────────────────────────────────
+    const antisense = data.sense.map(n => COMPLEMENT[n] ?? '');
+    block.appendChild(buildStrandRow(antisense, "3'", idx, true));
+
+    return block;
+  }
+
+  function buildStrandRow(
+    bases: string[],
+    label: string,
+    blockIdx: number,
+    isAntisense: boolean,
+  ): HTMLElement {
+    const row = document.createElement('div');
+    row.className = isAntisense ? 'sg-row-antisense' : 'sg-row-sense';
+
+    // Strand name
+    const name = document.createElement('div');
+    name.className = 'sg-strand-name';
+    name.textContent = label;
+
+    // Cells container
+    const cells = document.createElement('div');
+    cells.className = 'sg-cells';
+
+    bases.forEach((base, colIdx) => {
+      cells.appendChild(buildCell(base, blockIdx, colIdx, isAntisense));
+    });
+
+    // DS badge — directly appended, NO gap (flex layout, zero gap)
+    const ds = document.createElement('div');
+    ds.className = 'sg-ds-cell';
+    ds.textContent = 'DS';
+    cells.appendChild(ds);
+
+    row.appendChild(name);
+    row.appendChild(cells);
+    return row;
+  }
+
+  function buildCell(
+    value: string,
+    blockIdx: number,
+    colIdx: number,
+    isAntisense: boolean,
+  ): HTMLElement {
+    const cell = document.createElement('div');
+    cell.className = 'sg-cell';
+    cell.textContent = value;
+
+    if (isAntisense) {
+      cell.dataset.antisense = '';
+      // Not interactive — driven by sense strand
+      return cell;
+    }
+
+    cell.contentEditable = 'true';
+    cell.spellcheck = false;
+    cell.dataset.col = String(colIdx);
+
+    cell.addEventListener('keydown', (e: KeyboardEvent) => {
+      handleCellKey(e, blockIdx, colIdx);
+    });
+
+    cell.addEventListener('input', () => {
+      const raw = (cell.textContent ?? '').toUpperCase().replace(/[^ATGC]/g, '');
+      const ch = raw.slice(-1); // accept only last typed char
+      cell.textContent = ch;
+      // Move cursor to end (content-editable quirk)
+      const sel = window.getSelection();
+      if (sel) {
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+
+      blocks[blockIdx].sense[colIdx] = ch;
+      updateAntisenseRow(blockIdx);
+      save();
+
+      if (ch) {
+        // Auto-expand: if we're on the last non-DS cell, add a new column
+        const totalCols = blocks[blockIdx].sense.length;
+        if (colIdx === totalCols - 1) {
+          blocks[blockIdx].sense.push('');
+          rerenderBlock(blockIdx);
+        }
+        // Move focus to next cell
+        focusCell(blockIdx, colIdx + 1);
+      }
+    });
+
+    cell.addEventListener('focus', () => {
+      // Select all text in the cell for easy overwrite
+      const sel = window.getSelection();
+      if (sel) {
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    });
+
+    return cell;
+  }
+
+  function handleCellKey(e: KeyboardEvent, blockIdx: number, colIdx: number): void {
+    const totalCols = blocks[blockIdx].sense.length;
+
+    if (e.key === 'ArrowRight' || e.key === 'Tab') {
+      e.preventDefault();
+      if (colIdx < totalCols - 1) {
+        focusCell(blockIdx, colIdx + 1);
+      } else if (e.key === 'Tab' && blockIdx < blocks.length - 1) {
+        focusCell(blockIdx + 1, 0);
+      }
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (colIdx > 0) focusCell(blockIdx, colIdx - 1);
+    } else if (e.key === 'Backspace') {
+      const cell = e.currentTarget as HTMLElement;
+      if (!cell.textContent) {
+        e.preventDefault();
+        blocks[blockIdx].sense[colIdx] = '';
+        updateAntisenseRow(blockIdx);
+        save();
+        if (colIdx > 0) focusCell(blockIdx, colIdx - 1);
+      }
+    } else if (e.key === 'Delete') {
+      const cell = e.currentTarget as HTMLElement;
+      cell.textContent = '';
+      blocks[blockIdx].sense[colIdx] = '';
+      updateAntisenseRow(blockIdx);
+      save();
+      e.preventDefault();
+    }
+  }
+
+  // ─── Partial re-render helpers ───────────────────────────────────────────
+  function rerenderBlock(idx: number): void {
+    const container = document.getElementById('sg-blocks')!;
+    const old = container.querySelector<HTMLElement>(`.sg-block[data-idx="${idx}"]`);
+    const fresh = buildBlock(blocks[idx], idx);
+    if (old) container.replaceChild(fresh, old);
+    else container.appendChild(fresh);
+  }
+
+  function updateAntisenseRow(blockIdx: number): void {
+    const container = document.getElementById('sg-blocks')!;
+    const blockEl = container.querySelector<HTMLElement>(`.sg-block[data-idx="${blockIdx}"]`);
+    if (!blockEl) return;
+    const antisenseCells = blockEl.querySelectorAll<HTMLElement>('.sg-row-antisense .sg-cell');
+    blocks[blockIdx].sense.forEach((base, i) => {
+      const cell = antisenseCells[i];
+      if (cell) cell.textContent = COMPLEMENT[base] ?? '';
+    });
+  }
+
+  // ─── Focus helper ─────────────────────────────────────────────────────
+  function focusCell(blockIdx: number, colIdx: number): void {
+    const container = document.getElementById('sg-blocks')!;
+    const blockEl = container.querySelector<HTMLElement>(`.sg-block[data-idx="${blockIdx}"]`);
+    if (!blockEl) return;
+    const cells = blockEl.querySelectorAll<HTMLElement>('.sg-row-sense .sg-cell[contenteditable]');
+    const target = cells[colIdx];
+    if (target) {
+      target.focus();
+    }
+  }
+
+  // ─── Toolbar ─────────────────────────────────────────────────────────────
+  function bindToolbar(): void {
+    document.getElementById('sg-add-btn')?.addEventListener('click', () => {
+      blocks.push(makeBlock());
+      renderAll();
+      save();
+      // Focus first cell of the new block
+      focusCell(blocks.length - 1, 0);
+    });
+
+    document.getElementById('sg-clear-btn')?.addEventListener('click', () => {
+      if (!confirm('Alle Segmente zurücksetzen?')) return;
+      blocks = [makeBlock()];
+      renderAll();
+      save();
+    });
+  }
+
+  // ─── Persistence ──────────────────────────────────────────────────────
+  const STORAGE_KEY = 'sg-blocks-v1';
+
+  function save(): void {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(blocks));
+    } catch { /* ignore quota errors */ }
+  }
+
+  function tryLoad(): BlockData[] | null {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) return null;
+      return (parsed as BlockData[]).filter(
+        (b) => b && typeof b.label === 'string' && Array.isArray(b.sense),
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  // ─── Start ──────────────────────────────────────────────────────────────
+  init();
+</script>
