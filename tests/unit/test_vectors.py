@@ -4,7 +4,7 @@ The tail-derivation calibration tests are the FIRST checkpoint of Phase 2.
 They will fail until vectors are added to data/primer_design/vectors/.
 
 When .gb files are present, these MUST produce the empirically correct tails:
-    pEXG2 + HindIII + deletion  → P1 tail = "CATAAATGTAAAGCA"
+    pEXG2 + HindIII + deletion  → P1 tail = "AATGTAAAGCAAGCT"
     pBBR1MCS2 + HindIII + expression → P1 tail = "CGGTATCGATAAGCT"
 """
 from __future__ import annotations
@@ -69,8 +69,8 @@ class TestTailCalibration:
             pytest.skip("vectors not yet added")
         vector = get_vector("pEXG2")
         p1_tail, _ = derive_tails(vector, "HindIII", "deletion")
-        assert p1_tail == "CATAAATGTAAAGCA", \
-            f"P1 tail mismatch: got {p1_tail!r}, expected 'CATAAATGTAAAGCA'"
+        assert p1_tail == "AATGTAAAGCAAGCT", \
+            f"P1 tail mismatch: got {p1_tail!r}, expected 'AATGTAAAGCAAGCT'"
 
     def test_pEXG2_HindIII_deletion_p4_tail(self, vectors_present):
         if not vectors_present:

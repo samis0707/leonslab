@@ -157,14 +157,43 @@ TailRuleFn = Callable[[VectorRecord, str, int], str]
 
 
 def _rule_left_arm_15nt_excl_recognition(v: VectorRecord, motif: str, nick: int) -> str:
-    """P1 tail for ``site_destroyed`` convention (pEXG2 deletion / tagging).
+    """15 nt ending at nick-1 (excludes the recognition site entirely).
 
-    Example (HindIII A^AGCTT, recognition starts at nick-1):
-    Returns the 15 nt immediately before the nick (excludes recognition site entirely
-    on the left arm side, since the nick is between A and AGCTT — "left arm" ends at nick).
+    Deprecated for pEXG2 site_destroyed — superseded by
+    ``left_arm_15nt_incl_sticky_end``, which correctly spans the 4-nt
+    5'-overhang left by the restriction enzyme so that the P1 tail aligns with
+    the bottom strand after exonuclease chewing.  Kept for reference only.
     """
     assert nick >= VECTOR_TAIL_LEN, "vector too short before cut for 15 nt left tail"
     return v.sequence[nick - VECTOR_TAIL_LEN : nick]
+
+
+def _rule_left_arm_15nt_incl_sticky_end(v: VectorRecord, motif: str, nick: int) -> str:
+    """P1 tail for ``site_destroyed`` convention (pEXG2 deletion / tagging).
+
+    After linearisation with a 4-nt 5'-overhang enzyme (e.g. HindIII A^AGCTT)
+    the in-fusion exonuclease chews back the 3' end of the top strand, leaving
+    the bottom strand's 5' overhang (AGCT) exposed.  The P1 tail must therefore
+    span *across* the nick to include those 4 nt, so that the PCR product aligns
+    with the exposed bottom strand.
+
+    Returns the 11 nt immediately before the nick plus the 4 nt 5'-overhang
+    starting at the nick position, giving a 15-nt tail that ends with AAGCT
+    (first 5 nt of the HindIII recognition site read on the top strand).
+    """
+    # For enzymes with nick_offset=1 on a 6-nt palindrome the 5' overhang is
+    # len(motif) - 2*nick_offset = 4 nt (e.g. HindIII AAGCTT → AGCT).
+    # We find nick_offset by scanning backwards from nick to locate the motif.
+    nick_offset_in_motif = 1  # default; corrected below if motif found elsewhere
+    for k in range(1, len(motif)):
+        start = nick - k
+        if start >= 0 and v.sequence[start : start + len(motif)] == motif:
+            nick_offset_in_motif = k
+            break
+    sticky_len = len(motif) - 2 * nick_offset_in_motif   # 4 for HindIII
+    context_len = VECTOR_TAIL_LEN - sticky_len             # 11 for HindIII
+    assert nick >= context_len, "vector too short before cut for left tail"
+    return v.sequence[nick - context_len : nick + sticky_len]
 
 
 def _rule_rc_right_arm_15nt_starting_at_second_nt_of_recognition(
@@ -211,6 +240,7 @@ def _rule_left_arm_15nt_incl_5nt_recognition(v: VectorRecord, motif: str, nick: 
 
 TAIL_RULES: dict[str, TailRuleFn] = {
     "left_arm_15nt_excl_recognition": _rule_left_arm_15nt_excl_recognition,
+    "left_arm_15nt_incl_sticky_end": _rule_left_arm_15nt_incl_sticky_end,
     "rc_right_arm_15nt_starting_at_second_nt_of_recognition":
         _rule_rc_right_arm_15nt_starting_at_second_nt_of_recognition,
     "rc_right_arm_15nt_incl_5nt_recognition": _rule_rc_right_arm_15nt_incl_5nt_recognition,

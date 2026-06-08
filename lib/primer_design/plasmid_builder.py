@@ -5,7 +5,7 @@ The In-Fusion / Gibson overlap is 15 nt at each junction. The exact position of
 those 15-nt windows in the vector depends on the tail rule chosen for that
 (vector, enzyme, application) triple. For example:
 
-    site_destroyed   (pEXG2|HindIII|deletion)   left arm = vec[nick-15:nick]
+    site_destroyed   (pEXG2|HindIII|deletion)   left arm = vec[nick-11:nick+4]
                                                 right arm = vec[nick:nick+15]
     site_partial_AAGCT (pBBR1MCS2|HindIII|expression) left arm = vec[nick-11:nick+4]
                                                        right arm = vec[nick:nick+15]
