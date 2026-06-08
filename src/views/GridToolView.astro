@@ -290,6 +290,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
   :global(.gt-col-input:focus) { outline: 2px solid #0c5e3b; outline-offset: 1px; }
 
+  /* Paste button in popup */
+  :global(.gt-popup-paste) {
+    width: 100%;
+    margin-top: 5px;
+    padding: 4px 0;
+    font-family: inherit;
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: #1a1a1a;
+    background: #f4f4f2;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 80ms;
+  }
+  :global(.gt-popup-paste:hover) { background: #e8e8e4; }
+
   /* Color swatches */
   :global(.gt-swatch) {
     width: 22px;
@@ -351,6 +368,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     btn.title = c;
     popup.appendChild(btn);
   });
+  /* Paste button inside popup */
+  const pasteBtn = document.createElement('button');
+  pasteBtn.type = 'button';
+  pasteBtn.className = 'gt-popup-paste';
+  pasteBtn.textContent = 'Einfügen';
+  popup.appendChild(pasteBtn);
+
+  pasteBtn.addEventListener('click', () => {
+    navigator.clipboard.readText().then(text => {
+      if (text) doPaste(text);
+    }).catch(() => {});
+    hidePopup();
+  });
+
   popup.addEventListener('click', e => {
     const btn = e.target.closest('.gt-swatch');
     if (!btn) return;
@@ -613,7 +644,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     if (selected.size === 0) return;
 
     const up = e.key.toUpperCase();
-    if (up.length === 1 && /^[A-Z]$/.test(up)) {
+    if (up.length === 1 && /^[A-Z]$/.test(up) && !e.ctrlKey && !e.metaKey) {
       selected.forEach(id => {
         letters[id] = up;
         const el = canvas.querySelector(`[data-cid="${id}"]`);
