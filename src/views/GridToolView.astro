@@ -307,6 +307,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
   :global(.gt-popup-paste:hover) { background: #e8e8e4; }
 
+  /* 5'/3' strand label */
+  :global(.gt-strand-lbl) {
+    width: 22px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 4px;
+    font-size: 9px;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    color: #bbb;
+    user-select: none;
+    box-sizing: border-box;
+    letter-spacing: 0;
+    height: 28px;
+  }
+
   /* DS button */
   :global(.gt-ds-btn) {
     width: 28px;
@@ -357,6 +374,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   const CELL_W = 28;
   const CELL_H = 28;
   const EDGE_THRESH = 5;
+  const LABEL_W = 22; // px – width of 5'/3' strand label column
 
   const TEXT_COLORS = [
     '#1a1a1a','#e63946','#fb8c00','#f4c20d',
@@ -467,6 +485,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     inp.className = 'gt-text';
     inp.value = item.value;
     inp.style.width = `${colCount * CELL_W + 1}px`;
+    // Indent to align text field with cells (strand labels sit to the left)
+    inp.style.marginLeft = `${LABEL_W}px`;
     inp.dataset.iid = item.id;
     return inp;
   }
@@ -511,6 +531,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     const row = document.createElement('div');
     row.className  = 'gt-row';
     row.dataset.ri = ri;
+    // 5'/3' strand label
+    const lbl = document.createElement('span');
+    lbl.className = 'gt-strand-lbl';
+    lbl.textContent = ri % 2 === 0 ? "5'" : "3'";
+    row.appendChild(lbl);
     for (let ci = 0; ci < colCount; ci++) row.appendChild(buildCell(iid, ri, ci));
     // DS button at end of each row
     const ds = document.createElement('div');
