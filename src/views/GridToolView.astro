@@ -307,6 +307,32 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
   :global(.gt-popup-paste:hover) { background: #e8e8e4; }
 
+  /* DS button */
+  :global(.gt-ds-btn) {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #0c5e3b;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    letter-spacing: 0.04em;
+    color: #0c5e3b;
+    background: #f0faf4;
+    cursor: pointer;
+    user-select: none;
+    margin-left: 5px;
+    transition: background 80ms, color 80ms;
+  }
+  :global(.gt-ds-btn:hover) {
+    background: #0c5e3b;
+    color: #fff;
+  }
+
   /* Color swatches */
   :global(.gt-swatch) {
     width: 22px;
@@ -486,6 +512,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     row.className  = 'gt-row';
     row.dataset.ri = ri;
     for (let ci = 0; ci < colCount; ci++) row.appendChild(buildCell(iid, ri, ci));
+    // DS button at end of each row
+    const ds = document.createElement('div');
+    ds.className = 'gt-ds-btn';
+    ds.textContent = 'DS';
+    ds.dataset.iid = iid;
+    ds.dataset.ri  = ri;
+    row.appendChild(ds);
     return row;
   }
 
@@ -502,6 +535,36 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     applyEdgeColors(el, iid, ri, ci);
     return el;
   }
+
+  /* ── DS complement fill ── */
+  const COMPLEMENT = { A:'T', T:'A', G:'C', C:'G', X:'X' };
+
+  function fillComplement(iid, ri) {
+    const item = itemById(iid);
+    if (!item || item.type !== 'rows') return;
+    const partnerRi = ri % 2 === 0 ? ri + 1 : ri - 1;
+    if (partnerRi < 0 || partnerRi >= item.rowCount) return;
+
+    for (let ci = 0; ci < item.colCount; ci++) {
+      const targetId = cid(iid, ri, ci);
+      if (letters[targetId]) continue; // keep existing letter
+
+      const sourceLetter = letters[cid(iid, partnerRi, ci)];
+      const comp = sourceLetter && COMPLEMENT[sourceLetter];
+      if (!comp) continue; // empty or unknown source → leave empty
+
+      letters[targetId] = comp;
+      if (!cellColors[targetId]) cellColors[targetId] = TEXT_COLORS[0];
+      const el = canvas.querySelector(`[data-cid="${targetId}"]`);
+      if (el) { el.textContent = comp; el.style.color = cellColors[targetId]; }
+    }
+  }
+
+  canvas.addEventListener('click', e => {
+    const ds = e.target.closest('.gt-ds-btn');
+    if (!ds) return;
+    fillComplement(Number(ds.dataset.iid), Number(ds.dataset.ri));
+  });
 
   /* ── Edge coloring ── */
   function applyEdgeColors(el, iid, ri, ci) {
@@ -561,6 +624,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   /* ── Pointer events (selection + drag) ── */
   canvas.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
+    if (e.target.closest('.gt-ds-btn')) return; // handled by click listener
     const cell = e.target.closest('.gt-cell');
     if (!cell) { select([]); hidePopup(); return; }
 
