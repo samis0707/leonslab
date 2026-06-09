@@ -53,10 +53,12 @@ CLAMP_NO_4IDENT_LAST4: bool = True
 
 # ============================================================================
 # Scar (deletion application, D5.4)
+# Calibrated against PA14 lasR (N=6, C=13) and LB001 lasB (N=16, C=2) training sets.
 # ============================================================================
 
 SCAR_MAX_TOTAL_AA: int = 24          # N + C ≤ 24
-SCAR_MIN_PER_SIDE: int = 1
+SCAR_MIN_TOTAL_AA: int = 8           # N + C ≥ 8 (prevents biologically useless 2-4 codon scars)
+SCAR_MIN_PER_SIDE: int = 1           # N ≥ 1, C ≥ 1
 
 # ============================================================================
 # Junction overlap (deletion application — P2 and P3 genomic tails)

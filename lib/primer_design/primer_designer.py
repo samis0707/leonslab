@@ -356,16 +356,18 @@ def closest_by_tm(pool: list[Candidate], target_tm: float) -> Candidate | None:
 # ===========================================================================
 
 def search_scars(cds_len_codons: int, scar_max_total: int = cfg.SCAR_MAX_TOTAL_AA,
-                 scar_min_per_side: int = cfg.SCAR_MIN_PER_SIDE) -> list[tuple[int, int]]:
-    """Yield all (N, C) pairs with N, C ≥ 1 and N + C ≤ scar_max_total.
+                 scar_min_per_side: int = cfg.SCAR_MIN_PER_SIDE,
+                 scar_min_total: int = cfg.SCAR_MIN_TOTAL_AA) -> list[tuple[int, int]]:
+    """Return all (N, C) pairs within the configured scar-size window.
 
-    N counts retained N-terminal amino-acid codons (start with ATG).
-    C counts retained C-terminal amino-acid codons NOT including the stop codon
-    — the stop is always carried along separately. Smallest scar = 2 aa total
-    (one N + one C) + stop.
+    N counts retained N-terminal codons; C counts retained C-terminal codons
+    (stop codon is always appended separately). Hard bounds:
+      N ≥ scar_min_per_side, C ≥ scar_min_per_side
+      scar_min_total ≤ N + C ≤ scar_max_total
     """
     pairs: list[tuple[int, int]] = []
-    for total in range(2 * scar_min_per_side, scar_max_total + 1):
+    start = max(2 * scar_min_per_side, scar_min_total)
+    for total in range(start, scar_max_total + 1):
         for N in range(scar_min_per_side, total - scar_min_per_side + 1):
             C = total - N
             pairs.append((N, C))
@@ -472,7 +474,7 @@ def search_deletion_primers(
     best: DeletionPrimerSet | None = None
     top5: list[DeletionPrimerSet] = []
 
-    for N, C in search_scars(L, cfg.SCAR_MAX_TOTAL_AA, cfg.SCAR_MIN_PER_SIDE):
+    for N, C in search_scars(L, cfg.SCAR_MAX_TOTAL_AA, cfg.SCAR_MIN_PER_SIDE, cfg.SCAR_MIN_TOTAL_AA):
         # The C-terminal slice must include the stop codon as its last codon.
         if N >= L or C + 1 >= L:
             continue
