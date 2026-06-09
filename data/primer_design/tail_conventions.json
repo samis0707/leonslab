@@ -3,36 +3,36 @@
 
   "pEXG2|HindIII|deletion": {
     "name": "site_destroyed",
-    "p1_tail_rule": "left_arm_15nt_incl_sticky_end",
-    "p4_tail_rule": "rc_right_arm_15nt_starting_at_second_nt_of_recognition",
+    "p1_tail_rule": "left_arm_20nt_incl_sticky_end",
+    "p4_tail_rule": "rc_right_arm_20nt_starting_at_second_nt_of_recognition",
     "expected_recognition_count_in_final_plasmid": 0,
-    "calibrated_against": "corrected 2026-06 — old rule excl_recognition left AGCT out of left arm; P1 must span the sticky end so the PCR product aligns with bottom strand after exonuclease chewing",
-    "expected_p1_tail_for_pEXG2_HindIII": "AATGTAAAGCAAGCT"
+    "calibrated_against": "P1 spans nick to include the 4-nt sticky end (AGCT) so the PCR product aligns with the bottom strand after exonuclease chewing. Tail length = 20 nt (Takara In-Fusion standard).",
+    "expected_p1_tail_for_pEXG2_HindIII": "GCATAAATGTAAAGCAAGCT"
   },
 
   "pEXG2|HindIII|tagging": {
     "name": "site_destroyed",
-    "p1_tail_rule": "left_arm_15nt_incl_sticky_end",
-    "p4_tail_rule": "rc_right_arm_15nt_starting_at_second_nt_of_recognition",
+    "p1_tail_rule": "left_arm_20nt_incl_sticky_end",
+    "p4_tail_rule": "rc_right_arm_20nt_starting_at_second_nt_of_recognition",
     "expected_recognition_count_in_final_plasmid": 0,
-    "calibrated_against": "shares pEXG2|HindIII|deletion convention; junction overlap differs (see D6.4)"
+    "calibrated_against": "shares pEXG2|HindIII|deletion convention; cassette junction overlap differs (see D6.4)"
   },
 
   "pBBR1MCS2|HindIII|expression": {
     "name": "site_partial_AAGCT",
-    "_geometry_note": "Addgene pBBR1MCS-2 (#85168) MCS reads 5'->3' as ...SalI-ClaI-HindIII-EcoRV-EcoRI... so the empirical primer #1573's tail (10 nt left-arm + first 5 nt of AAGCTT) is the FORWARD-strand left-arm rule. P4 then uses RC of the right arm, anchored at the nick.",
-    "p1_tail_rule": "left_arm_15nt_incl_5nt_recognition",
-    "p4_tail_rule": "rc_right_arm_15nt_incl_5nt_recognition",
+    "_geometry_note": "Addgene pBBR1MCS-2 (#85168) MCS reads 5'->3' as ...SalI-ClaI-HindIII-EcoRV-EcoRI... P1 tail = 15 nt left-arm context + first 5 nt of AAGCTT = 20 nt total. P4 tail = RC of 20 nt at nick.",
+    "p1_tail_rule": "left_arm_20nt_incl_5nt_recognition",
+    "p4_tail_rule": "rc_right_arm_20nt_incl_5nt_recognition",
     "expected_recognition_count_in_final_plasmid": 1,
-    "calibrated_against": "PA14 lasR primer #1612 / lasB primer #1573 (working empirical set)",
-    "expected_p1_tail_for_pBBR1MCS2_HindIII": "CGGTATCGATAAGCT",
-    "expected_p4_tail_for_pBBR1MCS2_HindIII": "ATTCGATATCAAGCT"
+    "calibrated_against": "PA14 lasR primer #1612 / lasB primer #1573 (working empirical set); tail length updated to 20 nt 2026-06",
+    "expected_p1_tail_for_pBBR1MCS2_HindIII": "GTCGACGGTATCGATAAGCT",
+    "expected_p4_tail_for_pBBR1MCS2_HindIII": "CAGGAATTCGATATCAAGCT"
   },
 
   "default|site_destroyed": {
     "name": "site_destroyed",
-    "p1_tail_rule": "left_arm_15nt_incl_sticky_end",
-    "p4_tail_rule": "rc_right_arm_15nt_starting_at_second_nt_of_recognition",
+    "p1_tail_rule": "left_arm_20nt_incl_sticky_end",
+    "p4_tail_rule": "rc_right_arm_20nt_starting_at_second_nt_of_recognition",
     "expected_recognition_count_in_final_plasmid": 0,
     "calibrated_against": "FALLBACK ONLY — used for non-calibrated triples; verification will catch mistakes"
   }

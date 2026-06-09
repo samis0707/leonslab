@@ -156,19 +156,7 @@ def get_unique_cutters(vector: VectorRecord) -> list[str]:
 TailRuleFn = Callable[[VectorRecord, str, int], str]
 
 
-def _rule_left_arm_15nt_excl_recognition(v: VectorRecord, motif: str, nick: int) -> str:
-    """15 nt ending at nick-1 (excludes the recognition site entirely).
-
-    Deprecated for pEXG2 site_destroyed — superseded by
-    ``left_arm_15nt_incl_sticky_end``, which correctly spans the 4-nt
-    5'-overhang left by the restriction enzyme so that the P1 tail aligns with
-    the bottom strand after exonuclease chewing.  Kept for reference only.
-    """
-    assert nick >= VECTOR_TAIL_LEN, "vector too short before cut for 15 nt left tail"
-    return v.sequence[nick - VECTOR_TAIL_LEN : nick]
-
-
-def _rule_left_arm_15nt_incl_sticky_end(v: VectorRecord, motif: str, nick: int) -> str:
+def _rule_left_arm_20nt_incl_sticky_end(v: VectorRecord, motif: str, nick: int) -> str:
     """P1 tail for ``site_destroyed`` convention (pEXG2 deletion / tagging).
 
     After linearisation with a 4-nt 5'-overhang enzyme (e.g. HindIII A^AGCTT)
@@ -177,8 +165,8 @@ def _rule_left_arm_15nt_incl_sticky_end(v: VectorRecord, motif: str, nick: int) 
     span *across* the nick to include those 4 nt, so that the PCR product aligns
     with the exposed bottom strand.
 
-    Returns the 11 nt immediately before the nick plus the 4 nt 5'-overhang
-    starting at the nick position, giving a 15-nt tail that ends with AAGCT
+    Returns the 16 nt immediately before the nick plus the 4 nt 5'-overhang
+    starting at the nick position, giving a 20-nt tail that ends with AAGCT
     (first 5 nt of the HindIII recognition site read on the top strand).
     """
     # For enzymes with nick_offset=1 on a 6-nt palindrome the 5' overhang is
@@ -191,28 +179,28 @@ def _rule_left_arm_15nt_incl_sticky_end(v: VectorRecord, motif: str, nick: int) 
             nick_offset_in_motif = k
             break
     sticky_len = len(motif) - 2 * nick_offset_in_motif   # 4 for HindIII
-    context_len = VECTOR_TAIL_LEN - sticky_len             # 11 for HindIII
+    context_len = VECTOR_TAIL_LEN - sticky_len             # 16 for HindIII
     assert nick >= context_len, "vector too short before cut for left tail"
     return v.sequence[nick - context_len : nick + sticky_len]
 
 
-def _rule_rc_right_arm_15nt_starting_at_second_nt_of_recognition(
+def _rule_rc_right_arm_20nt_starting_at_second_nt_of_recognition(
     v: VectorRecord, motif: str, nick: int
 ) -> str:
     """P4 tail for ``site_destroyed`` (pEXG2 deletion / tagging).
 
-    Returns RC of the 15 nt starting at the nick position. For HindIII, this means
+    Returns RC of the 20 nt starting at the nick position. For HindIII, this means
     starting at the second A of AAGCTT (= AGCTT...). Captures 5 nt of recognition
-    on the right arm + 10 nt past — but in RC, so the recognition is destroyed.
+    on the right arm + 15 nt past — but in RC, so the recognition is destroyed.
     """
     return reverse_complement(v.sequence[nick : nick + VECTOR_TAIL_LEN])
 
 
-def _rule_rc_right_arm_15nt_incl_5nt_recognition(v: VectorRecord, motif: str, nick: int) -> str:
+def _rule_rc_right_arm_20nt_incl_5nt_recognition(v: VectorRecord, motif: str, nick: int) -> str:
     """``site_partial_AAGCT`` tail derived from the right arm.
 
-    Returns RC of the 15 nt starting at the nick position. Same physical span as
-    the deletion P4 rule above (15 nt RC at nick). For Addgene's pBBR1MCS-2
+    Returns RC of the 20 nt starting at the nick position. Same physical span as
+    the deletion P4 rule above (20 nt RC at nick). For Addgene's pBBR1MCS-2
     sequence (Addgene #85168, MCS oriented ...SalI-ClaI-HindIII-EcoRV-EcoRI...),
     this is the **P4** tail in the expression triple. The recognition site is
     regenerated at one junction in the final plasmid (the P1 vs P4 pairing
@@ -221,7 +209,7 @@ def _rule_rc_right_arm_15nt_incl_5nt_recognition(v: VectorRecord, motif: str, ni
     return reverse_complement(v.sequence[nick : nick + VECTOR_TAIL_LEN])
 
 
-def _rule_left_arm_15nt_incl_5nt_recognition(v: VectorRecord, motif: str, nick: int) -> str:
+def _rule_left_arm_20nt_incl_5nt_recognition(v: VectorRecord, motif: str, nick: int) -> str:
     """``site_partial_AAGCT`` tail derived from the left arm.
 
     Returns 20 nt of the forward strand: 15 nt of left-arm context immediately
@@ -234,16 +222,15 @@ def _rule_left_arm_15nt_incl_5nt_recognition(v: VectorRecord, motif: str, nick: 
     the first 5 of the motif, not the last 5.
     """
     s = nick - 1                                              # recognition start
-    return v.sequence[s - 15 : s + 5]                         # 15 nt context + AAGCT
+    return v.sequence[s - 15 : s + 5]                         # 15 nt context + 5 nt recognition = 20 nt
 
 
 TAIL_RULES: dict[str, TailRuleFn] = {
-    "left_arm_15nt_excl_recognition": _rule_left_arm_15nt_excl_recognition,
-    "left_arm_15nt_incl_sticky_end": _rule_left_arm_15nt_incl_sticky_end,
-    "rc_right_arm_15nt_starting_at_second_nt_of_recognition":
-        _rule_rc_right_arm_15nt_starting_at_second_nt_of_recognition,
-    "rc_right_arm_15nt_incl_5nt_recognition": _rule_rc_right_arm_15nt_incl_5nt_recognition,
-    "left_arm_15nt_incl_5nt_recognition": _rule_left_arm_15nt_incl_5nt_recognition,
+    "left_arm_20nt_incl_sticky_end": _rule_left_arm_20nt_incl_sticky_end,
+    "rc_right_arm_20nt_starting_at_second_nt_of_recognition":
+        _rule_rc_right_arm_20nt_starting_at_second_nt_of_recognition,
+    "rc_right_arm_20nt_incl_5nt_recognition": _rule_rc_right_arm_20nt_incl_5nt_recognition,
+    "left_arm_20nt_incl_5nt_recognition": _rule_left_arm_20nt_incl_5nt_recognition,
 }
 
 
@@ -291,7 +278,7 @@ def derive_tails(vector: VectorRecord, enzyme: str, application: Application) ->
     """Return (P1_tail, P4_tail) for the given vector / enzyme / application.
 
     Reads the calibrated convention from ``tail_conventions.json``, applies the named
-    rules, and returns the literal 15-nt tail strings.
+    rules, and returns the literal 20-nt tail strings.
     """
     convention = get_tail_convention(vector.name, enzyme, application)
     motif, _ = RESTRICTION_SITES[enzyme]

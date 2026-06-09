@@ -33,16 +33,16 @@ def assemble(
     """Build the linear representation of the final circular plasmid.
 
     Algorithm:
-        1. Locate insert[:15] in vector.sequence  → left_arm at [L, L+15).
-        2. Locate insert[-15:] in vector.sequence → right_arm at [R, R+15).
-        3. Splice: final = vec[:L] + insert + vec[R+15:], assuming the vector
-           is linear over [0, vec_len) and the cut lies inside [L, R+15).
-           Equivalent to keeping vector outside the [L .. R+15) span and
+        1. Locate insert[:20] in vector.sequence  → left_arm at [L, L+20).
+        2. Locate insert[-20:] in vector.sequence → right_arm at [R, R+20).
+        3. Splice: final = vec[:L] + insert + vec[R+20:], assuming the vector
+           is linear over [0, vec_len) and the cut lies inside [L, R+20).
+           Equivalent to keeping vector outside the [L .. R+20) span and
            letting the insert fill that span (the insert already contains
-           identical copies of the two 15-nt overlap windows, so they collapse
+           identical copies of the two 20-nt overlap windows, so they collapse
            naturally).
 
-    Length: len(vec) - (R + 15 - L) + len(insert).
+    Length: len(vec) - (R + 20 - L) + len(insert).
     """
     if len(insert) < 2 * VECTOR_TAIL_LEN:
         raise ValueError(
