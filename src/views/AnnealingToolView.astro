@@ -456,8 +456,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </div>
 
 <script>
-  // ─── Constants ───────────────────────────────────────────────
-  const COLS = 10;  // bases per row
+  // ─── Columns: recalculated from container width ──────────────
+  let COLS = 20;
+
+  function calcCols(): number {
+    const style  = getComputedStyle(seqChars);
+    const padH   = (parseFloat(style.paddingLeft) || 0)
+                 + (parseFloat(style.paddingRight) || 0);
+    const availW = seqChars.clientWidth - padH;
+    if (availW <= 0) return 20;
+    // Target ~20 px per base — readable but dense
+    const raw = Math.floor(availW / 20);
+    // Round to nearest 5 so ruler numbers stay clean
+    return Math.min(60, Math.max(10, Math.round(raw / 5) * 5));
+  }
 
   // ─── State ───────────────────────────────────────────────────
   let sequence     = '';
@@ -577,9 +589,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   function enterSelectMode() {
     sequence = seqInput.value.toUpperCase().replace(/[^ACGT]/g, '');
     if (!sequence) return;
-    buildCharDisplay();
     seqInput.style.display = 'none';
-    seqChars.classList.add('is-active');
+    seqChars.classList.add('is-active');  // visible first → clientWidth is valid
+    COLS = calcCols();
+    buildCharDisplay();
     selectBtn.innerHTML =
       `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
          <path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.6"
@@ -643,6 +656,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   document.addEventListener('mouseup', () => {
     if (isDragging) { isDragging = false; showTa(); }
+  });
+
+  // Re-render on window resize while in select mode
+  window.addEventListener('resize', () => {
+    if (!isSelectMode) return;
+    const newCols = calcCols();
+    if (newCols !== COLS) {
+      COLS = newCols;
+      buildCharDisplay();
+      if (selStart !== null && selEnd !== null) showTa();
+    }
   });
 </script>
 
