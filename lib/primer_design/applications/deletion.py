@@ -149,11 +149,11 @@ def _build_amplicons(gene, primer_set):
     """Reconstruct UP / DN amplicons from the chosen primer set + gene record.
 
     UP amplicon (top strand):
-        P1.tail + up_segment[p1_anchor:] + dn_segment[:15]
+        P1.tail + up_segment[p1_anchor:] + dn_segment[:10]
     DN amplicon (top strand):
-        up_segment[-15:] + dn_segment[:p4_anchor_end] + RC(P4.tail)
+        up_segment[-10:] + dn_segment[:p4_anchor_end] + RC(P4.tail)
 
-    The 30-nt junction (p3_tail + p2_tail's RC = up_segment[-15:] + dn_segment[:15])
+    The 20-nt junction (p3_tail + p2_tail's RC = up_segment[-10:] + dn_segment[:10])
     is shared between the two amplicons, so the assembled insert collapses it once.
     """
     cds = gene.cds_seq
@@ -210,7 +210,7 @@ def _expected_products_for_deletion(
     tol = 150  # _enumerate_products underestimates by ~tail+body length
     # WT locus product (P1 + P4) on the same isolate genome: same genomic span as
     # UP + DN but with the full native CDS rather than the deleted scar.
-    wt_size = up_size + dn_size - 30 + len(gene.cds_seq)
+    wt_size = up_size + dn_size - JUNCTION_LEN_DEFAULT + len(gene.cds_seq)
     return {
         ("P1", "P2"): (max(0, up_size - tol), up_size + tol),
         ("P3", "P4"): (max(0, dn_size - tol), dn_size + tol),

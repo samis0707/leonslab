@@ -149,7 +149,7 @@ def get_unique_cutters(vector: VectorRecord) -> list[str]:
 # Tail derivation
 # ---------------------------------------------------------------------------
 
-# Each rule takes (vector, motif, nick_position_0based) and returns a 15-nt tail string.
+# Each rule takes (vector, motif, nick_position_0based) and returns a 20-nt tail string.
 # The four rules below cover the calibrated triples in tail_conventions.json.
 # Adding a new rule = one new function here + a JSON entry referencing its name.
 
@@ -224,18 +224,17 @@ def _rule_rc_right_arm_15nt_incl_5nt_recognition(v: VectorRecord, motif: str, ni
 def _rule_left_arm_15nt_incl_5nt_recognition(v: VectorRecord, motif: str, nick: int) -> str:
     """``site_partial_AAGCT`` tail derived from the left arm.
 
-    Returns 15 nt of the forward strand: 10 nt of left-arm context immediately
+    Returns 20 nt of the forward strand: 15 nt of left-arm context immediately
     before the recognition site + the first 5 nt of the recognition site
     (for HindIII A^AGCTT this is `AAGCT`). For Addgene's pBBR1MCS-2 this is
-    the **P1** tail in the expression triple (matches the empirical PA14
-    lasB primer #1573 tail `CGGTATCGATAAGCT`).
+    the **P1** tail in the expression triple.
 
     The slice is anchored on the recognition start (`s = nick - 1` for HindIII)
     rather than directly on `nick`, so the 5 nt of recognition included are
     the first 5 of the motif, not the last 5.
     """
     s = nick - 1                                              # recognition start
-    return v.sequence[s - 10 : s + 5]                         # 10 nt context + AAGCT
+    return v.sequence[s - 15 : s + 5]                         # 15 nt context + AAGCT
 
 
 TAIL_RULES: dict[str, TailRuleFn] = {

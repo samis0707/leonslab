@@ -1,17 +1,17 @@
 """Assemble the final circular plasmid by replacing the cut region of the vector
 with the assembled insert.
 
-The In-Fusion / Gibson overlap is 15 nt at each junction. The exact position of
-those 15-nt windows in the vector depends on the tail rule chosen for that
-(vector, enzyme, application) triple. For example:
+The In-Fusion / Gibson overlap is 20 nt at each junction (P1 and P4 tails).
+The exact position of those 20-nt windows in the vector depends on the tail rule
+chosen for that (vector, enzyme, application) triple. For example:
 
-    site_destroyed   (pEXG2|HindIII|deletion)   left arm = vec[nick-11:nick+4]
-                                                right arm = vec[nick:nick+15]
-    site_partial_AAGCT (pBBR1MCS2|HindIII|expression) left arm = vec[nick-11:nick+4]
-                                                       right arm = vec[nick:nick+15]
+    site_destroyed   (pEXG2|HindIII|deletion)   left arm = vec[nick-16:nick+4]
+                                                right arm = vec[nick:nick+20]
+    site_partial_AAGCT (pBBR1MCS2|HindIII|expression) left arm = vec[nick-16:nick+4]
+                                                       right arm = vec[nick:nick+20]
 
 Rather than hard-code the offsets per convention, we locate each arm by literal
-match against the vector sequence. The insert's first / last 15 nt are required
+match against the vector sequence. The insert's first / last 20 nt are required
 to occur exactly once in the vector — which holds because the tail derivation
 copies from the vector deterministically. The two vector positions then define
 the splice; any nucleotide that lies in BOTH the left-arm range and the

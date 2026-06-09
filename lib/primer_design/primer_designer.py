@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ._bio_lite import Seq, tm_nn as Tm_NN
+from ._bio_lite import Seq
 
 from . import config as cfg
 from .exceptions import NoCandidates, OffTargetDetected
@@ -48,8 +48,14 @@ from .vectors import derive_tails, forbidden_body_5prime_prefixes, reverse_compl
 # ===========================================================================
 
 def primer_body_tm(body: str) -> float:
-    """Nearest-neighbor Tm (D5.1) for the primer body in In-Fusion buffer."""
-    return float(Tm_NN(Seq(body), **cfg.TM_NN_PARAMS))
+    """Wallace-rule Tm (D5.1): GC_count * 4 + AT_count * 2.
+
+    Annealing temperature = Tm - 5 °C (standard PCR rule of thumb).
+    """
+    s = body.upper()
+    gc = sum(b in "GC" for b in s)
+    at = len(s) - gc
+    return float(gc * 4 + at * 2)
 
 
 def primer_body_gc(body: str) -> float:
@@ -461,7 +467,7 @@ def search_deletion_primers(
                                    f"({gene.gene}/{gene.isolate_id}). Relax GC range or offset window.",
                            details={"primer": "P4", "gene": gene.gene, "isolate": gene.isolate_id})
 
-    junction_tail = cfg.JUNCTION_LEN_PER_PRIMER_DEFAULT       # 15 nt per primer
+    junction_tail = cfg.JUNCTION_LEN_PER_PRIMER_DEFAULT       # 10 nt per primer
 
     best: DeletionPrimerSet | None = None
     top5: list[DeletionPrimerSet] = []
@@ -479,8 +485,8 @@ def search_deletion_primers(
         if len(up_segment) < junction_tail or len(dn_segment) < junction_tail:
             continue
 
-        # Junction overlap: 30 nt total (15 from P3 tail at end of UP, 15 from P2 tail at start of DN).
-        p3_tail = up_segment[-junction_tail:]                  # last 15 nt of UP segment, fwd strand
+        # Junction overlap: 20 nt total (10 from P3 tail at end of UP, 10 from P2 tail at start of DN).
+        p3_tail = up_segment[-junction_tail:]                  # last 10 nt of UP segment, fwd strand
         p2_tail = reverse_complement(dn_segment[:junction_tail])
 
         p2_pool = enumerate_p2_candidates(up_segment)
@@ -488,17 +494,23 @@ def search_deletion_primers(
         if not p2_pool or not p3_pool:
             continue
 
+        # P1 is paired with P2 (UP PCR reaction); P4 is paired with P3 (DN PCR reaction).
+        # Spread is checked per reaction — the two reactions can have different annealing temps.
         for p2c in p2_pool:
+            p1c = closest_by_tm(p1_pool, p2c.tm)      # match P1 Tm to P2
+            if p1c is None:
+                continue
+            spread_up = abs(p1c.tm - p2c.tm)
+            if spread_up > cfg.TM_SPREAD_HARD_LIMIT_C:
+                continue
             for p3c in p3_pool:
-                target_tm = (p2c.tm + p3c.tm) / 2.0
-                p1c = closest_by_tm(p1_pool, target_tm)
-                p4c = closest_by_tm(p4_pool, target_tm)
-                if p1c is None or p4c is None:
+                p4c = closest_by_tm(p4_pool, p3c.tm)  # match P4 Tm to P3
+                if p4c is None:
+                    continue
+                spread_dn = abs(p3c.tm - p4c.tm)
+                if spread_dn > cfg.TM_SPREAD_HARD_LIMIT_C:
                     continue
                 tms = [p1c.tm, p2c.tm, p3c.tm, p4c.tm]
-                spread = max(tms) - min(tms)
-                if spread > cfg.TM_SPREAD_HARD_LIMIT_C:
-                    continue
                 gcs = [p1c.gc, p2c.gc, p3c.gc, p4c.gc]
                 score = compute_score(tms, gcs)
 
@@ -606,11 +618,13 @@ def search_tagging_primers(
     top5: list[TaggingPrimerSet] = []
     for p1c in p1_pool:
         for p2c in p2_pool:
+            spread_up = abs(p1c.tm - p2c.tm)          # UP PCR reaction
+            if spread_up > spread_limit:
+                continue
             for p3c in p3_pool:
                 for p4c in p4_pool:
-                    tms = [p1c.tm, p2c.tm, p3c.tm, p4c.tm]
-                    spread = max(tms) - min(tms)
-                    if spread > spread_limit:
+                    spread_dn = abs(p3c.tm - p4c.tm)  # DN PCR reaction
+                    if spread_dn > spread_limit:
                         continue
                     gcs = [p1c.gc, p2c.gc, p3c.gc, p4c.gc]
                     score = compute_score(
@@ -1004,7 +1018,7 @@ def _enumerate_products(
             # the 3' ends + len_b. Genomic body span on top strand = sb.pos + body_len_b
             # - sa.pos - body_len_a. Since len_X = tail_X + body_X, we approximate by
             # (sb.pos - sa.pos) + len_b. This estimate is within a few bp of the true
-            # PCR product size when tails are 15 nt.
+            # PCR product size when tails are 20 nt.
             size = sb.position_0based - sa.position_0based + (len_b or 1)
             # sb is on the top strand at the RC-match position; the 3' end of the
             # bottom-strand primer corresponds to sb.position_0based, so the amplicon

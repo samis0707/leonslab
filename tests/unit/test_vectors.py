@@ -3,9 +3,12 @@
 The tail-derivation calibration tests are the FIRST checkpoint of Phase 2.
 They will fail until vectors are added to data/primer_design/vectors/.
 
-When .gb files are present, these MUST produce the empirically correct tails:
-    pEXG2 + HindIII + deletion  → P1 tail = "AATGTAAAGCAAGCT"
-    pBBR1MCS2 + HindIII + expression → P1 tail = "CGGTATCGATAAGCT"
+When .gb files are present, these MUST produce the empirically correct tails
+(20 nt per tail, confirmed against PA14 lasR/lasI training primer sets):
+    pEXG2 + HindIII + deletion  → P1 tail = "GCATAAATGTAAAGCAAGCT"
+    pEXG2 + HindIII + deletion  → P4 tail = "AGAGTCGACCTGCAGAAGCT"
+    pBBR1MCS2 + HindIII + expression → P1 tail = "GTCGACGGTATCGATAAGCT"
+    pBBR1MCS2 + HindIII + expression → P4 tail = "CAGGAATTCGATATCAAGCT"
 """
 from __future__ import annotations
 
@@ -69,33 +72,32 @@ class TestTailCalibration:
             pytest.skip("vectors not yet added")
         vector = get_vector("pEXG2")
         p1_tail, _ = derive_tails(vector, "HindIII", "deletion")
-        assert p1_tail == "AATGTAAAGCAAGCT", \
-            f"P1 tail mismatch: got {p1_tail!r}, expected 'AATGTAAAGCAAGCT'"
+        assert p1_tail == "GCATAAATGTAAAGCAAGCT", \
+            f"P1 tail mismatch: got {p1_tail!r}, expected 'GCATAAATGTAAAGCAAGCT'"
 
     def test_pEXG2_HindIII_deletion_p4_tail(self, vectors_present):
         if not vectors_present:
             pytest.skip("vectors not yet added")
         vector = get_vector("pEXG2")
         _, p4_tail = derive_tails(vector, "HindIII", "deletion")
-        # From v1 working primer P4: tail = "CGACCTGCAGAAGCT"
-        assert p4_tail == "CGACCTGCAGAAGCT", \
-            f"P4 tail mismatch: got {p4_tail!r}, expected 'CGACCTGCAGAAGCT'"
+        assert p4_tail == "AGAGTCGACCTGCAGAAGCT", \
+            f"P4 tail mismatch: got {p4_tail!r}, expected 'AGAGTCGACCTGCAGAAGCT'"
 
     def test_pBBR1MCS2_HindIII_expression_p1_tail(self, vectors_present):
         if not vectors_present:
             pytest.skip("vectors not yet added")
         vector = get_vector("pBBR1MCS2")
         p1_tail, _ = derive_tails(vector, "HindIII", "expression")
-        assert p1_tail == "CGGTATCGATAAGCT", \
-            f"P1 tail mismatch: got {p1_tail!r}, expected 'CGGTATCGATAAGCT'"
+        assert p1_tail == "GTCGACGGTATCGATAAGCT", \
+            f"P1 tail mismatch: got {p1_tail!r}, expected 'GTCGACGGTATCGATAAGCT'"
 
     def test_pBBR1MCS2_HindIII_expression_p4_tail(self, vectors_present):
         if not vectors_present:
             pytest.skip("vectors not yet added")
         vector = get_vector("pBBR1MCS2")
         _, p4_tail = derive_tails(vector, "HindIII", "expression")
-        assert p4_tail == "ATTCGATATCAAGCT", \
-            f"P4 tail mismatch: got {p4_tail!r}, expected 'ATTCGATATCAAGCT'"
+        assert p4_tail == "CAGGAATTCGATATCAAGCT", \
+            f"P4 tail mismatch: got {p4_tail!r}, expected 'CAGGAATTCGATATCAAGCT'"
 
 
 class TestUniqueCutters:

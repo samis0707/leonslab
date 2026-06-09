@@ -8,9 +8,12 @@ from __future__ import annotations
 from typing import Literal
 
 # ============================================================================
-# Tm calculation (D5.1 — Allawi & SantaLucia 1997, Na correction SantaLucia 1998)
+# Tm calculation (D5.1 — Wallace rule: GC_count * 4 + AT_count * 2)
+# Simple rule chosen to keep body lengths PCR-tauglich (<= ~24 nt for 65% GC genome).
+# Annealing temperature = Tm - 5 °C (standard PCR rule of thumb).
 # ============================================================================
 
+# Legacy NN parameters kept for reference only — no longer used by primer_body_tm().
 TM_NN_PARAMS: dict[str, float] = {
     "Na": 50.0,         # mM
     "dnac1": 500.0,     # nM, primer concentration
@@ -19,6 +22,8 @@ TM_NN_PARAMS: dict[str, float] = {
 
 # ============================================================================
 # Primer body filters (D5.3) — values tuned for *P. aeruginosa* GC ~66%
+# All Tm values are Wallace-rule Tm (= GC*4 + AT*2).
+# Calibrated against PA14 lasR/lasI training sets (bodies 19–24 nt, Tm 64–72 °C).
 # ============================================================================
 
 GC_MIN: float = 0.40
@@ -29,13 +34,13 @@ GC_PREFERRED_MAX: float = 0.55
 BODY_LEN_MIN: int = 18
 BODY_LEN_MAX: int = 28
 
-TM_HARD_MIN_C: float = 58.0
-TM_HARD_MAX_C: float = 66.0
-TM_PREFERRED_MIN_C: float = 60.0
-TM_PREFERRED_MAX_C: float = 64.0
-TM_TARGET_C: float = 62.0           # used in scoring
+TM_HARD_MIN_C: float = 56.0         # Wallace Tm; annealing ~51 °C (lower bound)
+TM_HARD_MAX_C: float = 78.0         # Wallace Tm; annealing ~73 °C (upper bound)
+TM_PREFERRED_MIN_C: float = 62.0    # annealing ~57 °C
+TM_PREFERRED_MAX_C: float = 74.0    # annealing ~69 °C
+TM_TARGET_C: float = 68.0           # training set mean; used in scoring
 
-TM_SPREAD_HARD_LIMIT_C: float = 3.0  # rejected above this
+TM_SPREAD_HARD_LIMIT_C: float = 3.0  # per PCR reaction (P1/P2 or P3/P4); rejected above
 TM_SPREAD_SOFT_WARN_C: float = 2.0   # warning above this
 
 SELF_DIMER_MAX_3PRIME: int = 4       # contiguous 3'-end self-pair length
@@ -43,7 +48,7 @@ SELF_DIMER_MAX_3PRIME: int = 4       # contiguous 3'-end self-pair length
 # 3' GC clamp
 CLAMP_LAST_BASE_OK: tuple[str, ...] = ("G", "C")
 CLAMP_LAST5_GC_MIN: int = 1
-CLAMP_LAST5_GC_MAX: int = 3
+CLAMP_LAST5_GC_MAX: int = 4   # 4 GC in last 5 nt is common and acceptable in PA14 (66% GC)
 CLAMP_NO_4IDENT_LAST4: bool = True
 
 # ============================================================================
@@ -54,22 +59,24 @@ SCAR_MAX_TOTAL_AA: int = 24          # N + C ≤ 24
 SCAR_MIN_PER_SIDE: int = 1
 
 # ============================================================================
-# Junction overlap (deletion / tagging)
+# Junction overlap (deletion application — P2 and P3 genomic tails)
+# 10 nt per primer = 20 nt total In-Fusion homology between UP and DN amplicons.
+# Tagging cassette lengths are fixed and independent of this value.
 # ============================================================================
 
-JUNCTION_LEN_DEFAULT: int = 30       # standard In-Fusion 3-fragment overlap (15 nt per primer tail)
-JUNCTION_LEN_PER_PRIMER_DEFAULT: int = 15
+JUNCTION_LEN_DEFAULT: int = 20       # total overlap = 2 × per-primer (used in insert assembly)
+JUNCTION_LEN_PER_PRIMER_DEFAULT: int = 10
 
-# Tagging-specific (D6.4)
+# Tagging-specific (D6.4) — cassette lengths are fixed sequences, not genomic overlap
 JUNCTION_LEN_HIS6: int = 30          # His6 cassette is exactly 30 nt
 JUNCTION_LEN_FLAG_HIS8: int = 36     # FLAG and His8 cassettes = 36 nt
 TAGGING_MAX_CASSETTE_NT: int = 36    # in-locus rejected above this in v1
 
 # ============================================================================
-# Vector arms (In-Fusion homology length per side)
+# Vector arms (In-Fusion homology length per side — P1 and P4 tails)
 # ============================================================================
 
-VECTOR_TAIL_LEN: int = 15            # all four tail rules use 15 nt
+VECTOR_TAIL_LEN: int = 20            # all tail rules use 20 nt (Takara-style)
 
 # ============================================================================
 # Flanks (gene record canonical extraction)

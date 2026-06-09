@@ -44,17 +44,20 @@ def request_obj() -> DesignRequest:
     )
 
 
-# Expected values from skill_v2 §15.1 — empirically validated v1 working set
+# Expected values — tails updated for 20-nt VECTOR_TAIL_LEN (Takara-style).
+# Final plasmid length and amplicon lengths are invariant to tail-length change.
+# insert_length_bp = +10 vs v1 (5 nt each from P1 and P4 tails).
+# N/C scar may differ from v1 due to Wallace-rule Tm recalibration; update if needed.
 EXPECTED = {
     "N": 16,
     "C": 2,
     "scar_protein": "MKKVSTLDLLFVAIMGAL*",
-    "p1_tail": "AATGTAAAGCAAGCT",
-    "p4_tail": "CGACCTGCAGAAGCT",
+    "p1_tail": "GCATAAATGTAAAGCAAGCT",
+    "p4_tail": "AGAGTCGACCTGCAGAAGCT",
     "final_plasmid_length_bp": 6159,
     "up_amplicon_length_bp": 593,
     "dn_amplicon_length_bp": 538,
-    "insert_length_bp": 1101,
+    "insert_length_bp": 1111,
     "AAGCTT_count_in_final_plasmid": 0,
 }
 
