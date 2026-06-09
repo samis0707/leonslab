@@ -1,227 +1,921 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getLangFromUrl, useTranslations } from '../i18n/utils';
-
-const lang = getLangFromUrl(Astro.url);
-const t = useTranslations(lang);
-
-const title = t('page.labSolutions.title');
-const subtitle = t('page.labSolutions.subtitle');
-const runLabel = t('anneal.run');
-const emptyLabel = t('anneal.empty');
-const errorEmpty = t('anneal.error.empty');
-const errorSeq = t('anneal.error.sequence');
 ---
-<BaseLayout title={title} description={subtitle}>
-  <section class="anneal-page max-w-3xl mx-auto px-6 pt-20 md:pt-28 pb-32">
-    <p class="eyebrow">Tools</p>
-    <h1 class="display text-[clamp(2rem,4.5vw,3.25rem)] mt-4 mb-4 text-[color:var(--color-concrete-900)]">
-      {title}
-    </h1>
-    <p class="text-base text-[color:var(--color-concrete-600)] leading-relaxed mb-10 max-w-xl">
-      {subtitle}
-    </p>
 
-    <form
-      class="anneal-form"
-      id="anneal-form"
-      autocomplete="off"
-      novalidate
-      data-error-empty={errorEmpty}
-      data-error-seq={errorSeq}
-    >
-      {[1, 2, 3, 4].map((i) => (
-        <input
-          type="text"
-          name={`primer${i}`}
-          class="anneal-input"
-          placeholder={`Primer ${i}`}
-          spellcheck={false}
-          autocapitalize="off"
-          autocomplete="off"
-          inputmode="latin"
-        />
-      ))}
-
-      <button type="submit" class="anneal-btn">{runLabel}</button>
-
-      <output class="anneal-output" id="anneal-output" aria-live="polite">{emptyLabel}</output>
-    </form>
-  </section>
-</BaseLayout>
+<BaseLayout title="Annealing Calculator" description="PCR Primer Annealing-Temperatur Kalkulator">
 
 <style>
-  .anneal-form {
+  /* ─── Jungle palette ─────────────────────────────────────── */
+  :root {
+    --j-deep:   #07120a;
+    --j-dark:   #0c1e0f;
+    --j-mid:    #142b18;
+    --j-leaf:   #1e4a23;
+    --j-border: #2d6233;
+    --j-bright: #4caf50;
+    --j-light:  #81c784;
+    --j-pale:   #c8e6c9;
+    --j-cream:  #f1f8e9;
+    --j-muted:  #4a8a4e;
+    --j-red:    #8b1a1a;
+    --j-red-bg: rgba(139,26,26,0.18);
+  }
+
+  /* ─── Page wrapper ───────────────────────────────────────── */
+  .j-page {
+    position: relative;
+    min-height: calc(100vh - 56px);
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 15%, rgba(30,74,35,0.45) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 80% 75%, rgba(20,43,24,0.5) 0%, transparent 65%),
+      var(--j-dark);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    padding: 3.5rem 1.5rem 6rem;
+  }
+
+  /* ─── Decorative leaves ──────────────────────────────────── */
+  .j-leaf {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  /* ─── Content container ──────────────────────────────────── */
+  .j-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 500px;
+  }
+
+  /* ─── Header ─────────────────────────────────────────────── */
+  .j-eyebrow {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--j-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .j-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2.4rem, 6vw, 3.8rem);
+    letter-spacing: -0.045em;
+    line-height: 0.95;
+    color: var(--j-cream);
+    margin: 0 0 1.25rem;
+  }
+
+  .j-formula {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--j-light);
+    padding: 0.55rem 1rem;
+    background: rgba(45,98,51,0.2);
+    border-left: 2px solid var(--j-border);
+    border-radius: 0 4px 4px 0;
+    margin-bottom: 2.75rem;
+  }
+
+  /* ─── Primer list ─────────────────────────────────────────── */
+  .primer-list {
     display: flex;
     flex-direction: column;
-    gap: 0.7rem;
-    max-width: 28rem;
+    gap: 0.45rem;
+    margin-bottom: 0.6rem;
   }
-  .anneal-input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    background: white;
-    border: 1px solid var(--color-concrete-200);
-    border-radius: 6px;
+
+  .primer-row {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .primer-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .primer-label {
     font-family: var(--font-mono);
-    font-size: 0.95rem;
-    letter-spacing: 0.04em;
-    color: var(--color-concrete-900);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--j-muted);
+    width: 1.6rem;
+    flex-shrink: 0;
+    text-align: right;
+    letter-spacing: 0.03em;
+  }
+
+  .primer-input {
+    flex: 1;
+    padding: 0.65rem 0.9rem;
+    background: rgba(12,28,15,0.75);
+    border: 1px solid var(--j-border);
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    letter-spacing: 0.07em;
+    color: var(--j-pale);
     text-transform: uppercase;
-    transition: border-color 180ms ease, box-shadow 180ms ease;
-  }
-  .anneal-input::placeholder {
-    color: var(--color-concrete-500);
-    opacity: 0.5;
-    font-family: var(--font-sans);
-    letter-spacing: normal;
-    text-transform: none;
-  }
-  .anneal-input:focus {
     outline: none;
-    border-color: var(--color-park-green);
-    box-shadow: 0 0 0 3px rgba(12, 94, 59, 0.12);
+    transition: border-color 200ms ease, box-shadow 200ms ease, background 200ms ease;
   }
-  .anneal-btn {
-    align-self: flex-start;
-    margin-top: 0.4rem;
-    padding: 0.65rem 1.5rem;
-    background: var(--color-concrete-900);
-    color: var(--color-concrete-50);
-    border: none;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 500;
+
+  .primer-input::placeholder {
+    color: var(--j-muted);
+    opacity: 0.6;
+    font-family: var(--font-sans);
+    text-transform: none;
     letter-spacing: 0.02em;
-    cursor: pointer;
-    transition: background 160ms ease, transform 160ms ease;
   }
-  .anneal-btn:hover {
-    background: var(--color-park-green);
+
+  .primer-input:focus {
+    border-color: var(--j-bright);
+    background: rgba(15,36,18,0.95);
+    box-shadow: 0 0 0 3px rgba(76,175,80,0.14);
+  }
+
+  .primer-input.has-body {
+    border-color: var(--j-red);
+    box-shadow: 0 0 0 2px rgba(139,26,26,0.18);
+  }
+
+  /* ─── Body button ─────────────────────────────────────────── */
+  .body-btn {
+    flex-shrink: 0;
+    padding: 0.42rem 0.65rem;
+    background: transparent;
+    border: 1px solid var(--j-border);
+    border-radius: 6px;
+    color: var(--j-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 180ms ease;
+    white-space: nowrap;
+  }
+
+  .body-btn:hover {
+    background: rgba(45,98,51,0.18);
+    border-color: var(--j-bright);
+    color: var(--j-light);
+  }
+
+  .body-btn.is-active {
+    background: rgba(139,26,26,0.18);
+    border-color: var(--j-red);
+    color: #ef9a9a;
+  }
+
+  /* ─── Remove button ───────────────────────────────────────── */
+  .remove-btn {
+    flex-shrink: 0;
+    width: 1.8rem;
+    height: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: #2d5a31;
+    cursor: pointer;
+    transition: color 160ms ease, background 160ms ease;
+  }
+
+  .remove-btn:hover {
+    color: #ef9a9a;
+    background: rgba(139,26,26,0.14);
+  }
+
+  /* ─── Body selector ───────────────────────────────────────── */
+  .body-selector {
+    margin-top: 0.45rem;
+    margin-left: 2.1rem;
+    padding: 0.8rem 0.9rem;
+    background: rgba(7,18,10,0.7);
+    border: 1px solid rgba(139,26,26,0.3);
+    border-radius: 8px;
+    animation: fadeSlide 180ms ease;
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .body-hint {
+    font-size: 0.7rem;
+    color: #ef9a9a;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.55rem;
+  }
+
+  .seq-display {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    letter-spacing: 0.1em;
+    line-height: 2;
+    word-break: break-all;
+    cursor: crosshair;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .seq-char {
+    display: inline-block;
+    padding: 0.05em 0;
+    border-radius: 2px;
+    color: var(--j-light);
+    transition: color 60ms ease, background 60ms ease;
+  }
+
+  .seq-char.is-selected {
+    color: #ffcdd2;
+    background: rgba(139,0,0,0.55);
+  }
+
+  .body-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .body-range-label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: #ef9a9a;
+    word-break: break-all;
+    flex: 1;
+  }
+
+  .clear-body-btn {
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    color: var(--j-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+  }
+
+  .clear-body-btn:hover { color: var(--j-light); }
+
+  /* ─── Add primer button ───────────────────────────────────── */
+  .j-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 1rem;
+    margin-left: 2.1rem;
+    margin-bottom: 1.5rem;
+    background: transparent;
+    border: 1.5px dashed var(--j-border);
+    border-radius: 7px;
+    color: var(--j-bright);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+
+  .j-add-btn:hover {
+    background: rgba(45,98,51,0.15);
+    border-color: var(--j-bright);
     transform: translateY(-1px);
   }
-  .anneal-btn:active {
-    transform: translateY(0);
-  }
-  .anneal-output {
-    align-self: flex-start;
-    margin-top: 0.25rem;
-    padding: 0.7rem 1.1rem;
-    min-width: 9rem;
-    background: var(--color-concrete-50);
-    border: 1px solid var(--color-concrete-200);
-    border-radius: 6px;
-    font-family: var(--font-mono);
+
+  /* ─── Calculate button ────────────────────────────────────── */
+  .j-calc-btn {
+    width: 100%;
+    padding: 0.95rem 1.5rem;
+    background: linear-gradient(135deg, #2d6233 0%, #1a4a20 100%);
+    border: none;
+    border-radius: 10px;
+    color: var(--j-cream);
     font-size: 1rem;
-    color: var(--color-concrete-800);
-    text-align: center;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 0 1px rgba(76,175,80,0.1);
   }
-  .anneal-output.is-error {
-    color: #8a2a24;
-    border-color: #e9c8c4;
-    background: #faf1f0;
-    font-family: var(--font-sans);
+
+  .j-calc-btn:hover {
+    background: linear-gradient(135deg, #3a7a40 0%, #2d6233 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(0,0,0,0.45), 0 0 0 1px rgba(76,175,80,0.2);
+  }
+
+  .j-calc-btn:active { transform: translateY(0); }
+
+  /* ─── Results ─────────────────────────────────────────────── */
+  .j-results {
+    margin-top: 1.75rem;
+    background: rgba(12,28,15,0.6);
+    border: 1px solid var(--j-border);
+    border-radius: 12px;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+  }
+
+  .results-header {
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid rgba(45,98,51,0.4);
+    background: rgba(20,43,24,0.6);
+  }
+
+  .results-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--j-muted);
+    margin: 0;
+  }
+
+  .primer-results { padding: 0.25rem 0; }
+
+  .primer-result-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.6rem 1.1rem;
+    border-bottom: 1px solid rgba(45,98,51,0.15);
+  }
+
+  .primer-result-row:last-child { border-bottom: none; }
+
+  .primer-result-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .primer-result-name {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--j-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .primer-result-seq {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: #4a7a4e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .primer-result-seq .body-hi {
+    color: #ef5350;
+    font-weight: 600;
+  }
+
+  .primer-result-tm {
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--j-light);
+    white-space: nowrap;
+  }
+
+  .primer-result-tm.is-error {
+    color: #ef5350;
     font-size: 0.85rem;
-    text-align: left;
+    font-weight: 400;
+  }
+
+  .common-result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.1rem;
+    border-top: 1px solid rgba(45,98,51,0.4);
+    background: rgba(20,43,24,0.55);
+  }
+
+  .common-left { display: flex; flex-direction: column; gap: 0.1rem; }
+
+  .common-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--j-muted);
+  }
+
+  .common-sub {
+    font-size: 0.7rem;
+    color: #2d5a31;
+  }
+
+  .common-tm {
+    font-family: var(--font-mono);
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: #69c47a;
+    letter-spacing: -0.02em;
+  }
+
+  .results-warning {
+    padding: 0.65rem 1.1rem;
+    background: rgba(100,20,10,0.18);
+    border-top: 1px solid rgba(139,26,26,0.25);
+    font-size: 0.75rem;
+    color: #ef9a9a;
+    line-height: 1.5;
+  }
+
+  .results-error {
+    padding: 1.1rem;
+    color: #ef9a9a;
+    font-size: 0.85rem;
   }
 </style>
 
+<div class="j-page">
+
+  <!-- ─── Decorative SVG leaves ──────────────────────────────── -->
+  <svg class="j-leaf" style="top:-60px;right:-50px;width:260px;opacity:0.18;" viewBox="0 0 260 440" fill="none">
+    <path d="M130 15 C200 55 235 160 215 310 C200 390 160 430 130 430 C100 430 60 390 45 310 C25 160 60 55 130 15Z" fill="#2d6a33"/>
+    <path d="M130 15 C130 15 130 430" stroke="#4a8a4a" stroke-width="1.5" opacity="0.4"/>
+    <path d="M130 100 C160 130 175 160 165 200" stroke="#3a7a3a" stroke-width="1" opacity="0.3"/>
+    <path d="M130 150 C100 180 85 210 95 250" stroke="#3a7a3a" stroke-width="1" opacity="0.3"/>
+    <path d="M130 220 C158 248 168 278 160 315" stroke="#3a7a3a" stroke-width="1" opacity="0.3"/>
+  </svg>
+
+  <svg class="j-leaf" style="bottom:-80px;left:-60px;width:240px;opacity:0.2;transform:rotate(25deg);" viewBox="0 0 240 380" fill="none">
+    <path d="M120 15 C185 50 215 140 195 275 C180 350 60 350 45 275 C25 140 55 50 120 15Z" fill="#1a5225"/>
+    <path d="M120 15 L120 360" stroke="#2d7a33" stroke-width="1.5" opacity="0.35"/>
+  </svg>
+
+  <svg class="j-leaf" style="top:30%;left:-35px;width:150px;opacity:0.15;transform:rotate(-15deg);" viewBox="0 0 150 260" fill="none">
+    <path d="M75 10 C125 40 145 115 120 210 C105 248 45 248 30 210 C5 115 25 40 75 10Z" fill="#245e2a"/>
+    <path d="M75 10 L75 250" stroke="#3a7a3a" stroke-width="1" opacity="0.4"/>
+  </svg>
+
+  <svg class="j-leaf" style="top:5%;right:8%;width:110px;opacity:0.14;transform:rotate(18deg);" viewBox="0 0 110 190" fill="none">
+    <path d="M55 8 C92 30 108 85 90 155 C78 182 32 182 20 155 C2 85 18 30 55 8Z" fill="#2a7032"/>
+  </svg>
+
+  <!-- Monstera hole-leaf -->
+  <svg class="j-leaf" style="bottom:5%;right:-20px;width:200px;opacity:0.18;transform:rotate(-12deg);" viewBox="0 0 200 220" fill="none">
+    <path d="M100 12 C158 35 185 90 162 148 L148 170 C128 198 72 198 52 170 L38 148 C15 90 42 35 100 12Z" fill="#1e5a25"/>
+    <ellipse cx="78" cy="105" rx="13" ry="9" fill="#07120a"/>
+    <ellipse cx="122" cy="85" rx="11" ry="8" fill="#07120a"/>
+    <path d="M100 12 L100 205" stroke="#2d7a33" stroke-width="1.2" opacity="0.3"/>
+  </svg>
+
+  <svg class="j-leaf" style="top:55%;right:2%;width:90px;opacity:0.12;transform:rotate(30deg);" viewBox="0 0 90 160" fill="none">
+    <path d="M45 8 C78 25 90 70 75 128 C65 150 25 150 15 128 C0 70 12 25 45 8Z" fill="#2d6a33"/>
+  </svg>
+
+  <!-- ─── Main content ────────────────────────────────────────── -->
+  <div class="j-container">
+
+    <header>
+      <span class="j-eyebrow">PCR · Tools</span>
+      <h1 class="j-title">Annealing<br>Calculator</h1>
+      <p class="j-formula">T<sub>m</sub> = 4(G+C) + 2(A+T) &minus; 5</p>
+    </header>
+
+    <div id="primer-list" class="primer-list"></div>
+
+    <button id="add-primer" class="j-add-btn" type="button">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+        <path d="M6.5 1.5v10M1.5 6.5h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Primer
+    </button>
+
+    <button id="calc-btn" class="j-calc-btn" type="button">Berechnen</button>
+
+    <div id="results" class="j-results" hidden></div>
+  </div>
+</div>
+
 <script>
-  // SantaLucia 1998 unified nearest-neighbor parameters.
-  // ΔH in kcal/mol, ΔS in cal/(mol·K). Each pair lists the 5'→3' top strand;
-  // its reverse complement shares the same values.
-  const NN: Record<string, [number, number]> = {
-    AA: [-7.9, -22.2], TT: [-7.9, -22.2],
-    AT: [-7.2, -20.4],
-    TA: [-7.2, -21.3],
-    CA: [-8.5, -22.7], TG: [-8.5, -22.7],
-    GT: [-8.4, -22.4], AC: [-8.4, -22.4],
-    CT: [-7.8, -21.0], AG: [-7.8, -21.0],
-    GA: [-8.2, -22.2], TC: [-8.2, -22.2],
-    CG: [-10.6, -27.2],
-    GC: [-9.8, -24.4],
-    GG: [-8.0, -19.9], CC: [-8.0, -19.9],
-  };
+  // ─── Module-level drag state ─────────────────────────────────
+  let isDragging = false;
+  let onDragMove: ((x: number, y: number) => void) | null = null;
 
-  const R = 1.987;       // gas constant, cal/(mol·K)
-  const Ct = 0.25e-6;    // total strand concentration, 250 nM
-  const Na = 0.05;       // monovalent salt, 50 mM (standard PCR buffer)
+  document.addEventListener('mousemove', (e) => {
+    if (isDragging && onDragMove) onDragMove(e.clientX, e.clientY);
+  });
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+    onDragMove = null;
+  });
 
-  function reverseComplement(seq: string): string {
-    const comp: Record<string, string> = { A: 'T', T: 'A', G: 'C', C: 'G' };
-    let out = '';
-    for (let i = seq.length - 1; i >= 0; i--) out += comp[seq[i]];
-    return out;
+  // ─── State ───────────────────────────────────────────────────
+  interface PrimerState {
+    id: number;
+    bodyActive: boolean;
+    bodyStart: number | null;
+    bodyEnd: number | null;
   }
 
-  function tmSantaLucia(seq: string): number | null {
-    const s = seq.toUpperCase().replace(/\s+/g, '');
-    if (!/^[ACGT]+$/.test(s) || s.length < 2) return null;
+  let nextId = 1;
+  const primers: PrimerState[] = [];
 
-    let dH = 0, dS = 0;
-    for (let i = 0; i < s.length - 1; i++) {
-      const nn = NN[s.slice(i, i + 2)];
-      if (!nn) return null;
-      dH += nn[0];
-      dS += nn[1];
+  // ─── Formula ─────────────────────────────────────────────────
+  function tmCalc(seq: string): number | null {
+    const s = seq.toUpperCase().replace(/[^ACGT]/g, '');
+    if (s.length === 0) return null;
+    const g = (s.match(/G/g) ?? []).length;
+    const c = (s.match(/C/g) ?? []).length;
+    const a = (s.match(/A/g) ?? []).length;
+    const t = (s.match(/T/g) ?? []).length;
+    return 4 * (g + c) + 2 * (a + t) - 5;
+  }
+
+  // ─── Body display ─────────────────────────────────────────────
+  function updateBodyDisplay(state: PrimerState, row: HTMLDivElement) {
+    const existing = row.querySelector('.body-selector');
+    if (existing) existing.remove();
+    if (!state.bodyActive) return;
+
+    const inp = row.querySelector('.primer-input') as HTMLInputElement;
+    const seq = (inp.value ?? '').toUpperCase().replace(/[^ACGT]/g, '');
+    if (!seq) return;
+
+    const selector = document.createElement('div');
+    selector.className = 'body-selector';
+
+    const hint = document.createElement('p');
+    hint.className = 'body-hint';
+    hint.textContent = 'Markiere den Body-Bereich (Klicken & Ziehen):';
+
+    const seqDisplay = document.createElement('div');
+    seqDisplay.className = 'seq-display';
+
+    for (let i = 0; i < seq.length; i++) {
+      const span = document.createElement('span');
+      span.className = 'seq-char';
+      span.textContent = seq[i];
+      span.dataset.index = String(i);
+      if (state.bodyStart !== null && state.bodyEnd !== null
+          && i >= state.bodyStart && i <= state.bodyEnd) {
+        span.classList.add('is-selected');
+      }
+      seqDisplay.appendChild(span);
     }
 
-    // Initiation terms for the two terminal base pairs.
-    const initEnd = (b: string): [number, number] =>
-      b === 'G' || b === 'C' ? [0.1, -2.8] : [2.3, 4.1];
-    const i5 = initEnd(s[0]);
-    const i3 = initEnd(s[s.length - 1]);
-    dH += i5[0] + i3[0];
-    dS += i5[1] + i3[1];
+    function getIdxAt(x: number, y: number): number | null {
+      const el = document.elementFromPoint(x, y);
+      if (!el) return null;
+      const span = el.closest('[data-index]') as HTMLElement | null;
+      if (!span || !seqDisplay.contains(span)) return null;
+      return parseInt(span.dataset.index!);
+    }
 
-    // Self-complementary correction.
-    const selfComp = s === reverseComplement(s);
-    if (selfComp) dS += -1.4;
-    const x = selfComp ? 1 : 4;
+    function applyRange(anchor: number, end: number) {
+      const lo = Math.min(anchor, end);
+      const hi = Math.max(anchor, end);
+      state.bodyStart = lo;
+      state.bodyEnd   = hi;
+      seqDisplay.querySelectorAll('.seq-char').forEach((el) => {
+        const idx = parseInt((el as HTMLElement).dataset.index!);
+        el.classList.toggle('is-selected', idx >= lo && idx <= hi);
+      });
+      inp.classList.add('has-body');
+      refreshRangeLabel();
+    }
 
-    // Salt correction (SantaLucia 1998).
-    const dSsalt = dS + 0.368 * (s.length - 1) * Math.log(Na);
+    let dragAnchor = 0;
 
-    const tmK = (dH * 1000) / (dSsalt + R * Math.log(Ct / x));
-    return tmK - 273.15;
+    seqDisplay.addEventListener('mousedown', (e) => {
+      const idx = getIdxAt(e.clientX, e.clientY);
+      if (idx === null) return;
+      e.preventDefault();
+      isDragging = true;
+      dragAnchor = idx;
+      applyRange(idx, idx);
+      onDragMove = (x, y) => {
+        const cur = getIdxAt(x, y);
+        if (cur !== null) applyRange(dragAnchor, cur);
+      };
+    });
+
+    const actions = document.createElement('div');
+    actions.className = 'body-actions';
+
+    const rangeLabel = document.createElement('span');
+    rangeLabel.className = 'body-range-label';
+
+    function refreshRangeLabel() {
+      if (state.bodyStart !== null && state.bodyEnd !== null) {
+        const bodySeq = seq.slice(state.bodyStart, state.bodyEnd + 1);
+        const len = bodySeq.length;
+        rangeLabel.textContent =
+          `[${state.bodyStart + 1}–${state.bodyEnd + 1}] · ${len} nt · ${bodySeq.length > 20 ? bodySeq.slice(0,12)+'…'+bodySeq.slice(-4) : bodySeq}`;
+      } else {
+        rangeLabel.textContent = 'Kein Bereich ausgewählt';
+      }
+    }
+    refreshRangeLabel();
+
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'clear-body-btn';
+    clearBtn.textContent = 'Löschen';
+    clearBtn.addEventListener('click', () => {
+      state.bodyStart = null;
+      state.bodyEnd   = null;
+      inp.classList.remove('has-body');
+      seqDisplay.querySelectorAll('.seq-char').forEach((el) => el.classList.remove('is-selected'));
+      refreshRangeLabel();
+    });
+
+    actions.appendChild(rangeLabel);
+    actions.appendChild(clearBtn);
+    selector.appendChild(hint);
+    selector.appendChild(seqDisplay);
+    selector.appendChild(actions);
+    row.appendChild(selector);
   }
 
-  const form = document.getElementById('anneal-form') as HTMLFormElement | null;
-  const output = document.getElementById('anneal-output') as HTMLOutputElement | null;
+  // ─── Create primer row ─────────────────────────────────────────
+  function createPrimerRow(state: PrimerState, label: number): HTMLDivElement {
+    const row = document.createElement('div');
+    row.className = 'primer-row';
+    row.dataset.id = String(state.id);
 
-  if (form && output) {
-    const errEmpty = form.dataset.errorEmpty ?? 'Enter at least one primer.';
-    const errSeq = form.dataset.errorSeq ?? 'Invalid sequence.';
+    const group = document.createElement('div');
+    group.className = 'primer-input-group';
 
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      output.classList.remove('is-error');
+    const lbl = document.createElement('span');
+    lbl.className = 'primer-label';
+    lbl.textContent = String(label);
 
-      const data = new FormData(form);
-      const sequences = ['primer1', 'primer2', 'primer3', 'primer4']
-        .map((k) => String(data.get(k) ?? '').trim())
-        .filter((v) => v.length > 0);
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'primer-input';
+    inp.placeholder = "5'→3' Sequenz";
+    inp.spellcheck = false;
+    inp.setAttribute('autocapitalize', 'off');
+    inp.setAttribute('autocomplete', 'off');
+    inp.addEventListener('input', () => {
+      // Reset body on sequence change
+      state.bodyStart = null;
+      state.bodyEnd   = null;
+      inp.classList.remove('has-body');
+      if (state.bodyActive) updateBodyDisplay(state, row);
+    });
 
-      if (sequences.length === 0) {
-        output.classList.add('is-error');
-        output.textContent = errEmpty;
-        return;
+    const bodyBtn = document.createElement('button');
+    bodyBtn.type = 'button';
+    bodyBtn.className = 'body-btn';
+    bodyBtn.textContent = 'Body';
+    bodyBtn.addEventListener('click', () => {
+      state.bodyActive = !state.bodyActive;
+      if (!state.bodyActive) {
+        state.bodyStart = null;
+        state.bodyEnd   = null;
+        inp.classList.remove('has-body');
       }
+      bodyBtn.classList.toggle('is-active', state.bodyActive);
+      updateBodyDisplay(state, row);
+    });
 
-      const tms: number[] = [];
-      for (const s of sequences) {
-        const tm = tmSantaLucia(s);
-        if (tm === null) {
-          output.classList.add('is-error');
-          output.textContent = errSeq;
-          return;
-        }
-        tms.push(tm);
-      }
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'remove-btn';
+    removeBtn.title = 'Primer entfernen';
+    removeBtn.innerHTML =
+      `<svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+         <path d="M1.5 1.5l8 8M9.5 1.5l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+       </svg>`;
+    removeBtn.addEventListener('click', () => removePrimer(state.id));
 
-      // Common annealing temperature: 5 °C below the lowest primer Tm.
-      const ta = Math.min(...tms) - 5;
-      output.textContent = `${ta.toFixed(1)} °C`;
+    group.append(lbl, inp, bodyBtn, removeBtn);
+    row.appendChild(group);
+    return row;
+  }
+
+  // ─── Primer management ─────────────────────────────────────────
+  const primerList = document.getElementById('primer-list')!;
+
+  function refreshLabels() {
+    primerList.querySelectorAll('.primer-row').forEach((r, i) => {
+      const l = r.querySelector('.primer-label');
+      if (l) l.textContent = String(i + 1);
     });
   }
+
+  function updateRemoveBtns() {
+    primerList.querySelectorAll('.remove-btn').forEach((b) => {
+      (b as HTMLElement).style.visibility = primers.length <= 1 ? 'hidden' : 'visible';
+    });
+  }
+
+  function addPrimer() {
+    const state: PrimerState = { id: nextId++, bodyActive: false, bodyStart: null, bodyEnd: null };
+    primers.push(state);
+    const row = createPrimerRow(state, primers.length);
+    primerList.appendChild(row);
+    (row.querySelector('.primer-input') as HTMLInputElement)?.focus();
+    updateRemoveBtns();
+  }
+
+  function removePrimer(id: number) {
+    if (primers.length <= 1) return;
+    const idx = primers.findIndex((p) => p.id === id);
+    if (idx === -1) return;
+    primers.splice(idx, 1);
+    primerList.querySelector(`[data-id="${id}"]`)?.remove();
+    refreshLabels();
+    updateRemoveBtns();
+  }
+
+  // ─── Calculate ──────────────────────────────────────────────────
+  const resultsEl = document.getElementById('results')!;
+
+  function calculate() {
+    resultsEl.innerHTML = '';
+    resultsEl.hidden = false;
+
+    const rows = Array.from(primerList.querySelectorAll('.primer-row')) as HTMLElement[];
+    if (rows.length === 0) {
+      resultsEl.innerHTML = `<div class="results-error">Kein Primer eingegeben.</div>`;
+      return;
+    }
+
+    interface PrimerData {
+      label: number;
+      fullSeq: string;
+      calcSeq: string;
+      bodyStart: number | null;
+      bodyEnd: number | null;
+      tm: number | null;
+      empty: boolean;
+    }
+
+    const data: PrimerData[] = rows.map((rowEl, i) => {
+      const id    = parseInt(rowEl.dataset.id!);
+      const state = primers.find((p) => p.id === id)!;
+      const inp   = rowEl.querySelector('.primer-input') as HTMLInputElement;
+      const rawVal = (inp.value ?? '').trim();
+      const fullSeq = rawVal.toUpperCase().replace(/[^ACGT]/g, '');
+      const empty = rawVal.length === 0;
+
+      let calcSeq = fullSeq;
+      if (state.bodyActive && state.bodyStart !== null && state.bodyEnd !== null) {
+        calcSeq = fullSeq.slice(state.bodyStart, state.bodyEnd + 1);
+      }
+
+      return {
+        label: i + 1,
+        fullSeq,
+        calcSeq,
+        bodyStart: state.bodyActive ? state.bodyStart : null,
+        bodyEnd:   state.bodyActive ? state.bodyEnd   : null,
+        tm:   (!empty && calcSeq.length > 0) ? tmCalc(calcSeq) : null,
+        empty,
+      };
+    });
+
+    // Check if all empty
+    if (data.every((d) => d.empty)) {
+      resultsEl.innerHTML = `<div class="results-error">Bitte mindestens einen Primer eingeben.</div>`;
+      return;
+    }
+
+    // Header
+    const hdr = document.createElement('div');
+    hdr.className = 'results-header';
+    hdr.innerHTML = `<p class="results-title">Ergebnisse</p>`;
+    resultsEl.appendChild(hdr);
+
+    // Individual rows
+    const primerResultsDiv = document.createElement('div');
+    primerResultsDiv.className = 'primer-results';
+    const validTms: number[] = [];
+
+    data.forEach((d) => {
+      const row = document.createElement('div');
+      row.className = 'primer-result-row';
+
+      // Left side: name + sequence
+      const left = document.createElement('div');
+      left.className = 'primer-result-left';
+
+      const name = document.createElement('div');
+      name.className = 'primer-result-name';
+      name.textContent = `Primer ${d.label}`;
+
+      const seqEl = document.createElement('div');
+      seqEl.className = 'primer-result-seq';
+
+      if (d.empty) {
+        seqEl.textContent = '—';
+      } else if (d.bodyStart !== null && d.bodyEnd !== null && d.fullSeq) {
+        const pre  = d.fullSeq.slice(0, d.bodyStart);
+        const body = d.fullSeq.slice(d.bodyStart, d.bodyEnd + 1);
+        const post = d.fullSeq.slice(d.bodyEnd + 1);
+        // Truncate display but keep body highlighted
+        const preDisp  = pre.length  > 6  ? pre.slice(-6)         : pre;
+        const bodyDisp = body.length > 18 ? body.slice(0,8)+'…'+body.slice(-4) : body;
+        const postDisp = post.length > 6  ? post.slice(0,6)       : post;
+        seqEl.innerHTML =
+          `<span>${pre.length > 6 ? '…' : ''}${preDisp}</span>` +
+          `<span class="body-hi">${bodyDisp}</span>` +
+          `<span>${postDisp}${post.length > 6 ? '…' : ''}</span>`;
+      } else if (d.fullSeq) {
+        const s = d.fullSeq;
+        seqEl.textContent = s.length > 22 ? s.slice(0,10)+'…'+s.slice(-6) : s;
+      } else {
+        seqEl.textContent = 'Ungültige Sequenz';
+      }
+
+      left.append(name, seqEl);
+
+      // Right side: Tm
+      const tmEl = document.createElement('div');
+      tmEl.className = 'primer-result-tm';
+      if (d.tm !== null) {
+        tmEl.textContent = `${d.tm} °C`;
+        validTms.push(d.tm);
+      } else if (!d.empty) {
+        tmEl.textContent = 'Fehler';
+        tmEl.classList.add('is-error');
+      } else {
+        tmEl.textContent = '—';
+        tmEl.classList.add('is-error');
+      }
+
+      row.append(left, tmEl);
+      primerResultsDiv.appendChild(row);
+    });
+
+    resultsEl.appendChild(primerResultsDiv);
+
+    // Common Tm
+    if (validTms.length > 0) {
+      const commonTm = Math.min(...validTms);
+      const spread   = Math.max(...validTms) - Math.min(...validTms);
+
+      const commonDiv = document.createElement('div');
+      commonDiv.className = 'common-result';
+
+      const commonLeft = document.createElement('div');
+      commonLeft.className = 'common-left';
+
+      const commonLbl = document.createElement('div');
+      commonLbl.className = 'common-label';
+      commonLbl.textContent = validTms.length > 1 ? 'Gemeinsame Ta' : 'Ta';
+
+      const commonSub = document.createElement('div');
+      commonSub.className = 'common-sub';
+      commonSub.textContent = validTms.length > 1
+        ? `niedrigster Primer-Wert`
+        : `4(G+C) + 2(A+T) − 5`;
+
+      commonLeft.append(commonLbl, commonSub);
+
+      const commonTmEl = document.createElement('div');
+      commonTmEl.className = 'common-tm';
+      commonTmEl.textContent = `${commonTm} °C`;
+
+      commonDiv.append(commonLeft, commonTmEl);
+      resultsEl.appendChild(commonDiv);
+
+      if (validTms.length > 1 && spread > 10) {
+        const warn = document.createElement('div');
+        warn.className = 'results-warning';
+        warn.textContent =
+          `⚠ Temperaturspreizung ${spread} °C — Gradient-PCR empfohlen `
+          + `(${Math.min(...validTms)}–${Math.max(...validTms)} °C).`;
+        resultsEl.appendChild(warn);
+      }
+    }
+  }
+
+  // ─── Init ────────────────────────────────────────────────────────
+  document.getElementById('add-primer')?.addEventListener('click', addPrimer);
+  document.getElementById('calc-btn')?.addEventListener('click', calculate);
+
+  // Start with one primer
+  addPrimer();
 </script>
+
+</BaseLayout>
