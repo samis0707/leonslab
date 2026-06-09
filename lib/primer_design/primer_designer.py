@@ -520,7 +520,7 @@ def search_deletion_primers(
                     p3=_make_primer("P3", "DN_Fwd", p3_tail, p3c, "junction_overlap"),
                     p4=_make_primer("P4", "DN_Rev", p4_tail, p4c, convention.name),
                     N=N, C=C, scar_dna=scar,
-                    score=score, tm_spread=spread,
+                    score=score, tm_spread=max(spread_up, spread_dn),
                 )
                 top5 = _topk_insert(top5, cand)
                 if best is None or score < best.score:
