@@ -135,7 +135,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .seq-chars {
     display: none;
     flex-direction: column;
-    align-items: flex-start;
     padding: 0.9rem 1.1rem 0.5rem;
     background: rgba(220,255,220,0.08);
     border: 2px solid #6ed475;
@@ -161,13 +160,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .seq-line-bases {
     display: flex;
+    justify-content: space-between;
   }
 
   /* ─── Individual character ───────────────────────────────── */
   .sc {
     display: inline-block;
-    width: 1.55ch;        /* fixed width relative to monospace char */
-    min-width: 1.2em;     /* floor so it's always clickable */
+    flex: 1;
     text-align: center;
     font-family: var(--font-mono);
     font-size: 1rem;
