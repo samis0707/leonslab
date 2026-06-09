@@ -123,9 +123,49 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     text-align: right;
   }
 
+  /* ─── Input wrapper (holds input + body overlay) ─────────── */
+  .input-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* ─── Body overlay — shown in place of input when range set ─ */
+  .input-body-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    padding: 0.72rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: pre;
+    overflow: hidden;
+    align-items: center;
+    border-radius: 9px;
+    border: 2px solid #e05050;
+    background: rgba(220, 255, 220, 0.13);
+    cursor: text;
+    z-index: 2;
+    box-shadow: 0 0 0 3px rgba(220,80,80,0.2);
+  }
+
+  .input-body-overlay .seg-pre,
+  .input-body-overlay .seg-post {
+    color: rgba(237, 252, 237, 0.45);
+  }
+
+  .input-body-overlay .seg-body {
+    color: #ffe4e4;
+    background: rgba(180, 20, 20, 0.6);
+    border-radius: 2px;
+    padding: 0.08em 0.1em;
+  }
+
   /* ── Input — light frosted surface, unmistakably visible ── */
   .primer-input {
-    flex: 1;
+    width: 100%;
     padding: 0.72rem 1rem;
     background: rgba(220, 255, 220, 0.13);
     border: 2px solid #6ed475;
@@ -198,6 +238,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     border-color: #e05050;
     color: #ffd0d0;
     box-shadow: 0 2px 8px rgba(163,34,34,0.3);
+  }
+
+  /* Panel closed but selection persists */
+  .body-btn.is-marked {
+    background: #5c3200;
+    border-color: #d47a20;
+    color: #ffdaa0;
+    box-shadow: 0 2px 8px rgba(180,100,0,0.3);
+  }
+
+  .body-btn.is-marked:hover {
+    background: #7a4400;
+    border-color: #e89030;
+    color: #ffe8c0;
   }
 
   /* ─── Remove button ───────────────────────────────────────── */
@@ -701,6 +755,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       state.bodyStart = null;
       state.bodyEnd   = null;
       inp.classList.remove('has-body');
+      const bodyBtn = row.querySelector('.body-btn') as HTMLButtonElement | null;
+      if (bodyBtn) bodyBtn.classList.remove('is-marked');
       seqDisplay.querySelectorAll('.seq-char').forEach((el) => el.classList.remove('is-selected'));
       refreshRangeLabel();
     });
@@ -711,6 +767,35 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     selector.appendChild(seqDisplay);
     selector.appendChild(actions);
     row.appendChild(selector);
+  }
+
+  // ─── Input overlay (show highlighted range in the input field) ─
+  function updateInputOverlay(state: PrimerState, row: HTMLDivElement) {
+    const overlay = row.querySelector('.input-body-overlay') as HTMLDivElement | null;
+    const inp = row.querySelector('.primer-input') as HTMLInputElement | null;
+    if (!overlay || !inp) return;
+
+    if (!state.bodyActive && state.bodyStart !== null && state.bodyEnd !== null) {
+      const seq = inp.value.toUpperCase().replace(/[^ACGT]/g, '');
+      const pre  = seq.slice(0, state.bodyStart);
+      const body = seq.slice(state.bodyStart, state.bodyEnd + 1);
+      const post = seq.slice(state.bodyEnd + 1);
+
+      overlay.innerHTML = '';
+      const addSeg = (text: string, cls: string) => {
+        if (!text) return;
+        const s = document.createElement('span');
+        s.className = cls;
+        s.textContent = text;
+        overlay.appendChild(s);
+      };
+      addSeg(pre,  'seg-pre');
+      addSeg(body, 'seg-body');
+      addSeg(post, 'seg-post');
+      overlay.style.display = 'flex';
+    } else {
+      overlay.style.display = 'none';
+    }
   }
 
   // ─── Create primer row ─────────────────────────────────────────
@@ -726,6 +811,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     lbl.className = 'primer-label';
     lbl.textContent = String(label);
 
+    // ── Input + overlay wrapper ──
+    const inputWrapper = document.createElement('div');
+    inputWrapper.className = 'input-wrapper';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'input-body-overlay';
+    overlay.addEventListener('click', () => {
+      overlay.style.display = 'none';
+      inp.focus();
+    });
+
     const inp = document.createElement('input');
     inp.type = 'text';
     inp.className = 'primer-input';
@@ -734,26 +830,42 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     inp.setAttribute('autocapitalize', 'off');
     inp.setAttribute('autocomplete', 'off');
     inp.addEventListener('input', () => {
-      // Reset body on sequence change
+      // Reset body when sequence changes
       state.bodyStart = null;
       state.bodyEnd   = null;
       inp.classList.remove('has-body');
+      overlay.style.display = 'none';
+      bodyBtn.classList.remove('is-marked');
       if (state.bodyActive) updateBodyDisplay(state, row);
     });
+    inp.addEventListener('blur', () => {
+      // Re-show overlay when leaving the input, if a range is locked
+      updateInputOverlay(state, row);
+    });
+
+    inputWrapper.append(overlay, inp);
 
     const bodyBtn = document.createElement('button');
     bodyBtn.type = 'button';
     bodyBtn.className = 'body-btn';
     bodyBtn.textContent = 'Body';
     bodyBtn.addEventListener('click', () => {
-      state.bodyActive = !state.bodyActive;
-      if (!state.bodyActive) {
-        state.bodyStart = null;
-        state.bodyEnd   = null;
-        inp.classList.remove('has-body');
+      if (state.bodyActive) {
+        // Close panel — keep range, show overlay
+        state.bodyActive = false;
+        bodyBtn.classList.remove('is-active');
+        const hasRange = state.bodyStart !== null && state.bodyEnd !== null;
+        bodyBtn.classList.toggle('is-marked', hasRange);
+        updateBodyDisplay(state, row);
+        updateInputOverlay(state, row);
+      } else {
+        // Open panel — hide overlay
+        overlay.style.display = 'none';
+        state.bodyActive = true;
+        bodyBtn.classList.add('is-active');
+        bodyBtn.classList.remove('is-marked');
+        updateBodyDisplay(state, row);
       }
-      bodyBtn.classList.toggle('is-active', state.bodyActive);
-      updateBodyDisplay(state, row);
     });
 
     const removeBtn = document.createElement('button');
@@ -766,7 +878,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
        </svg>`;
     removeBtn.addEventListener('click', () => removePrimer(state.id));
 
-    group.append(lbl, inp, bodyBtn, removeBtn);
+    group.append(lbl, inputWrapper, bodyBtn, removeBtn);
     row.appendChild(group);
     return row;
   }
