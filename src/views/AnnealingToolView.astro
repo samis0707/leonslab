@@ -7,18 +7,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <style>
   /* ─── Jungle palette ─────────────────────────────────────── */
   :root {
-    --j-deep:   #07120a;
-    --j-dark:   #0c1e0f;
-    --j-mid:    #142b18;
-    --j-leaf:   #1e4a23;
-    --j-border: #2d6233;
-    --j-bright: #4caf50;
-    --j-light:  #81c784;
-    --j-pale:   #c8e6c9;
-    --j-cream:  #f1f8e9;
-    --j-muted:  #4a8a4e;
-    --j-red:    #8b1a1a;
-    --j-red-bg: rgba(139,26,26,0.18);
+    --j-deep:   #0a1e0d;
+    --j-dark:   #112616;
+    --j-mid:    #1a3d20;
+    --j-leaf:   #245c2b;
+    --j-border: #3d8045;
+    --j-bright: #5ec466;
+    --j-light:  #93d696;
+    --j-pale:   #daf0db;
+    --j-cream:  #f3faf0;
+    --j-muted:  #8fcc93;
+    --j-red:    #9b2020;
+    --j-red-bg: rgba(155,32,32,0.18);
   }
 
   /* ─── Page wrapper ───────────────────────────────────────── */
@@ -26,8 +26,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     position: relative;
     min-height: calc(100vh - 56px);
     background:
-      radial-gradient(ellipse 60% 50% at 20% 15%, rgba(30,74,35,0.45) 0%, transparent 70%),
-      radial-gradient(ellipse 50% 40% at 80% 75%, rgba(20,43,24,0.5) 0%, transparent 65%),
+      radial-gradient(ellipse 70% 55% at 15% 10%, rgba(40,95,48,0.5) 0%, transparent 65%),
+      radial-gradient(ellipse 55% 45% at 85% 80%, rgba(30,65,36,0.55) 0%, transparent 65%),
+      radial-gradient(ellipse 40% 30% at 60% 40%, rgba(25,55,30,0.3) 0%, transparent 60%),
       var(--j-dark);
     overflow: hidden;
     display: flex;
@@ -56,7 +57,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-weight: 600;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: var(--j-muted);
+    color: var(--j-light);
     margin-bottom: 0.75rem;
   }
 
@@ -74,10 +75,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     display: inline-block;
     font-family: var(--font-mono);
     font-size: 0.85rem;
-    color: var(--j-light);
+    color: var(--j-pale);
     padding: 0.55rem 1rem;
-    background: rgba(45,98,51,0.2);
-    border-left: 2px solid var(--j-border);
+    background: rgba(61,128,69,0.22);
+    border-left: 2px solid var(--j-bright);
     border-radius: 0 4px 4px 0;
     margin-bottom: 2.75rem;
   }
@@ -115,21 +116,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .primer-input {
     flex: 1;
     padding: 0.65rem 0.9rem;
-    background: rgba(12,28,15,0.75);
+    background: rgba(15,40,20,0.65);
     border: 1px solid var(--j-border);
     border-radius: 8px;
     font-family: var(--font-mono);
     font-size: 0.875rem;
     letter-spacing: 0.07em;
-    color: var(--j-pale);
+    color: var(--j-cream);
     text-transform: uppercase;
     outline: none;
     transition: border-color 200ms ease, box-shadow 200ms ease, background 200ms ease;
   }
 
   .primer-input::placeholder {
-    color: var(--j-muted);
-    opacity: 0.6;
+    color: var(--j-light);
+    opacity: 0.55;
     font-family: var(--font-sans);
     text-transform: none;
     letter-spacing: 0.02em;
@@ -150,10 +151,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .body-btn {
     flex-shrink: 0;
     padding: 0.42rem 0.65rem;
-    background: transparent;
+    background: rgba(61,128,69,0.15);
     border: 1px solid var(--j-border);
     border-radius: 6px;
-    color: var(--j-muted);
+    color: var(--j-pale);
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -164,15 +165,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .body-btn:hover {
-    background: rgba(45,98,51,0.18);
+    background: rgba(94,196,102,0.2);
     border-color: var(--j-bright);
-    color: var(--j-light);
+    color: var(--j-cream);
   }
 
   .body-btn.is-active {
-    background: rgba(139,26,26,0.18);
-    border-color: var(--j-red);
-    color: #ef9a9a;
+    background: rgba(155,32,32,0.25);
+    border-color: #d04040;
+    color: #ffb3b3;
   }
 
   /* ─── Remove button ───────────────────────────────────────── */
@@ -186,23 +187,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     background: transparent;
     border: none;
     border-radius: 50%;
-    color: #2d5a31;
+    color: var(--j-muted);
     cursor: pointer;
     transition: color 160ms ease, background 160ms ease;
   }
 
   .remove-btn:hover {
-    color: #ef9a9a;
-    background: rgba(139,26,26,0.14);
+    color: #ffb3b3;
+    background: rgba(155,32,32,0.18);
   }
 
   /* ─── Body selector ───────────────────────────────────────── */
   .body-selector {
     margin-top: 0.45rem;
     margin-left: 2.1rem;
-    padding: 0.8rem 0.9rem;
-    background: rgba(7,18,10,0.7);
-    border: 1px solid rgba(139,26,26,0.3);
+    padding: 0.85rem 1rem;
+    background: rgba(10,22,12,0.75);
+    border: 1px solid rgba(208,64,64,0.4);
     border-radius: 8px;
     animation: fadeSlide 180ms ease;
   }
@@ -213,16 +214,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .body-hint {
-    font-size: 0.7rem;
-    color: #ef9a9a;
-    font-weight: 500;
+    font-size: 0.72rem;
+    color: #ffb3b3;
+    font-weight: 600;
     letter-spacing: 0.04em;
     margin: 0 0 0.55rem;
   }
 
   .seq-display {
     font-family: var(--font-mono);
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     letter-spacing: 0.1em;
     line-height: 2;
     word-break: break-all;
@@ -235,34 +236,34 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     display: inline-block;
     padding: 0.05em 0;
     border-radius: 2px;
-    color: var(--j-light);
+    color: var(--j-pale);
     transition: color 60ms ease, background 60ms ease;
   }
 
   .seq-char.is-selected {
-    color: #ffcdd2;
-    background: rgba(139,0,0,0.55);
+    color: #ffe0e0;
+    background: rgba(180,0,0,0.6);
   }
 
   .body-actions {
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin-top: 0.5rem;
+    margin-top: 0.55rem;
   }
 
   .body-range-label {
     font-family: var(--font-mono);
     font-size: 0.68rem;
-    color: #ef9a9a;
+    color: #ffb3b3;
     word-break: break-all;
     flex: 1;
   }
 
   .clear-body-btn {
     flex-shrink: 0;
-    font-size: 0.68rem;
-    color: var(--j-muted);
+    font-size: 0.7rem;
+    color: var(--j-light);
     background: none;
     border: none;
     cursor: pointer;
@@ -272,7 +273,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     white-space: nowrap;
   }
 
-  .clear-body-btn:hover { color: var(--j-light); }
+  .clear-body-btn:hover { color: var(--j-cream); }
 
   /* ─── Add primer button ───────────────────────────────────── */
   .j-add-btn {
@@ -282,10 +283,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     padding: 0.5rem 1rem;
     margin-left: 2.1rem;
     margin-bottom: 1.5rem;
-    background: transparent;
+    background: rgba(61,128,69,0.12);
     border: 1.5px dashed var(--j-border);
     border-radius: 7px;
-    color: var(--j-bright);
+    color: var(--j-light);
     font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
@@ -293,8 +294,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .j-add-btn:hover {
-    background: rgba(45,98,51,0.15);
+    background: rgba(94,196,102,0.18);
     border-color: var(--j-bright);
+    color: var(--j-cream);
     transform: translateY(-1px);
   }
 
@@ -325,7 +327,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   /* ─── Results ─────────────────────────────────────────────── */
   .j-results {
     margin-top: 1.75rem;
-    background: rgba(12,28,15,0.6);
+    background: rgba(14,34,17,0.7);
     border: 1px solid var(--j-border);
     border-radius: 12px;
     overflow: hidden;
@@ -334,8 +336,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .results-header {
     padding: 0.85rem 1.1rem;
-    border-bottom: 1px solid rgba(45,98,51,0.4);
-    background: rgba(20,43,24,0.6);
+    border-bottom: 1px solid rgba(61,128,69,0.35);
+    background: rgba(26,61,32,0.6);
   }
 
   .results-title {
@@ -343,7 +345,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-weight: 700;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--j-muted);
+    color: var(--j-light);
     margin: 0;
   }
 
@@ -354,8 +356,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    padding: 0.6rem 1.1rem;
-    border-bottom: 1px solid rgba(45,98,51,0.15);
+    padding: 0.65rem 1.1rem;
+    border-bottom: 1px solid rgba(61,128,69,0.18);
   }
 
   .primer-result-row:last-child { border-bottom: none; }
@@ -371,7 +373,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .primer-result-name {
     font-size: 0.68rem;
     font-weight: 600;
-    color: var(--j-muted);
+    color: var(--j-light);
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
@@ -379,27 +381,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .primer-result-seq {
     font-family: var(--font-mono);
     font-size: 0.75rem;
-    color: #4a7a4e;
+    color: var(--j-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .primer-result-seq .body-hi {
-    color: #ef5350;
-    font-weight: 600;
+    color: #ff6b6b;
+    font-weight: 700;
   }
 
   .primer-result-tm {
     font-family: var(--font-mono);
     font-size: 1.05rem;
     font-weight: 700;
-    color: var(--j-light);
+    color: var(--j-pale);
     white-space: nowrap;
   }
 
   .primer-result-tm.is-error {
-    color: #ef5350;
+    color: #ff6b6b;
     font-size: 0.85rem;
     font-weight: 400;
   }
@@ -408,46 +410,47 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.9rem 1.1rem;
-    border-top: 1px solid rgba(45,98,51,0.4);
-    background: rgba(20,43,24,0.55);
+    padding: 0.95rem 1.1rem;
+    border-top: 1px solid rgba(61,128,69,0.35);
+    background: rgba(26,61,32,0.5);
   }
 
-  .common-left { display: flex; flex-direction: column; gap: 0.1rem; }
+  .common-left { display: flex; flex-direction: column; gap: 0.15rem; }
 
   .common-label {
     font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--j-muted);
+    color: var(--j-light);
   }
 
   .common-sub {
     font-size: 0.7rem;
-    color: #2d5a31;
+    color: var(--j-muted);
   }
 
   .common-tm {
     font-family: var(--font-mono);
-    font-size: 1.65rem;
+    font-size: 1.7rem;
     font-weight: 700;
-    color: #69c47a;
+    color: #7de882;
     letter-spacing: -0.02em;
+    text-shadow: 0 0 20px rgba(94,196,102,0.3);
   }
 
   .results-warning {
     padding: 0.65rem 1.1rem;
-    background: rgba(100,20,10,0.18);
-    border-top: 1px solid rgba(139,26,26,0.25);
+    background: rgba(120,25,15,0.2);
+    border-top: 1px solid rgba(208,64,64,0.25);
     font-size: 0.75rem;
-    color: #ef9a9a;
+    color: #ffb3b3;
     line-height: 1.5;
   }
 
   .results-error {
     padding: 1.1rem;
-    color: #ef9a9a;
+    color: #ffb3b3;
     font-size: 0.85rem;
   }
 </style>
@@ -455,38 +458,70 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <div class="j-page">
 
   <!-- ─── Decorative SVG leaves ──────────────────────────────── -->
-  <svg class="j-leaf" style="top:-60px;right:-50px;width:260px;opacity:0.18;" viewBox="0 0 260 440" fill="none">
-    <path d="M130 15 C200 55 235 160 215 310 C200 390 160 430 130 430 C100 430 60 390 45 310 C25 160 60 55 130 15Z" fill="#2d6a33"/>
-    <path d="M130 15 C130 15 130 430" stroke="#4a8a4a" stroke-width="1.5" opacity="0.4"/>
-    <path d="M130 100 C160 130 175 160 165 200" stroke="#3a7a3a" stroke-width="1" opacity="0.3"/>
-    <path d="M130 150 C100 180 85 210 95 250" stroke="#3a7a3a" stroke-width="1" opacity="0.3"/>
-    <path d="M130 220 C158 248 168 278 160 315" stroke="#3a7a3a" stroke-width="1" opacity="0.3"/>
+
+  <!-- Top-right large leaf -->
+  <svg class="j-leaf" style="top:-55px;right:-45px;width:280px;opacity:0.22;" viewBox="0 0 280 460" fill="none">
+    <path d="M140 12 C215 55 252 168 230 325 C214 408 170 445 140 445 C110 445 66 408 50 325 C28 168 65 55 140 12Z" fill="#2d6a33"/>
+    <path d="M140 12 L140 445" stroke="#4aaa4a" stroke-width="1.5" opacity="0.5"/>
+    <path d="M140 90 C172 122 186 155 175 198" stroke="#3a8a3a" stroke-width="1" opacity="0.4"/>
+    <path d="M140 150 C108 182 94 215 104 258" stroke="#3a8a3a" stroke-width="1" opacity="0.4"/>
+    <path d="M140 230 C170 260 180 292 170 330" stroke="#3a8a3a" stroke-width="1" opacity="0.3"/>
+    <path d="M140 290 C112 318 104 348 112 382" stroke="#3a8a3a" stroke-width="1" opacity="0.3"/>
   </svg>
 
-  <svg class="j-leaf" style="bottom:-80px;left:-60px;width:240px;opacity:0.2;transform:rotate(25deg);" viewBox="0 0 240 380" fill="none">
-    <path d="M120 15 C185 50 215 140 195 275 C180 350 60 350 45 275 C25 140 55 50 120 15Z" fill="#1a5225"/>
-    <path d="M120 15 L120 360" stroke="#2d7a33" stroke-width="1.5" opacity="0.35"/>
+  <!-- Bottom-left wide leaf -->
+  <svg class="j-leaf" style="bottom:-70px;left:-55px;width:260px;opacity:0.22;transform:rotate(22deg);" viewBox="0 0 260 400" fill="none">
+    <path d="M130 14 C198 52 226 148 205 288 C190 368 70 368 55 288 C34 148 62 52 130 14Z" fill="#1c5e28"/>
+    <path d="M130 14 L130 375" stroke="#2d8a35" stroke-width="1.5" opacity="0.4"/>
+    <path d="M130 80 C158 108 168 138 158 172" stroke="#268a2e" stroke-width="1" opacity="0.35"/>
+    <path d="M130 140 C102 168 94 198 106 232" stroke="#268a2e" stroke-width="1" opacity="0.35"/>
   </svg>
 
-  <svg class="j-leaf" style="top:30%;left:-35px;width:150px;opacity:0.15;transform:rotate(-15deg);" viewBox="0 0 150 260" fill="none">
-    <path d="M75 10 C125 40 145 115 120 210 C105 248 45 248 30 210 C5 115 25 40 75 10Z" fill="#245e2a"/>
-    <path d="M75 10 L75 250" stroke="#3a7a3a" stroke-width="1" opacity="0.4"/>
+  <!-- Left mid leaf -->
+  <svg class="j-leaf" style="top:28%;left:-30px;width:158px;opacity:0.18;transform:rotate(-18deg);" viewBox="0 0 158 275" fill="none">
+    <path d="M79 10 C132 42 152 122 126 222 C110 258 48 258 32 222 C6 122 26 42 79 10Z" fill="#265e2c"/>
+    <path d="M79 10 L79 262" stroke="#3a8a3a" stroke-width="1" opacity="0.45"/>
   </svg>
 
-  <svg class="j-leaf" style="top:5%;right:8%;width:110px;opacity:0.14;transform:rotate(18deg);" viewBox="0 0 110 190" fill="none">
-    <path d="M55 8 C92 30 108 85 90 155 C78 182 32 182 20 155 C2 85 18 30 55 8Z" fill="#2a7032"/>
+  <!-- Top-left small leaf -->
+  <svg class="j-leaf" style="top:8%;left:6%;width:95px;opacity:0.17;transform:rotate(-8deg);" viewBox="0 0 95 170" fill="none">
+    <path d="M47 8 C82 28 96 80 80 142 C68 168 26 168 14 142 C-2 80 12 28 47 8Z" fill="#2a7032"/>
+    <path d="M47 8 L47 165" stroke="#3a9040" stroke-width="0.8" opacity="0.4"/>
   </svg>
 
-  <!-- Monstera hole-leaf -->
-  <svg class="j-leaf" style="bottom:5%;right:-20px;width:200px;opacity:0.18;transform:rotate(-12deg);" viewBox="0 0 200 220" fill="none">
-    <path d="M100 12 C158 35 185 90 162 148 L148 170 C128 198 72 198 52 170 L38 148 C15 90 42 35 100 12Z" fill="#1e5a25"/>
-    <ellipse cx="78" cy="105" rx="13" ry="9" fill="#07120a"/>
-    <ellipse cx="122" cy="85" rx="11" ry="8" fill="#07120a"/>
-    <path d="M100 12 L100 205" stroke="#2d7a33" stroke-width="1.2" opacity="0.3"/>
+  <!-- Top-right second small -->
+  <svg class="j-leaf" style="top:6%;right:10%;width:115px;opacity:0.16;transform:rotate(20deg);" viewBox="0 0 115 195" fill="none">
+    <path d="M57 8 C98 32 114 90 95 162 C82 190 32 190 19 162 C0 90 16 32 57 8Z" fill="#286e30"/>
   </svg>
 
-  <svg class="j-leaf" style="top:55%;right:2%;width:90px;opacity:0.12;transform:rotate(30deg);" viewBox="0 0 90 160" fill="none">
-    <path d="M45 8 C78 25 90 70 75 128 C65 150 25 150 15 128 C0 70 12 25 45 8Z" fill="#2d6a33"/>
+  <!-- Monstera hole-leaf bottom-right -->
+  <svg class="j-leaf" style="bottom:3%;right:-18px;width:215px;opacity:0.2;transform:rotate(-14deg);" viewBox="0 0 215 235" fill="none">
+    <path d="M107 12 C168 36 198 96 174 158 L158 182 C136 212 79 212 57 182 L41 158 C17 96 46 36 107 12Z" fill="#1e5a25"/>
+    <ellipse cx="84" cy="112" rx="15" ry="10" fill="#0a1e0d"/>
+    <ellipse cx="130" cy="90" rx="12" ry="9" fill="#0a1e0d"/>
+    <path d="M107 12 L107 218" stroke="#2d7a33" stroke-width="1.2" opacity="0.35"/>
+  </svg>
+
+  <!-- Right mid leaf -->
+  <svg class="j-leaf" style="top:50%;right:0%;width:100px;opacity:0.16;transform:rotate(28deg);" viewBox="0 0 100 175" fill="none">
+    <path d="M50 8 C86 28 100 78 84 138 C72 162 28 162 16 138 C0 78 14 28 50 8Z" fill="#2d6a33"/>
+    <path d="M50 8 L50 168" stroke="#4aaa4a" stroke-width="0.8" opacity="0.4"/>
+  </svg>
+
+  <!-- Bottom centre-left small -->
+  <svg class="j-leaf" style="bottom:12%;left:4%;width:80px;opacity:0.15;transform:rotate(10deg);" viewBox="0 0 80 145" fill="none">
+    <path d="M40 6 C70 22 80 65 66 112 C56 134 24 134 14 112 C0 65 10 22 40 6Z" fill="#245c2b"/>
+  </svg>
+
+  <!-- Top centre floating -->
+  <svg class="j-leaf" style="top:2%;left:38%;width:70px;opacity:0.13;transform:rotate(-5deg);" viewBox="0 0 70 130" fill="none">
+    <path d="M35 5 C62 20 70 57 58 98 C50 118 20 118 12 98 C0 57 8 20 35 5Z" fill="#2d7033"/>
+  </svg>
+
+  <!-- Right centre banana-ish wide leaf -->
+  <svg class="j-leaf" style="top:35%;right:-10px;width:130px;opacity:0.15;transform:rotate(5deg);" viewBox="0 0 260 120" fill="none">
+    <path d="M10 60 C50 20 130 5 250 15 C240 45 200 75 130 85 C80 92 30 85 10 60Z" fill="#1e5228"/>
+    <path d="M10 60 C80 62 160 58 250 15" stroke="#2d7a33" stroke-width="0.8" opacity="0.4"/>
   </svg>
 
   <!-- ─── Main content ────────────────────────────────────────── -->
