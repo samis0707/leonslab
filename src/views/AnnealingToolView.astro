@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Annealing Calculator" description="PCR Primer Annealing-Temperatur Kalkulator">
+<BaseLayout title="Sherlock" description="Your web tool to analyse DNA sequences to find the perfect primer region">
 
 <style is:global>
   @import url('https://fonts.googleapis.com/css2?family=Rye&display=swap');
@@ -33,18 +33,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     padding: 3.5rem 1.5rem 6rem;
   }
 
-  /* ─── Decorative leaves ──────────────────────────────────── */
   .j-leaf {
     position: absolute;
     pointer-events: none;
   }
 
-  /* ─── Content container ──────────────────────────────────── */
+  /* ─── Container ──────────────────────────────────────────── */
   .j-container {
     position: relative;
     z-index: 1;
     width: 100%;
-    max-width: 620px;
+    max-width: 640px;
   }
 
   /* ─── Header ─────────────────────────────────────────────── */
@@ -55,18 +54,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     letter-spacing: 0.25em;
     text-transform: uppercase;
     color: var(--j-bright);
-    margin-bottom: 0.65rem;
+    margin-bottom: 0.6rem;
   }
 
   .j-title {
     font-family: 'Rye', Georgia, serif;
     font-weight: 400;
-    font-size: clamp(2.8rem, 7vw, 4.4rem);
+    font-size: clamp(3rem, 8vw, 5rem);
     letter-spacing: 0.02em;
-    line-height: 1.05;
+    line-height: 1.0;
     color: var(--j-cream);
-    margin: 0 0 1.2rem;
+    margin: 0 0 0.55rem;
     text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
+
+  .j-subtitle {
+    font-size: 0.82rem;
+    color: rgba(159,219,159,0.7);
+    font-style: italic;
+    letter-spacing: 0.02em;
+    margin: 0 0 1.1rem;
+    line-height: 1.5;
   }
 
   .j-formula {
@@ -99,7 +107,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     border-radius: 10px;
     font-family: var(--font-mono);
     font-size: 0.95rem;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     color: #edfced;
     text-transform: uppercase;
     outline: none;
@@ -123,62 +131,101 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     box-shadow: 0 0 0 3px rgba(93,200,102,0.2);
   }
 
-  /* ─── Character display (select mode) ───────────────────── */
+  /* ─── Sequence character display (select mode) ───────────── */
   .seq-chars {
     display: none;
-    padding: 0.85rem 1.1rem;
-    background: rgba(220,255,220,0.1);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.9rem 1.1rem 0.5rem;
+    background: rgba(220,255,220,0.08);
     border: 2px solid #6ed475;
     border-radius: 10px;
-    font-family: var(--font-mono);
-    font-size: 1rem;
-    letter-spacing: 0.09em;
-    line-height: 2.4;
-    word-break: break-all;
+    margin-bottom: 0.85rem;
     cursor: crosshair;
     -webkit-user-select: none;
     user-select: none;
-    margin-bottom: 0.85rem;
-    min-height: 3.8rem;
+    gap: 0;
   }
 
   .seq-chars.is-active {
-    display: block;
+    display: flex;
     border-color: #90e896;
-    box-shadow: 0 0 0 3px rgba(93,200,102,0.2);
+    box-shadow: 0 0 0 3px rgba(93,200,102,0.18);
   }
 
-  /* Individual character span */
+  /* ─── One row: 10 chars + ruler ──────────────────────────── */
+  .seq-line {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .seq-line-bases {
+    display: flex;
+  }
+
+  /* ─── Individual character ───────────────────────────────── */
   .sc {
     display: inline-block;
-    color: #c8ecc8;
-    border-radius: 3px;
-    padding: 0.06em 0.02em;
-    transition: background 40ms ease, color 40ms ease;
-  }
-
-  .sc:hover {
-    background: rgba(106,204,114,0.15);
-  }
-
-  .sc.selected {
-    color: #ffe4e4;
-    background: rgba(175,20,20,0.68);
-  }
-
-  /* Position marker every 10 chars */
-  .pos-mark {
-    display: inline-block;
-    font-size: 0.58rem;
-    color: rgba(106,204,114,0.45);
-    letter-spacing: 0;
-    margin: 0 0.25em;
-    vertical-align: super;
-    pointer-events: none;
-    -webkit-user-select: none;
-    user-select: none;
+    width: 1.55ch;        /* fixed width relative to monospace char */
+    min-width: 1.2em;     /* floor so it's always clickable */
+    text-align: center;
     font-family: var(--font-mono);
-    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0;
+    line-height: 1.9;
+    color: #c8ecc8;
+    border-radius: 0;
+    transition: background 35ms ease;
+  }
+
+  .sc:hover:not(.selected) {
+    background: rgba(106,204,114,0.12);
+  }
+
+  /* Smooth continuous highlight — no per-char border-radius */
+  .sc.selected {
+    background: rgba(160,18,18,0.62);
+    color: #ffe2e2;
+  }
+
+  /* Round only the outer edges of the selection */
+  .sc.sel-l {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+  }
+  .sc.sel-r {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+  }
+
+  /* ─── Benchling-style ruler under each row ───────────────── */
+  .seq-ruler {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    border-top: 1px solid rgba(106,204,114,0.18);
+    padding-top: 0.18rem;
+    padding-bottom: 0.45rem;
+    /* tick mark at right end */
+  }
+
+  .seq-ruler::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    right: 0;
+    width: 1px;
+    height: 4px;
+    background: rgba(106,204,114,0.45);
+  }
+
+  .ruler-num {
+    font-family: var(--font-mono);
+    font-size: 0.57rem;
+    color: rgba(106,204,114,0.45);
+    line-height: 1;
+    padding-right: 0.05em;
   }
 
   /* ─── Tool footer ────────────────────────────────────────── */
@@ -189,12 +236,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     flex-wrap: wrap;
   }
 
-  /* ─── Select / Back button ───────────────────────────────── */
   .select-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    padding: 0.6rem 1.1rem;
+    padding: 0.58rem 1.05rem;
     background: #2a6430;
     border: 2px solid #6ed475;
     border-radius: 9px;
@@ -217,9 +263,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     box-shadow: 0 4px 14px rgba(0,0,0,0.4);
   }
 
-  .select-btn:active:not(:disabled) {
-    transform: translateY(0);
-  }
+  .select-btn:active:not(:disabled) { transform: translateY(0); }
 
   .select-btn:disabled {
     opacity: 0.38;
@@ -230,6 +274,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     background: #1e3a24;
     border-color: #4a7850;
     color: #9fdb9f;
+    box-shadow: none;
   }
 
   .select-btn.is-back:hover {
@@ -240,16 +285,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .select-hint {
     font-size: 0.72rem;
-    color: rgba(168,216,168,0.75);
+    color: rgba(168,216,168,0.65);
     font-style: italic;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
   }
 
-  /* ─── Tm result ──────────────────────────────────────────── */
+  /* ─── Ta result ──────────────────────────────────────────── */
   .tm-display {
     margin-top: 1rem;
     background: rgba(16,40,20,0.82);
-    border: 1px solid rgba(74,150,82,0.45);
+    border: 1px solid rgba(74,150,82,0.4);
     border-radius: 13px;
     overflow: hidden;
     backdrop-filter: blur(8px);
@@ -272,7 +317,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .tm-left {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.28rem;
     min-width: 0;
   }
 
@@ -310,18 +355,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     white-space: nowrap;
     flex-shrink: 0;
   }
-
-  @keyframes fadeSlide {
-    from { opacity: 0; transform: translateY(-5px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
 </style>
 
 <div class="j-page">
 
-  <!-- ─── Decorative SVG leaves ──────────────────────────────── -->
-
-  <!-- Top-right large leaf -->
+  <!-- Decorative leaves -->
   <svg class="j-leaf" style="top:-55px;right:-45px;width:280px;opacity:0.22;" viewBox="0 0 280 460" fill="none">
     <path d="M140 12 C215 55 252 168 230 325 C214 408 170 445 140 445 C110 445 66 408 50 325 C28 168 65 55 140 12Z" fill="#2d6a33"/>
     <path d="M140 12 L140 445" stroke="#4aaa4a" stroke-width="1.5" opacity="0.5"/>
@@ -330,68 +368,51 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <path d="M140 230 C170 260 180 292 170 330" stroke="#3a8a3a" stroke-width="1" opacity="0.3"/>
     <path d="M140 290 C112 318 104 348 112 382" stroke="#3a8a3a" stroke-width="1" opacity="0.3"/>
   </svg>
-
-  <!-- Bottom-left wide leaf -->
   <svg class="j-leaf" style="bottom:-70px;left:-55px;width:260px;opacity:0.22;transform:rotate(22deg);" viewBox="0 0 260 400" fill="none">
     <path d="M130 14 C198 52 226 148 205 288 C190 368 70 368 55 288 C34 148 62 52 130 14Z" fill="#1c5e28"/>
     <path d="M130 14 L130 375" stroke="#2d8a35" stroke-width="1.5" opacity="0.4"/>
     <path d="M130 80 C158 108 168 138 158 172" stroke="#268a2e" stroke-width="1" opacity="0.35"/>
     <path d="M130 140 C102 168 94 198 106 232" stroke="#268a2e" stroke-width="1" opacity="0.35"/>
   </svg>
-
-  <!-- Left mid leaf -->
   <svg class="j-leaf" style="top:28%;left:-30px;width:158px;opacity:0.18;transform:rotate(-18deg);" viewBox="0 0 158 275" fill="none">
     <path d="M79 10 C132 42 152 122 126 222 C110 258 48 258 32 222 C6 122 26 42 79 10Z" fill="#265e2c"/>
     <path d="M79 10 L79 262" stroke="#3a8a3a" stroke-width="1" opacity="0.45"/>
   </svg>
-
-  <!-- Top-left small leaf -->
   <svg class="j-leaf" style="top:8%;left:6%;width:95px;opacity:0.17;transform:rotate(-8deg);" viewBox="0 0 95 170" fill="none">
     <path d="M47 8 C82 28 96 80 80 142 C68 168 26 168 14 142 C-2 80 12 28 47 8Z" fill="#2a7032"/>
     <path d="M47 8 L47 165" stroke="#3a9040" stroke-width="0.8" opacity="0.4"/>
   </svg>
-
-  <!-- Top-right second small -->
   <svg class="j-leaf" style="top:6%;right:10%;width:115px;opacity:0.16;transform:rotate(20deg);" viewBox="0 0 115 195" fill="none">
     <path d="M57 8 C98 32 114 90 95 162 C82 190 32 190 19 162 C0 90 16 32 57 8Z" fill="#286e30"/>
   </svg>
-
-  <!-- Monstera hole-leaf bottom-right -->
   <svg class="j-leaf" style="bottom:3%;right:-18px;width:215px;opacity:0.2;transform:rotate(-14deg);" viewBox="0 0 215 235" fill="none">
     <path d="M107 12 C168 36 198 96 174 158 L158 182 C136 212 79 212 57 182 L41 158 C17 96 46 36 107 12Z" fill="#1e5a25"/>
     <ellipse cx="84" cy="112" rx="15" ry="10" fill="#0a1e0d"/>
     <ellipse cx="130" cy="90" rx="12" ry="9" fill="#0a1e0d"/>
     <path d="M107 12 L107 218" stroke="#2d7a33" stroke-width="1.2" opacity="0.35"/>
   </svg>
-
-  <!-- Right mid leaf -->
   <svg class="j-leaf" style="top:50%;right:0%;width:100px;opacity:0.16;transform:rotate(28deg);" viewBox="0 0 100 175" fill="none">
     <path d="M50 8 C86 28 100 78 84 138 C72 162 28 162 16 138 C0 78 14 28 50 8Z" fill="#2d6a33"/>
     <path d="M50 8 L50 168" stroke="#4aaa4a" stroke-width="0.8" opacity="0.4"/>
   </svg>
-
-  <!-- Bottom centre-left small -->
   <svg class="j-leaf" style="bottom:12%;left:4%;width:80px;opacity:0.15;transform:rotate(10deg);" viewBox="0 0 80 145" fill="none">
     <path d="M40 6 C70 22 80 65 66 112 C56 134 24 134 14 112 C0 65 10 22 40 6Z" fill="#245c2b"/>
   </svg>
-
-  <!-- Top centre floating -->
   <svg class="j-leaf" style="top:2%;left:38%;width:70px;opacity:0.13;transform:rotate(-5deg);" viewBox="0 0 70 130" fill="none">
     <path d="M35 5 C62 20 70 57 58 98 C50 118 20 118 12 98 C0 57 8 20 35 5Z" fill="#2d7033"/>
   </svg>
-
-  <!-- Right centre banana-ish wide leaf -->
   <svg class="j-leaf" style="top:35%;right:-10px;width:130px;opacity:0.15;transform:rotate(5deg);" viewBox="0 0 260 120" fill="none">
     <path d="M10 60 C50 20 130 5 250 15 C240 45 200 75 130 85 C80 92 30 85 10 60Z" fill="#1e5228"/>
     <path d="M10 60 C80 62 160 58 250 15" stroke="#2d7a33" stroke-width="0.8" opacity="0.4"/>
   </svg>
 
-  <!-- ─── Main content ────────────────────────────────────────── -->
+  <!-- Main content -->
   <div class="j-container">
 
     <header>
-      <span class="j-eyebrow">PCR · Tools</span>
-      <h1 class="j-title">Annealing<br>Calculator</h1>
+      <span class="j-eyebrow">DNA · Analysis</span>
+      <h1 class="j-title">Sherlock</h1>
+      <p class="j-subtitle">your web tool to analyse DNA sequences to find the perfect primer region</p>
       <p class="j-formula">T<sub>a</sub> = 4(G+C) + 2(A+T) &minus; 5</p>
     </header>
 
@@ -426,7 +447,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <div class="tm-left">
           <div class="tm-label-row">Annealing-Temperatur</div>
           <div id="tm-range" class="tm-range-info"></div>
-          <div id="tm-seq" class="tm-seq-preview"></div>
+          <div id="tm-seq"   class="tm-seq-preview"></div>
         </div>
         <div id="tm-value" class="tm-value"></div>
       </div>
@@ -436,26 +457,29 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </div>
 
 <script>
+  // ─── Constants ───────────────────────────────────────────────
+  const COLS = 10;  // bases per row
+
   // ─── State ───────────────────────────────────────────────────
-  let sequence  = '';
+  let sequence     = '';
   let selStart: number | null = null;
   let selEnd:   number | null = null;
   let isSelectMode = false;
   let isDragging   = false;
   let dragAnchor   = 0;
-  let lastIdx      = 0;  // last known char idx while dragging
+  let lastIdx      = 0;
 
   // ─── Elements ────────────────────────────────────────────────
-  const seqInput  = document.getElementById('seq-input')  as HTMLInputElement;
-  const seqChars  = document.getElementById('seq-chars')  as HTMLDivElement;
-  const selectBtn = document.getElementById('select-btn') as HTMLButtonElement;
+  const seqInput   = document.getElementById('seq-input')   as HTMLInputElement;
+  const seqChars   = document.getElementById('seq-chars')   as HTMLDivElement;
+  const selectBtn  = document.getElementById('select-btn')  as HTMLButtonElement;
   const selectHint = document.getElementById('select-hint') as HTMLSpanElement;
-  const tmDisplay = document.getElementById('tm-display') as HTMLDivElement;
-  const tmRange   = document.getElementById('tm-range')   as HTMLDivElement;
-  const tmSeq     = document.getElementById('tm-seq')     as HTMLDivElement;
-  const tmValue   = document.getElementById('tm-value')   as HTMLDivElement;
+  const tmDisplay  = document.getElementById('tm-display')  as HTMLDivElement;
+  const tmRange    = document.getElementById('tm-range')    as HTMLDivElement;
+  const tmSeq      = document.getElementById('tm-seq')      as HTMLDivElement;
+  const tmValue    = document.getElementById('tm-value')    as HTMLDivElement;
 
-  // ─── Wallace formula (= annealing temperature) ───────────────
+  // ─── Wallace formula → annealing temperature ─────────────────
   function taCalc(seq: string): number {
     const s = seq.toUpperCase().replace(/[^ACGT]/g, '');
     const g = (s.match(/G/g) ?? []).length;
@@ -465,7 +489,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     return 4 * (g + c) + 2 * (a + t) - 5;
   }
 
-  // ─── Find char index under pointer ───────────────────────────
+  // ─── Hit-test: which char is under the pointer? ───────────────
   function charIdxAt(x: number, y: number): number | null {
     const el = document.elementFromPoint(x, y);
     if (!el) return null;
@@ -474,50 +498,79 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     return parseInt(span.dataset.i!);
   }
 
-  // ─── Apply selection highlight ────────────────────────────────
+  // ─── Apply continuous selection highlight ─────────────────────
+  // sel-l = left-rounded edge  (selection start OR start of row within selection)
+  // sel-r = right-rounded edge (selection end   OR end of row within selection)
   function applySelection(a: number, b: number) {
     const lo = Math.min(a, b);
     const hi = Math.max(a, b);
     selStart = lo;
     selEnd   = hi;
-    seqChars.querySelectorAll('.sc').forEach((el) => {
-      const i = parseInt((el as HTMLElement).dataset.i!);
-      el.classList.toggle('selected', i >= lo && i <= hi);
+    seqChars.querySelectorAll<HTMLElement>('.sc').forEach((el) => {
+      const i = parseInt(el.dataset.i!);
+      const inSel = i >= lo && i <= hi;
+      el.classList.toggle('selected', inSel);
+      el.classList.toggle('sel-l', inSel && (i === lo || i % COLS === 0));
+      el.classList.toggle('sel-r', inSel && (i === hi || i % COLS === COLS - 1));
     });
   }
 
-  // ─── Show Tm result ───────────────────────────────────────────
+  // ─── Show Ta result ───────────────────────────────────────────
   function showTa() {
     if (selStart === null || selEnd === null) return;
     const sel = sequence.slice(selStart, selEnd + 1);
     if (!sel) return;
     const ta = taCalc(sel);
     tmRange.textContent = `[${selStart + 1}–${selEnd + 1}] · ${sel.length} nt`;
-    tmSeq.textContent   = sel.length > 30 ? sel.slice(0, 15) + '…' + sel.slice(-8) : sel;
+    tmSeq.textContent   = sel.length > 32 ? sel.slice(0, 16) + '…' + sel.slice(-8) : sel;
     tmValue.textContent = `${ta} °C`;
     tmDisplay.hidden = false;
   }
 
-  // ─── Build char display ───────────────────────────────────────
+  // ─── Build row-based char display ─────────────────────────────
   function buildCharDisplay() {
     seqChars.innerHTML = '';
-    for (let i = 0; i < sequence.length; i++) {
-      // Position marker every 10 chars (before char 10, 20, …)
-      if (i > 0 && i % 10 === 0) {
-        const m = document.createElement('span');
-        m.className = 'pos-mark';
-        m.textContent = String(i);
-        m.setAttribute('aria-hidden', 'true');
-        seqChars.appendChild(m);
+    const lo = selStart ?? -1;
+    const hi = selEnd   ?? -1;
+
+    for (let rowStart = 0; rowStart < sequence.length; rowStart += COLS) {
+      const rowEnd = Math.min(rowStart + COLS, sequence.length);
+
+      const line = document.createElement('div');
+      line.className = 'seq-line';
+
+      // ── Bases ──
+      const bases = document.createElement('div');
+      bases.className = 'seq-line-bases';
+
+      for (let i = rowStart; i < rowEnd; i++) {
+        const span = document.createElement('span');
+        span.className = 'sc';
+        span.dataset.i = String(i);
+        span.textContent = sequence[i];
+
+        const inSel = i >= lo && i <= hi;
+        if (inSel) {
+          span.classList.add('selected');
+          if (i === lo || i % COLS === 0)        span.classList.add('sel-l');
+          if (i === hi || i % COLS === COLS - 1) span.classList.add('sel-r');
+        }
+        bases.appendChild(span);
       }
-      const span = document.createElement('span');
-      span.className = 'sc';
-      span.dataset.i = String(i);
-      span.textContent = sequence[i];
-      if (selStart !== null && selEnd !== null && i >= selStart && i <= selEnd) {
-        span.classList.add('selected');
-      }
-      seqChars.appendChild(span);
+
+      // ── Ruler ──
+      const ruler = document.createElement('div');
+      ruler.className = 'seq-ruler';
+      ruler.setAttribute('aria-hidden', 'true');
+
+      const rnum = document.createElement('span');
+      rnum.className = 'ruler-num';
+      rnum.textContent = String(rowEnd);
+      ruler.appendChild(rnum);
+
+      line.appendChild(bases);
+      line.appendChild(ruler);
+      seqChars.appendChild(line);
     }
   }
 
@@ -530,11 +583,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     seqChars.classList.add('is-active');
     selectBtn.innerHTML =
       `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-         <path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-       </svg>
-       Bearbeiten`;
+         <path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.6"
+               stroke-linecap="round" stroke-linejoin="round"/>
+       </svg>Bearbeiten`;
     selectBtn.classList.add('is-back');
-    selectHint.textContent = 'Klicken & Ziehen zum Markieren';
+    selectHint.textContent = 'Select the sequence part you want to analyse';
     isSelectMode = true;
   }
 
@@ -545,19 +598,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
          <rect x="1" y="1" width="11" height="11" rx="2.5" stroke="currentColor" stroke-width="1.6"/>
          <path d="M4.5 6.5h4M6.5 4.5v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-       </svg>
-       Region auswählen`;
+       </svg>Region auswählen`;
     selectBtn.classList.remove('is-back');
     selectHint.textContent = '';
     isSelectMode = false;
     seqInput.focus();
   }
 
-  // ─── Input events ─────────────────────────────────────────────
+  // ─── Input ────────────────────────────────────────────────────
   seqInput.addEventListener('input', () => {
     const clean = seqInput.value.replace(/[^ACGTacgt]/g, '');
     selectBtn.disabled = clean.length === 0;
-    // Clear result when sequence changes
     selStart = null;
     selEnd   = null;
     tmDisplay.hidden = true;
@@ -573,12 +624,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     const idx = charIdxAt(e.clientX, e.clientY);
     if (idx === null) return;
     e.preventDefault();
-    isDragging  = true;
-    dragAnchor  = idx;
-    lastIdx     = idx;
+    isDragging = true;
+    dragAnchor = idx;
+    lastIdx    = idx;
     tmDisplay.hidden = true;
-    // Clear previous selection
-    seqChars.querySelectorAll('.sc').forEach(el => el.classList.remove('selected'));
+    seqChars.querySelectorAll('.sc')
+      .forEach(el => el.classList.remove('selected', 'sel-l', 'sel-r'));
     selStart = null;
     selEnd   = null;
     applySelection(idx, idx);
@@ -587,21 +638,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   document.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     const idx = charIdxAt(e.clientX, e.clientY);
-    if (idx !== null) {
-      lastIdx = idx;
-      applySelection(dragAnchor, idx);
-    }
-    // If hovering over a pos-mark, keep extending to last known char
-    else if (isDragging) {
-      applySelection(dragAnchor, lastIdx);
-    }
+    if (idx !== null) { lastIdx = idx; applySelection(dragAnchor, idx); }
+    else applySelection(dragAnchor, lastIdx); // keep extending over pos-marks
   });
 
   document.addEventListener('mouseup', () => {
-    if (isDragging) {
-      isDragging = false;
-      showTa();
-    }
+    if (isDragging) { isDragging = false; showTa(); }
   });
 </script>
 
