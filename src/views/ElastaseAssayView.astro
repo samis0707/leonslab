@@ -159,11 +159,7 @@ const errorGeneric = t('elastase.error.generic');
       output.textContent = loadingLabel;
 
       try {
-        const resp = await fetch('/api/elastase-assay', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ num_samples: numSamples }),
-        });
+        const resp = await fetch(`/api/elastase-assay?num_samples=${numSamples}`);
 
         if (!resp.ok) {
           let message = errGeneric;
