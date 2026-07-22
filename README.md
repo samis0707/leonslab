@@ -58,7 +58,9 @@ elastase assay from a single input (number of samples) and returns a PDF
 report.
 
 Since the tool has only one integer input, every possible report
-(`num_samples` 1–1000) is pre-rendered offline and stored in the same R2
+(`num_samples` 1–100 — a 96-well plate fits at most 39 duplicate samples
+alongside the fixed standard curve and negative control, so 100 leaves
+headroom without being unbounded) is pre-rendered offline and stored in the same R2
 bucket used for the primer-design genomes, under the `elastase-assay/reports/`
 prefix — regenerate/upload with `scripts/upload_elastase_reports.py`. The
 runtime path (`api/elastase-assay.js`) is a small Node.js function that just

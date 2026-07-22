@@ -4,7 +4,7 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 // report (num_samples 1..MAX_SAMPLES) is pre-rendered and stored in R2 by
 // scripts/upload_elastase_reports.py. This function just streams the right
 // object back — no Python involved at request time.
-const MAX_SAMPLES = 1000;
+const MAX_SAMPLES = 100;
 const R2_PREFIX = 'elastase-assay/reports/';
 
 let client;

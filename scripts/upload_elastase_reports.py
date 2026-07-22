@@ -8,7 +8,7 @@ possible report locally and upload them to R2. The runtime path is then a tiny
 Node.js function that streams the right object back — no Python at request time.
 
 Usage:
-    python scripts/upload_elastase_reports.py --min 1 --max 1000
+    python scripts/upload_elastase_reports.py --min 1 --max 100
     python scripts/upload_elastase_reports.py --only 5 10 15 --overwrite
 """
 from __future__ import annotations
@@ -84,7 +84,7 @@ def upload_report(num_samples: int, overwrite: bool = False) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Pre-generate and upload elastase assay PDF reports to R2")
     parser.add_argument("--min", type=int, default=1)
-    parser.add_argument("--max", type=int, default=1000)
+    parser.add_argument("--max", type=int, default=100)
     parser.add_argument("--only", type=int, nargs="*", help="Restrict to these sample counts")
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
