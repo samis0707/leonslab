@@ -16,6 +16,7 @@ export const ui = {
     'nav.primerDesign': 'Primer Design',
     'nav.plateConfigurator': 'Plate Configurator',
     'nav.gridTool': 'Base to Base',
+    'nav.elastaseAssay': 'Elastase Assay',
 
     'hero.eyebrow': 'LeonsLab',
     'hero.title.line1': 'Creative Space',
@@ -134,6 +135,15 @@ export const ui = {
     'page.park.subtitle': 'Der Creative Space.',
     'page.ideas.title': 'Ideen',
     'page.ideas.subtitle': 'Neue Ideen brauchen Platz.',
+
+    'page.elastase.title': 'Elastase Assay Calculator',
+    'page.elastase.subtitle': 'Berechnet alle Volumina für einen DQ-Elastin-Elastase-Assay und erstellt einen PDF-Report zum Download.',
+    'elastase.field.numSamples': 'Anzahl der Proben',
+    'elastase.field.placeholder': 'z. B. 10',
+    'elastase.submit': 'Generieren',
+    'elastase.submit.loading': 'Report wird erstellt…',
+    'elastase.error.empty': 'Bitte eine gültige Probenanzahl eingeben (mind. 1).',
+    'elastase.error.generic': 'Etwas ist schiefgelaufen. Bitte versuch es erneut.',
   },
   en: {
     'nav.cartoons': 'Cartoons',
@@ -144,6 +154,7 @@ export const ui = {
     'nav.primerDesign': 'Primer Design',
     'nav.plateConfigurator': 'Plate Configurator',
     'nav.gridTool': 'Base to Base',
+    'nav.elastaseAssay': 'Elastase Assay',
 
     'hero.eyebrow': 'LeonsLab',
     'hero.title.line1': 'Creative Space',
@@ -262,6 +273,15 @@ export const ui = {
     'page.park.subtitle': 'The creative space.',
     'page.ideas.title': 'Ideas',
     'page.ideas.subtitle': 'New ideas need space.',
+
+    'page.elastase.title': 'Elastase Assay Calculator',
+    'page.elastase.subtitle': 'Calculates all volumes for a DQ Elastin elastase assay and generates a downloadable PDF report.',
+    'elastase.field.numSamples': 'Number of samples',
+    'elastase.field.placeholder': 'e.g. 10',
+    'elastase.submit': 'Generate',
+    'elastase.submit.loading': 'Generating report…',
+    'elastase.error.empty': 'Please enter a valid number of samples (min. 1).',
+    'elastase.error.generic': 'Something went wrong. Please try again.',
   },
 } as const;
 

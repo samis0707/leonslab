@@ -1,0 +1,199 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const title = t('page.elastase.title');
+const subtitle = t('page.elastase.subtitle');
+const fieldLabel = t('elastase.field.numSamples');
+const fieldPlaceholder = t('elastase.field.placeholder');
+const submitLabel = t('elastase.submit');
+const loadingLabel = t('elastase.submit.loading');
+const errorEmpty = t('elastase.error.empty');
+const errorGeneric = t('elastase.error.generic');
+---
+<BaseLayout title={title} description={subtitle}>
+  <section class="elastase-page max-w-3xl mx-auto px-6 pt-20 md:pt-28 pb-32">
+    <p class="eyebrow">Tools</p>
+    <h1 class="display text-[clamp(2rem,4.5vw,3.25rem)] mt-4 mb-4 text-[color:var(--color-concrete-900)]">
+      {title}
+    </h1>
+    <p class="text-base text-[color:var(--color-concrete-600)] leading-relaxed mb-10 max-w-xl">
+      {subtitle}
+    </p>
+
+    <form
+      class="elastase-form"
+      id="elastase-form"
+      autocomplete="off"
+      novalidate
+      data-loading-label={loadingLabel}
+      data-error-empty={errorEmpty}
+      data-error-generic={errorGeneric}
+    >
+      <label class="elastase-field" for="elastase-num-samples">
+        <span>{fieldLabel}</span>
+        <input
+          type="number"
+          id="elastase-num-samples"
+          name="numSamples"
+          class="elastase-input"
+          min="1"
+          max="1000"
+          step="1"
+          inputmode="numeric"
+          placeholder={fieldPlaceholder}
+          required
+        />
+      </label>
+
+      <button type="submit" class="elastase-btn" id="elastase-submit">{submitLabel}</button>
+
+      <output class="elastase-output" id="elastase-output" aria-live="polite"></output>
+    </form>
+  </section>
+</BaseLayout>
+
+<style>
+  .elastase-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    max-width: 22rem;
+  }
+  .elastase-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--color-concrete-600);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  .elastase-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: white;
+    border: 1px solid var(--color-concrete-200);
+    border-radius: 6px;
+    font-size: 1rem;
+    color: var(--color-concrete-900);
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .elastase-input:focus {
+    outline: none;
+    border-color: var(--color-park-green);
+    box-shadow: 0 0 0 3px rgba(12, 94, 59, 0.12);
+  }
+  .elastase-btn {
+    align-self: flex-start;
+    margin-top: 0.4rem;
+    padding: 0.65rem 1.5rem;
+    background: var(--color-concrete-900);
+    color: var(--color-concrete-50);
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 160ms ease, transform 160ms ease, opacity 160ms ease;
+  }
+  .elastase-btn:hover {
+    background: var(--color-park-green);
+    transform: translateY(-1px);
+  }
+  .elastase-btn:active {
+    transform: translateY(0);
+  }
+  .elastase-btn:disabled {
+    opacity: 0.55;
+    cursor: progress;
+    transform: none;
+  }
+  .elastase-output {
+    align-self: flex-start;
+    font-size: 0.85rem;
+    color: var(--color-concrete-600);
+  }
+  .elastase-output.is-error {
+    padding: 0.7rem 1.1rem;
+    color: #8a2a24;
+    border: 1px solid #e9c8c4;
+    background: #faf1f0;
+    border-radius: 6px;
+    font-size: 0.85rem;
+  }
+</style>
+
+<script>
+  const form = document.getElementById('elastase-form') as HTMLFormElement | null;
+  const input = document.getElementById('elastase-num-samples') as HTMLInputElement | null;
+  const submitBtn = document.getElementById('elastase-submit') as HTMLButtonElement | null;
+  const output = document.getElementById('elastase-output') as HTMLOutputElement | null;
+
+  if (form && input && submitBtn && output) {
+    const loadingLabel = form.dataset.loadingLabel ?? 'Generating…';
+    const errEmpty = form.dataset.errorEmpty ?? 'Please enter a valid number of samples.';
+    const errGeneric = form.dataset.errorGeneric ?? 'Something went wrong.';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      output.classList.remove('is-error');
+
+      const numSamples = Math.trunc(Number(input.value));
+      if (!Number.isFinite(numSamples) || numSamples <= 0) {
+        output.classList.add('is-error');
+        output.textContent = errEmpty;
+        return;
+      }
+
+      submitBtn.disabled = true;
+      output.classList.remove('is-error');
+      output.textContent = loadingLabel;
+
+      try {
+        const resp = await fetch('/api/elastase-assay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ num_samples: numSamples }),
+        });
+
+        if (!resp.ok) {
+          let message = errGeneric;
+          try {
+            const data = await resp.json();
+            if (data?.message) message = data.message;
+          } catch {
+            // ignore — keep generic message
+          }
+          output.classList.add('is-error');
+          output.textContent = message;
+          return;
+        }
+
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Elastase_Assay_Report_${numSamples}_samples.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        output.textContent = '';
+      } catch (err) {
+        output.classList.add('is-error');
+        output.textContent = errGeneric;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  }
+</script>

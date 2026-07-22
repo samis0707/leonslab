@@ -5,9 +5,14 @@
       "memory": 1024,
       "maxDuration": 30,
       "includeFiles": "lib/primer_design/fonts/*.ttf"
+    },
+    "api/elastase-assay/handler.py": {
+      "memory": 512,
+      "maxDuration": 15
     }
   },
   "rewrites": [
-    { "source": "/api/design", "destination": "/api/design/handler" }
+    { "source": "/api/design", "destination": "/api/design/handler" },
+    { "source": "/api/elastase-assay", "destination": "/api/elastase-assay/handler" }
   ]
 }
