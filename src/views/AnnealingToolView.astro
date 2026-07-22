@@ -1,227 +1,673 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getLangFromUrl, useTranslations } from '../i18n/utils';
-
-const lang = getLangFromUrl(Astro.url);
-const t = useTranslations(lang);
-
-const title = t('page.labSolutions.title');
-const subtitle = t('page.labSolutions.subtitle');
-const runLabel = t('anneal.run');
-const emptyLabel = t('anneal.empty');
-const errorEmpty = t('anneal.error.empty');
-const errorSeq = t('anneal.error.sequence');
 ---
-<BaseLayout title={title} description={subtitle}>
-  <section class="anneal-page max-w-3xl mx-auto px-6 pt-20 md:pt-28 pb-32">
-    <p class="eyebrow">Tools</p>
-    <h1 class="display text-[clamp(2rem,4.5vw,3.25rem)] mt-4 mb-4 text-[color:var(--color-concrete-900)]">
-      {title}
-    </h1>
-    <p class="text-base text-[color:var(--color-concrete-600)] leading-relaxed mb-10 max-w-xl">
-      {subtitle}
-    </p>
 
-    <form
-      class="anneal-form"
-      id="anneal-form"
-      autocomplete="off"
-      novalidate
-      data-error-empty={errorEmpty}
-      data-error-seq={errorSeq}
-    >
-      {[1, 2, 3, 4].map((i) => (
-        <input
-          type="text"
-          name={`primer${i}`}
-          class="anneal-input"
-          placeholder={`Primer ${i}`}
-          spellcheck={false}
-          autocapitalize="off"
-          autocomplete="off"
-          inputmode="latin"
-        />
-      ))}
+<BaseLayout title="Sherlock" description="Your web tool to analyse DNA sequences to find the perfect primer region">
 
-      <button type="submit" class="anneal-btn">{runLabel}</button>
+<style is:global>
+  @import url('https://fonts.googleapis.com/css2?family=Rye&display=swap');
 
-      <output class="anneal-output" id="anneal-output" aria-live="polite">{emptyLabel}</output>
-    </form>
-  </section>
-</BaseLayout>
-
-<style>
-  .anneal-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.7rem;
-    max-width: 28rem;
+  /* ─── Jungle palette ─────────────────────────────────────── */
+  :root {
+    --j-page-bg: #0e2212;
+    --j-border:  #4a9652;
+    --j-bright:  #6acc72;
+    --j-light:   #9fdb9f;
+    --j-pale:    #dff2df;
+    --j-cream:   #f4faf1;
+    --j-muted:   #a8d8a8;
   }
-  .anneal-input {
+
+  /* ─── Page wrapper ───────────────────────────────────────── */
+  .j-page {
+    position: relative;
+    min-height: calc(100vh - 56px);
+    background:
+      radial-gradient(ellipse 65% 50% at 12% 8%,  rgba(45,105,52,0.55) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 88% 82%, rgba(28,68,34,0.6)  0%, transparent 60%),
+      radial-gradient(ellipse 35% 30% at 55% 45%, rgba(22,52,26,0.35) 0%, transparent 55%),
+      var(--j-page-bg);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    padding: 3.5rem 1.5rem 6rem;
+  }
+
+  .j-leaf {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  /* ─── Container ──────────────────────────────────────────── */
+  .j-container {
+    position: relative;
+    z-index: 1;
     width: 100%;
-    padding: 0.75rem 1rem;
-    background: white;
-    border: 1px solid var(--color-concrete-200);
-    border-radius: 6px;
+    max-width: 640px;
+  }
+
+  /* ─── Header ─────────────────────────────────────────────── */
+  .j-eyebrow {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--j-bright);
+    margin-bottom: 0.6rem;
+  }
+
+  .j-title {
+    font-family: 'Rye', Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(3rem, 8vw, 5rem);
+    letter-spacing: 0.02em;
+    line-height: 1.0;
+    color: var(--j-cream);
+    margin: 0 0 0.55rem;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
+
+  .j-subtitle {
+    font-size: 0.82rem;
+    color: rgba(159,219,159,0.7);
+    font-style: italic;
+    letter-spacing: 0.02em;
+    margin: 0 0 1.1rem;
+    line-height: 1.5;
+  }
+
+  .j-formula {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    color: var(--j-pale);
+    padding: 0.55rem 1.1rem;
+    background: rgba(74,150,82,0.18);
+    border-left: 3px solid var(--j-bright);
+    border-radius: 0 5px 5px 0;
+    margin-bottom: 2rem;
+  }
+
+  /* ─── Card ────────────────────────────────────────────────── */
+  .j-card {
+    background: rgba(12,28,14,0.7);
+    border: 1px solid rgba(74,150,82,0.35);
+    border-radius: 14px;
+    padding: 1.2rem;
+    backdrop-filter: blur(6px);
+  }
+
+  /* ─── Sequence input ─────────────────────────────────────── */
+  .seq-input {
+    width: 100%;
+    padding: 0.85rem 1.1rem;
+    background: rgba(220,255,220,0.1);
+    border: 2px solid #6ed475;
+    border-radius: 10px;
     font-family: var(--font-mono);
     font-size: 0.95rem;
-    letter-spacing: 0.04em;
-    color: var(--color-concrete-900);
+    letter-spacing: 0.06em;
+    color: #edfced;
     text-transform: uppercase;
-    transition: border-color 180ms ease, box-shadow 180ms ease;
-  }
-  .anneal-input::placeholder {
-    color: var(--color-concrete-500);
-    opacity: 0.5;
-    font-family: var(--font-sans);
-    letter-spacing: normal;
-    text-transform: none;
-  }
-  .anneal-input:focus {
     outline: none;
-    border-color: var(--color-park-green);
-    box-shadow: 0 0 0 3px rgba(12, 94, 59, 0.12);
+    transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    margin-bottom: 0.85rem;
+    display: block;
   }
-  .anneal-btn {
-    align-self: flex-start;
-    margin-top: 0.4rem;
-    padding: 0.65rem 1.5rem;
-    background: var(--color-concrete-900);
-    color: var(--color-concrete-50);
-    border: none;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    cursor: pointer;
-    transition: background 160ms ease, transform 160ms ease;
+
+  .seq-input::placeholder {
+    color: #7ec882;
+    font-family: var(--font-sans);
+    text-transform: none;
+    letter-spacing: 0.01em;
+    font-size: 0.88rem;
+    opacity: 1;
   }
-  .anneal-btn:hover {
-    background: var(--color-park-green);
-    transform: translateY(-1px);
+
+  .seq-input:focus {
+    border-color: #90e896;
+    background: rgba(220,255,220,0.14);
+    box-shadow: 0 0 0 3px rgba(93,200,102,0.2);
   }
-  .anneal-btn:active {
-    transform: translateY(0);
+
+  /* ─── Sequence character display (select mode) ───────────── */
+  .seq-chars {
+    display: none;
+    flex-direction: column;
+    padding: 0.9rem 1.1rem 0.5rem;
+    background: rgba(220,255,220,0.08);
+    border: 2px solid #6ed475;
+    border-radius: 10px;
+    margin-bottom: 0.85rem;
+    cursor: crosshair;
+    -webkit-user-select: none;
+    user-select: none;
+    gap: 0;
   }
-  .anneal-output {
-    align-self: flex-start;
-    margin-top: 0.25rem;
-    padding: 0.7rem 1.1rem;
-    min-width: 9rem;
-    background: var(--color-concrete-50);
-    border: 1px solid var(--color-concrete-200);
-    border-radius: 6px;
+
+  .seq-chars.is-active {
+    display: flex;
+    border-color: #90e896;
+    box-shadow: 0 0 0 3px rgba(93,200,102,0.18);
+  }
+
+  /* ─── One row: 10 chars + ruler ──────────────────────────── */
+  .seq-line {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .seq-line-bases {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ─── Individual character ───────────────────────────────── */
+  .sc {
+    display: inline-block;
+    flex: 1;
+    text-align: center;
     font-family: var(--font-mono);
     font-size: 1rem;
-    color: var(--color-concrete-800);
-    text-align: center;
+    letter-spacing: 0;
+    line-height: 1.9;
+    color: #c8ecc8;
+    border-radius: 0;
+    transition: background 35ms ease;
   }
-  .anneal-output.is-error {
-    color: #8a2a24;
-    border-color: #e9c8c4;
-    background: #faf1f0;
-    font-family: var(--font-sans);
-    font-size: 0.85rem;
-    text-align: left;
+
+  .sc:hover:not(.selected) {
+    background: rgba(106,204,114,0.12);
+  }
+
+  /* Smooth continuous highlight — no per-char border-radius */
+  .sc.selected {
+    background: rgba(160,18,18,0.62);
+    color: #ffe2e2;
+  }
+
+  /* Round only the outer edges of the selection */
+  .sc.sel-l {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+  }
+  .sc.sel-r {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+  }
+
+  /* ─── Benchling-style ruler under each row ───────────────── */
+  .seq-ruler {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    border-top: 1px solid rgba(106,204,114,0.18);
+    padding-top: 0.18rem;
+    padding-bottom: 0.45rem;
+    /* tick mark at right end */
+  }
+
+  .seq-ruler::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    right: 0;
+    width: 1px;
+    height: 4px;
+    background: rgba(106,204,114,0.45);
+  }
+
+  .ruler-num {
+    font-family: var(--font-mono);
+    font-size: 0.57rem;
+    color: rgba(106,204,114,0.45);
+    line-height: 1;
+    padding-right: 0.05em;
+  }
+
+  /* ─── Tool footer ────────────────────────────────────────── */
+  .tool-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+  }
+
+  .select-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.58rem 1.05rem;
+    background: #2a6430;
+    border: 2px solid #6ed475;
+    border-radius: 9px;
+    color: #d2f5d2;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 180ms ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+    line-height: 1;
+  }
+
+  .select-btn:hover:not(:disabled) {
+    background: #3a8042;
+    border-color: #90e896;
+    color: #f0fff0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  }
+
+  .select-btn:active:not(:disabled) { transform: translateY(0); }
+
+  .select-btn:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+  }
+
+  .select-btn.is-back {
+    background: #1e3a24;
+    border-color: #4a7850;
+    color: #9fdb9f;
+    box-shadow: none;
+  }
+
+  .select-btn.is-back:hover {
+    background: #283e2e;
+    border-color: #6aaa72;
+    color: #c8ecc8;
+  }
+
+  .select-hint {
+    font-size: 0.72rem;
+    color: rgba(168,216,168,0.65);
+    font-style: italic;
+    letter-spacing: 0.02em;
+  }
+
+  /* ─── Ta result ──────────────────────────────────────────── */
+  .tm-display {
+    margin-top: 1rem;
+    background: rgba(16,40,20,0.82);
+    border: 1px solid rgba(74,150,82,0.4);
+    border-radius: 13px;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    animation: tmFadeIn 220ms ease;
+  }
+
+  @keyframes tmFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .tm-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.3rem;
+  }
+
+  .tm-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+    min-width: 0;
+  }
+
+  .tm-label-row {
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--j-bright);
+  }
+
+  .tm-range-info {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--j-muted);
+    letter-spacing: 0.04em;
+  }
+
+  .tm-seq-preview {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: #ff8080;
+    letter-spacing: 0.07em;
+    font-weight: 700;
+    word-break: break-all;
+  }
+
+  .tm-value {
+    font-family: 'Rye', Georgia, serif;
+    font-size: 2.4rem;
+    font-weight: 400;
+    color: #85e88a;
+    letter-spacing: 0.02em;
+    text-shadow: 0 0 24px rgba(106,204,114,0.4);
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 </style>
 
+<div class="j-page">
+
+  <!-- Decorative leaves -->
+  <svg class="j-leaf" style="top:-55px;right:-45px;width:280px;opacity:0.22;" viewBox="0 0 280 460" fill="none">
+    <path d="M140 12 C215 55 252 168 230 325 C214 408 170 445 140 445 C110 445 66 408 50 325 C28 168 65 55 140 12Z" fill="#2d6a33"/>
+    <path d="M140 12 L140 445" stroke="#4aaa4a" stroke-width="1.5" opacity="0.5"/>
+    <path d="M140 90 C172 122 186 155 175 198" stroke="#3a8a3a" stroke-width="1" opacity="0.4"/>
+    <path d="M140 150 C108 182 94 215 104 258" stroke="#3a8a3a" stroke-width="1" opacity="0.4"/>
+    <path d="M140 230 C170 260 180 292 170 330" stroke="#3a8a3a" stroke-width="1" opacity="0.3"/>
+    <path d="M140 290 C112 318 104 348 112 382" stroke="#3a8a3a" stroke-width="1" opacity="0.3"/>
+  </svg>
+  <svg class="j-leaf" style="bottom:-70px;left:-55px;width:260px;opacity:0.22;transform:rotate(22deg);" viewBox="0 0 260 400" fill="none">
+    <path d="M130 14 C198 52 226 148 205 288 C190 368 70 368 55 288 C34 148 62 52 130 14Z" fill="#1c5e28"/>
+    <path d="M130 14 L130 375" stroke="#2d8a35" stroke-width="1.5" opacity="0.4"/>
+    <path d="M130 80 C158 108 168 138 158 172" stroke="#268a2e" stroke-width="1" opacity="0.35"/>
+    <path d="M130 140 C102 168 94 198 106 232" stroke="#268a2e" stroke-width="1" opacity="0.35"/>
+  </svg>
+  <svg class="j-leaf" style="top:28%;left:-30px;width:158px;opacity:0.18;transform:rotate(-18deg);" viewBox="0 0 158 275" fill="none">
+    <path d="M79 10 C132 42 152 122 126 222 C110 258 48 258 32 222 C6 122 26 42 79 10Z" fill="#265e2c"/>
+    <path d="M79 10 L79 262" stroke="#3a8a3a" stroke-width="1" opacity="0.45"/>
+  </svg>
+  <svg class="j-leaf" style="top:8%;left:6%;width:95px;opacity:0.17;transform:rotate(-8deg);" viewBox="0 0 95 170" fill="none">
+    <path d="M47 8 C82 28 96 80 80 142 C68 168 26 168 14 142 C-2 80 12 28 47 8Z" fill="#2a7032"/>
+    <path d="M47 8 L47 165" stroke="#3a9040" stroke-width="0.8" opacity="0.4"/>
+  </svg>
+  <svg class="j-leaf" style="top:6%;right:10%;width:115px;opacity:0.16;transform:rotate(20deg);" viewBox="0 0 115 195" fill="none">
+    <path d="M57 8 C98 32 114 90 95 162 C82 190 32 190 19 162 C0 90 16 32 57 8Z" fill="#286e30"/>
+  </svg>
+  <svg class="j-leaf" style="bottom:3%;right:-18px;width:215px;opacity:0.2;transform:rotate(-14deg);" viewBox="0 0 215 235" fill="none">
+    <path d="M107 12 C168 36 198 96 174 158 L158 182 C136 212 79 212 57 182 L41 158 C17 96 46 36 107 12Z" fill="#1e5a25"/>
+    <ellipse cx="84" cy="112" rx="15" ry="10" fill="#0a1e0d"/>
+    <ellipse cx="130" cy="90" rx="12" ry="9" fill="#0a1e0d"/>
+    <path d="M107 12 L107 218" stroke="#2d7a33" stroke-width="1.2" opacity="0.35"/>
+  </svg>
+  <svg class="j-leaf" style="top:50%;right:0%;width:100px;opacity:0.16;transform:rotate(28deg);" viewBox="0 0 100 175" fill="none">
+    <path d="M50 8 C86 28 100 78 84 138 C72 162 28 162 16 138 C0 78 14 28 50 8Z" fill="#2d6a33"/>
+    <path d="M50 8 L50 168" stroke="#4aaa4a" stroke-width="0.8" opacity="0.4"/>
+  </svg>
+  <svg class="j-leaf" style="bottom:12%;left:4%;width:80px;opacity:0.15;transform:rotate(10deg);" viewBox="0 0 80 145" fill="none">
+    <path d="M40 6 C70 22 80 65 66 112 C56 134 24 134 14 112 C0 65 10 22 40 6Z" fill="#245c2b"/>
+  </svg>
+  <svg class="j-leaf" style="top:2%;left:38%;width:70px;opacity:0.13;transform:rotate(-5deg);" viewBox="0 0 70 130" fill="none">
+    <path d="M35 5 C62 20 70 57 58 98 C50 118 20 118 12 98 C0 57 8 20 35 5Z" fill="#2d7033"/>
+  </svg>
+  <svg class="j-leaf" style="top:35%;right:-10px;width:130px;opacity:0.15;transform:rotate(5deg);" viewBox="0 0 260 120" fill="none">
+    <path d="M10 60 C50 20 130 5 250 15 C240 45 200 75 130 85 C80 92 30 85 10 60Z" fill="#1e5228"/>
+    <path d="M10 60 C80 62 160 58 250 15" stroke="#2d7a33" stroke-width="0.8" opacity="0.4"/>
+  </svg>
+
+  <!-- Main content -->
+  <div class="j-container">
+
+    <header>
+      <span class="j-eyebrow">DNA · Analysis</span>
+      <h1 class="j-title">Sherlock</h1>
+      <p class="j-subtitle">your web tool to analyse DNA sequences to find the perfect primer region</p>
+      <p class="j-formula">T<sub>a</sub> = 4(G+C) + 2(A+T) &minus; 5</p>
+    </header>
+
+    <div class="j-card">
+      <input
+        type="text"
+        id="seq-input"
+        class="seq-input"
+        placeholder="Nucleotidsequenz eingeben (A, T, G, C) …"
+        autocomplete="off"
+        spellcheck="false"
+        autocapitalize="off"
+        inputmode="latin"
+      >
+
+      <div id="seq-chars" class="seq-chars" aria-hidden="true"></div>
+
+      <div class="tool-footer">
+        <button id="select-btn" class="select-btn" type="button" disabled>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+            <rect x="1" y="1" width="11" height="11" rx="2.5" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M4.5 6.5h4M6.5 4.5v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          Region auswählen
+        </button>
+        <span id="select-hint" class="select-hint"></span>
+      </div>
+    </div>
+
+    <div id="tm-display" class="tm-display" hidden>
+      <div class="tm-inner">
+        <div class="tm-left">
+          <div class="tm-label-row">Annealing-Temperatur</div>
+          <div id="tm-range" class="tm-range-info"></div>
+          <div id="tm-seq"   class="tm-seq-preview"></div>
+        </div>
+        <div id="tm-value" class="tm-value"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <script>
-  // SantaLucia 1998 unified nearest-neighbor parameters.
-  // ΔH in kcal/mol, ΔS in cal/(mol·K). Each pair lists the 5'→3' top strand;
-  // its reverse complement shares the same values.
-  const NN: Record<string, [number, number]> = {
-    AA: [-7.9, -22.2], TT: [-7.9, -22.2],
-    AT: [-7.2, -20.4],
-    TA: [-7.2, -21.3],
-    CA: [-8.5, -22.7], TG: [-8.5, -22.7],
-    GT: [-8.4, -22.4], AC: [-8.4, -22.4],
-    CT: [-7.8, -21.0], AG: [-7.8, -21.0],
-    GA: [-8.2, -22.2], TC: [-8.2, -22.2],
-    CG: [-10.6, -27.2],
-    GC: [-9.8, -24.4],
-    GG: [-8.0, -19.9], CC: [-8.0, -19.9],
-  };
+  // ─── Columns: recalculated from container width ──────────────
+  let COLS = 20;
 
-  const R = 1.987;       // gas constant, cal/(mol·K)
-  const Ct = 0.25e-6;    // total strand concentration, 250 nM
-  const Na = 0.05;       // monovalent salt, 50 mM (standard PCR buffer)
-
-  function reverseComplement(seq: string): string {
-    const comp: Record<string, string> = { A: 'T', T: 'A', G: 'C', C: 'G' };
-    let out = '';
-    for (let i = seq.length - 1; i >= 0; i--) out += comp[seq[i]];
-    return out;
+  function calcCols(): number {
+    const style  = getComputedStyle(seqChars);
+    const padH   = (parseFloat(style.paddingLeft) || 0)
+                 + (parseFloat(style.paddingRight) || 0);
+    const availW = seqChars.clientWidth - padH;
+    if (availW <= 0) return 20;
+    // Target ~20 px per base — readable but dense
+    const raw = Math.floor(availW / 20);
+    // Round to nearest 5 so ruler numbers stay clean
+    return Math.min(60, Math.max(10, Math.round(raw / 5) * 5));
   }
 
-  function tmSantaLucia(seq: string): number | null {
-    const s = seq.toUpperCase().replace(/\s+/g, '');
-    if (!/^[ACGT]+$/.test(s) || s.length < 2) return null;
+  // ─── State ───────────────────────────────────────────────────
+  let sequence     = '';
+  let selStart: number | null = null;
+  let selEnd:   number | null = null;
+  let isSelectMode = false;
+  let isDragging   = false;
+  let dragAnchor   = 0;
+  let lastIdx      = 0;
 
-    let dH = 0, dS = 0;
-    for (let i = 0; i < s.length - 1; i++) {
-      const nn = NN[s.slice(i, i + 2)];
-      if (!nn) return null;
-      dH += nn[0];
-      dS += nn[1];
-    }
+  // ─── Elements ────────────────────────────────────────────────
+  const seqInput   = document.getElementById('seq-input')   as HTMLInputElement;
+  const seqChars   = document.getElementById('seq-chars')   as HTMLDivElement;
+  const selectBtn  = document.getElementById('select-btn')  as HTMLButtonElement;
+  const selectHint = document.getElementById('select-hint') as HTMLSpanElement;
+  const tmDisplay  = document.getElementById('tm-display')  as HTMLDivElement;
+  const tmRange    = document.getElementById('tm-range')    as HTMLDivElement;
+  const tmSeq      = document.getElementById('tm-seq')      as HTMLDivElement;
+  const tmValue    = document.getElementById('tm-value')    as HTMLDivElement;
 
-    // Initiation terms for the two terminal base pairs.
-    const initEnd = (b: string): [number, number] =>
-      b === 'G' || b === 'C' ? [0.1, -2.8] : [2.3, 4.1];
-    const i5 = initEnd(s[0]);
-    const i3 = initEnd(s[s.length - 1]);
-    dH += i5[0] + i3[0];
-    dS += i5[1] + i3[1];
-
-    // Self-complementary correction.
-    const selfComp = s === reverseComplement(s);
-    if (selfComp) dS += -1.4;
-    const x = selfComp ? 1 : 4;
-
-    // Salt correction (SantaLucia 1998).
-    const dSsalt = dS + 0.368 * (s.length - 1) * Math.log(Na);
-
-    const tmK = (dH * 1000) / (dSsalt + R * Math.log(Ct / x));
-    return tmK - 273.15;
+  // ─── Wallace formula → annealing temperature ─────────────────
+  function taCalc(seq: string): number {
+    const s = seq.toUpperCase().replace(/[^ACGT]/g, '');
+    const g = (s.match(/G/g) ?? []).length;
+    const c = (s.match(/C/g) ?? []).length;
+    const a = (s.match(/A/g) ?? []).length;
+    const t = (s.match(/T/g) ?? []).length;
+    return 4 * (g + c) + 2 * (a + t) - 5;
   }
 
-  const form = document.getElementById('anneal-form') as HTMLFormElement | null;
-  const output = document.getElementById('anneal-output') as HTMLOutputElement | null;
+  // ─── Hit-test: which char is under the pointer? ───────────────
+  function charIdxAt(x: number, y: number): number | null {
+    const el = document.elementFromPoint(x, y);
+    if (!el) return null;
+    const span = el.closest('[data-i]') as HTMLElement | null;
+    if (!span || !seqChars.contains(span)) return null;
+    return parseInt(span.dataset.i!);
+  }
 
-  if (form && output) {
-    const errEmpty = form.dataset.errorEmpty ?? 'Enter at least one primer.';
-    const errSeq = form.dataset.errorSeq ?? 'Invalid sequence.';
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      output.classList.remove('is-error');
-
-      const data = new FormData(form);
-      const sequences = ['primer1', 'primer2', 'primer3', 'primer4']
-        .map((k) => String(data.get(k) ?? '').trim())
-        .filter((v) => v.length > 0);
-
-      if (sequences.length === 0) {
-        output.classList.add('is-error');
-        output.textContent = errEmpty;
-        return;
-      }
-
-      const tms: number[] = [];
-      for (const s of sequences) {
-        const tm = tmSantaLucia(s);
-        if (tm === null) {
-          output.classList.add('is-error');
-          output.textContent = errSeq;
-          return;
-        }
-        tms.push(tm);
-      }
-
-      // Common annealing temperature: 5 °C below the lowest primer Tm.
-      const ta = Math.min(...tms) - 5;
-      output.textContent = `${ta.toFixed(1)} °C`;
+  // ─── Apply continuous selection highlight ─────────────────────
+  // sel-l = left-rounded edge  (selection start OR start of row within selection)
+  // sel-r = right-rounded edge (selection end   OR end of row within selection)
+  function applySelection(a: number, b: number) {
+    const lo = Math.min(a, b);
+    const hi = Math.max(a, b);
+    selStart = lo;
+    selEnd   = hi;
+    seqChars.querySelectorAll<HTMLElement>('.sc').forEach((el) => {
+      const i = parseInt(el.dataset.i!);
+      const inSel = i >= lo && i <= hi;
+      el.classList.toggle('selected', inSel);
+      el.classList.toggle('sel-l', inSel && (i === lo || i % COLS === 0));
+      el.classList.toggle('sel-r', inSel && (i === hi || i % COLS === COLS - 1));
     });
   }
+
+  // ─── Show Ta result ───────────────────────────────────────────
+  function showTa() {
+    if (selStart === null || selEnd === null) return;
+    const sel = sequence.slice(selStart, selEnd + 1);
+    if (!sel) return;
+    const ta = taCalc(sel);
+    tmRange.textContent = `[${selStart + 1}–${selEnd + 1}] · ${sel.length} nt`;
+    tmSeq.textContent   = sel.length > 32 ? sel.slice(0, 16) + '…' + sel.slice(-8) : sel;
+    tmValue.textContent = `${ta} °C`;
+    tmDisplay.hidden = false;
+  }
+
+  // ─── Build row-based char display ─────────────────────────────
+  function buildCharDisplay() {
+    seqChars.innerHTML = '';
+    const lo = selStart ?? -1;
+    const hi = selEnd   ?? -1;
+
+    for (let rowStart = 0; rowStart < sequence.length; rowStart += COLS) {
+      const rowEnd = Math.min(rowStart + COLS, sequence.length);
+
+      const line = document.createElement('div');
+      line.className = 'seq-line';
+
+      // ── Bases ──
+      const bases = document.createElement('div');
+      bases.className = 'seq-line-bases';
+
+      for (let i = rowStart; i < rowEnd; i++) {
+        const span = document.createElement('span');
+        span.className = 'sc';
+        span.dataset.i = String(i);
+        span.textContent = sequence[i];
+
+        const inSel = i >= lo && i <= hi;
+        if (inSel) {
+          span.classList.add('selected');
+          if (i === lo || i % COLS === 0)        span.classList.add('sel-l');
+          if (i === hi || i % COLS === COLS - 1) span.classList.add('sel-r');
+        }
+        bases.appendChild(span);
+      }
+
+      // ── Ruler ──
+      const ruler = document.createElement('div');
+      ruler.className = 'seq-ruler';
+      ruler.setAttribute('aria-hidden', 'true');
+
+      const rnum = document.createElement('span');
+      rnum.className = 'ruler-num';
+      rnum.textContent = String(rowEnd);
+      ruler.appendChild(rnum);
+
+      line.appendChild(bases);
+      line.appendChild(ruler);
+      seqChars.appendChild(line);
+    }
+  }
+
+  // ─── Mode switching ───────────────────────────────────────────
+  function enterSelectMode() {
+    sequence = seqInput.value.toUpperCase().replace(/[^ACGT]/g, '');
+    if (!sequence) return;
+    seqInput.style.display = 'none';
+    seqChars.classList.add('is-active');  // visible first → clientWidth is valid
+    COLS = calcCols();
+    buildCharDisplay();
+    selectBtn.innerHTML =
+      `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+         <path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.6"
+               stroke-linecap="round" stroke-linejoin="round"/>
+       </svg>Bearbeiten`;
+    selectBtn.classList.add('is-back');
+    selectHint.textContent = 'Select the sequence part you want to analyse';
+    isSelectMode = true;
+  }
+
+  function exitSelectMode() {
+    seqInput.style.display = '';
+    seqChars.classList.remove('is-active');
+    selectBtn.innerHTML =
+      `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+         <rect x="1" y="1" width="11" height="11" rx="2.5" stroke="currentColor" stroke-width="1.6"/>
+         <path d="M4.5 6.5h4M6.5 4.5v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+       </svg>Region auswählen`;
+    selectBtn.classList.remove('is-back');
+    selectHint.textContent = '';
+    isSelectMode = false;
+    seqInput.focus();
+  }
+
+  // ─── Input ────────────────────────────────────────────────────
+  seqInput.addEventListener('input', () => {
+    const clean = seqInput.value.replace(/[^ACGTacgt]/g, '');
+    selectBtn.disabled = clean.length === 0;
+    selStart = null;
+    selEnd   = null;
+    tmDisplay.hidden = true;
+  });
+
+  selectBtn.addEventListener('click', () => {
+    if (isSelectMode) exitSelectMode();
+    else enterSelectMode();
+  });
+
+  // ─── Drag selection ───────────────────────────────────────────
+  seqChars.addEventListener('mousedown', (e) => {
+    const idx = charIdxAt(e.clientX, e.clientY);
+    if (idx === null) return;
+    e.preventDefault();
+    isDragging = true;
+    dragAnchor = idx;
+    lastIdx    = idx;
+    tmDisplay.hidden = true;
+    seqChars.querySelectorAll('.sc')
+      .forEach(el => el.classList.remove('selected', 'sel-l', 'sel-r'));
+    selStart = null;
+    selEnd   = null;
+    applySelection(idx, idx);
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const idx = charIdxAt(e.clientX, e.clientY);
+    if (idx !== null) { lastIdx = idx; applySelection(dragAnchor, idx); }
+    else applySelection(dragAnchor, lastIdx); // keep extending over pos-marks
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isDragging) { isDragging = false; showTa(); }
+  });
+
+  // Re-render on window resize while in select mode
+  window.addEventListener('resize', () => {
+    if (!isSelectMode) return;
+    const newCols = calcCols();
+    if (newCols !== COLS) {
+      COLS = newCols;
+      buildCharDisplay();
+      if (selStart !== null && selEnd !== null) showTa();
+    }
+  });
 </script>
+
+</BaseLayout>
