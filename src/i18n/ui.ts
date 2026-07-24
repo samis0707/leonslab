@@ -137,7 +137,7 @@ export const ui = {
     'page.ideas.subtitle': 'Neue Ideen brauchen Platz.',
 
     'page.elastase.title': 'Elastase Assay Calculator',
-    'page.elastase.subtitle': 'Berechnet alle Volumina für einen DQ-Elastin-Elastase-Assay und erstellt einen PDF-Report zum Download.',
+    'page.elastase.subtitle': 'Berechnet alle Volumina für einen DQ-Elastin-Elastase-Assay und erstellt einen PDF-Report zum Download. Standardkurve und eine Mediumskontrolle sind bereits in der Berechnung enthalten — weitere Kontrollen bitte als Proben angeben.',
     'elastase.field.numSamples': 'Anzahl der Proben',
     'elastase.field.placeholder': 'z. B. 10',
     'elastase.submit': 'Generieren',
@@ -275,7 +275,7 @@ export const ui = {
     'page.ideas.subtitle': 'New ideas need space.',
 
     'page.elastase.title': 'Elastase Assay Calculator',
-    'page.elastase.subtitle': 'Calculates all volumes for a DQ Elastin elastase assay and generates a downloadable PDF report.',
+    'page.elastase.subtitle': 'Calculates all volumes for a DQ Elastin elastase assay and generates a downloadable PDF report. The standard curve and one medium control are already included in the calculation — enter any additional controls as samples.',
     'elastase.field.numSamples': 'Number of samples',
     'elastase.field.placeholder': 'e.g. 10',
     'elastase.submit': 'Generate',

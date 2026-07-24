@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 # --- Konstanten ---
-SAMPLE_VOL_PER = 10
 SAMPLE_RB_PER = 590
 NEG_CTRL_LB_VOL = 10
 NEG_CTRL_RB = 590
@@ -22,7 +21,7 @@ NUM_NEG_CTRL = 1
 DQ_WORKING_PER_WELL = 50
 DQ_STOCK_PER_WORKING = 5
 DQ_RB_PER_WORKING = 45
-DQ_OVERSHOOT = 0.20
+DQ_OVERSHOOT_UL = 500  # konstanter Überschuss: 500 µl Working Solution (= 50 µl Stock Solution)
 
 RB_RESERVE = 0.10
 
@@ -43,7 +42,7 @@ def calculate_elastase_assay(num_samples: int) -> dict:
     rb_standard = rb_std_tube1 + rb_std_dilutions + rb_std_zero
 
     dq_working_needed = wells_total * DQ_WORKING_PER_WELL
-    dq_working_total = dq_working_needed * (1 + DQ_OVERSHOOT)
+    dq_working_total = dq_working_needed + DQ_OVERSHOOT_UL
     dq_stock_needed = dq_working_total * (DQ_STOCK_PER_WORKING / DQ_WORKING_PER_WELL)
     rb_dq_working = dq_working_total * (DQ_RB_PER_WORKING / DQ_WORKING_PER_WELL)
 
@@ -81,6 +80,5 @@ def calculate_elastase_assay(num_samples: int) -> dict:
         "dq_working_needed": dq_working_needed,
         "elastase_stock_needed": ELASTASE_STOCK_VOL,
         "lb_miller_needed": NEG_CTRL_LB_VOL,
-        "sample_total_vol": SAMPLE_VOL_PER * num_samples,
         "concentrations": concentrations,
     }

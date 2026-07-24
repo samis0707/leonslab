@@ -9,12 +9,17 @@ from fpdf import FPDF
 from .calculator import calculate_elastase_assay
 
 
-def _format_rb_total_ml(value_ul: float) -> str:
-    """Round a 1X RB total up to the nearest 0.5 ml for display, e.g. ``~17 ml``."""
-    rounded = math.ceil(value_ul / 500) * 0.5
-    if rounded == int(rounded):
-        return f"~{int(rounded)} ml"
-    return f"~{rounded:.1f} ml"
+def _round_up_to_500(value_ul: float) -> float:
+    """Round a µl volume up to the nearest 500 µl (0.5 ml)."""
+    return math.ceil(value_ul / 500) * 500
+
+
+def _format_ml(value_ul: float) -> str:
+    """Format a µl volume (already rounded to a practical value) as ml, e.g. ``~17 ml``."""
+    ml = value_ul / 1000
+    if ml == int(ml):
+        return f"~{int(ml)} ml"
+    return f"~{ml:.1f} ml"
 
 
 class ElastaseAssayPDF(FPDF):
@@ -54,17 +59,27 @@ def generate_pdf_report(data: dict, output_path: str) -> None:
     pdf.set_auto_page_break(auto=True, margin=10)
     pdf.add_page()
 
-    rb_total_display = _format_rb_total_ml(data["rb_1x_total"])
+    rb_total_rounded_ul = _round_up_to_500(data["rb_1x_total"])
+    rb_10x_rounded_ul = rb_total_rounded_ul / 10
+    h2o_rounded_ul = rb_total_rounded_ul - rb_10x_rounded_ul
+    rb_total_display = _format_ml(rb_total_rounded_ul)
 
     # 1. Gesamtübersicht Ausgangsvolumina
     pdf.section_title("1. Gesamtübersicht Ausgangsvolumina")
+    pdf.set_font("Helvetica", "", 9.5)
+    pdf.multi_cell(
+        0, 5.2,
+        f"Elastase-Assay mit {data['num_samples']} Proben (in Duplikaten), "
+        "inklusive Standardkurve und Negativkontrolle.",
+        new_x="LMARGIN", new_y="NEXT",
+    )
+    pdf.ln(0.8)
     pdf.set_left_margin(20)
-    pdf.kv_line("10X Reaction Buffer:", f"{data['rb_10x_needed']:.1f} µl")
-    pdf.kv_line("H2O (Aqua dest.):", f"{data['h2o_needed']:.1f} µl")
+    pdf.kv_line("10X Reaction Buffer:", f"{rb_10x_rounded_ul:.0f} µl")
+    pdf.kv_line("H2O (Aqua dest.):", f"{h2o_rounded_ul:.0f} µl")
     pdf.kv_line("DQ Elastin Stock Solution:", f"{data['dq_stock_needed']:.1f} µl")
     pdf.kv_line("Elastase Stock (für Standardkurve):", f"{data['elastase_stock_needed']} µl")
     pdf.kv_line("LB Miller Medium:", f"{data['lb_miller_needed']} µl")
-    pdf.kv_line("Proben (Überstände gesamt):", f"{data['sample_total_vol']} µl")
     pdf.set_left_margin(12)
     pdf.ln(1.5)
 
@@ -73,18 +88,18 @@ def generate_pdf_report(data: dict, output_path: str) -> None:
     pdf.set_left_margin(20)
     pdf.kv_line("Mischungsverhältnis:", "1 Teil 10X RB + 9 Teile H2O")
     pdf.kv_line("Benötigte Gesamtmenge 1X RB:", rb_total_display, bold=True)
-    pdf.kv_line("- davon 10X Reaction Buffer:", f"{data['rb_10x_needed']:.1f} µl")
-    pdf.kv_line("- davon H2O:", f"{data['h2o_needed']:.1f} µl")
+    pdf.kv_line("- davon 10X Reaction Buffer:", f"{rb_10x_rounded_ul:.0f} µl")
+    pdf.kv_line("- davon H2O:", f"{h2o_rounded_ul:.0f} µl")
     pdf.set_left_margin(12)
     pdf.ln(1.5)
 
     # 3. Herstellung DQ Elastin Working Solution
     pdf.section_title("3. Herstellung DQ Elastin Working Solution")
     pdf.set_left_margin(20)
-    pdf.kv_line("Mischungsverhältnis:", "1 Teil Stock + 9 Teilen 1X RB (5 µl + 45 µl pro 50 µl)")
+    pdf.kv_line("Mischungsverhältnis:", "1 Teil Stock + 9 Teile 1X RB (5 µl + 45 µl pro 50 µl)")
     pdf.kv_line("Benötigte Wells gesamt:", f"{data['wells_total']}")
     pdf.kv_line("Pipettierbedarf (50 µl/Well):", f"{data['dq_working_needed']:.0f} µl")
-    pdf.kv_line("Anzusetzende Menge (+20% Overshoot):", f"{data['dq_working_total']:.1f} µl", bold=True)
+    pdf.kv_line("Anzusetzende Menge (+500 µl Überschuss):", f"{data['dq_working_total']:.1f} µl", bold=True)
     pdf.kv_line("- davon DQ Elastin Stock:", f"{data['dq_stock_needed']:.1f} µl")
     pdf.kv_line("- davon 1X Reaction Buffer:", f"{data['rb_dq_working']:.1f} µl")
     pdf.set_left_margin(12)
