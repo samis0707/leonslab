@@ -167,7 +167,7 @@
     border-color: var(--color-concrete-400);
   }
 
-  /* Long-form legal prose used on Impressum and Datenschutz pages. */
+  /* Long-form legal prose used on the Datenschutz page. */
   .legal-prose {
     color: var(--color-concrete-700);
     font-size: 0.95rem;

@@ -51,7 +51,6 @@ export const ui = {
     'footer.contactForm': 'Kontaktformular',
     'footer.colophon': 'Gebaut mit Astro · System-Schrift',
     'footer.legal': 'Rechtliches',
-    'footer.imprint': 'Impressum',
     'footer.privacy': 'Datenschutz',
 
     'contact.eyebrow': 'Kontakt',
@@ -189,7 +188,6 @@ export const ui = {
     'footer.contactForm': 'Contact form',
     'footer.colophon': 'Built with Astro · System type',
     'footer.legal': 'Legal',
-    'footer.imprint': 'Imprint',
     'footer.privacy': 'Privacy',
 
     'contact.eyebrow': 'Contact',
