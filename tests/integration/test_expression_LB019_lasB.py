@@ -39,12 +39,16 @@ def request_obj() -> DesignRequest:
     )
 
 
-# Expected: lasB CDS is 1497 nt across all isolates in the panel.
-# Full PCR amplicon = p1.tail (29) + coding_seq (1497) + RC(p2.tail) (15)
-# = 1541 bp. Final plasmid uses the site_partial_AAGCT convention which
-# collapses 26 nt across the two assembly junctions (15 + 15 - 4 nt of
-# shared AAGCT recognition), so length = 5148 + 1541 - 26 = 6663 bp.
-EXPECTED_AMPLICON_BP = 1541
+# LB019 lasB now resolves to the fixed, wet-lab-validated pBBR1MCS-2
+# complementation primer set (lib/primer_design/fixed_primers.py) since its
+# genomic bodies match this isolate exactly. That primer set's P1 anneals
+# 8 nt further upstream (native context between the RBS and ATG, carried in
+# the primer body rather than a synthetic spacer) and uses a 6-nt RBS-only
+# tail, so the full PCR amplicon is 10 bp longer than the dynamically
+# designed one: p1.tail (26) + native_anneal_segment (1505) + RC(p2.tail)
+# (20) = 1551 bp. Final plasmid length is unaffected (6663 bp) because the
+# fixed primer's shorter vector-arm tail exactly offsets the longer amplicon.
+EXPECTED_AMPLICON_BP = 1551
 EXPECTED_FINAL_PLASMID_BP = 6663
 EXPECTED_PROTEIN_TAIL = "RAFSTVGVTCPSAL*"
 

@@ -1,0 +1,33 @@
+{
+  "_comment": "Wet-lab-validated primer sets that must be preferred over a fresh computational design whenever their genomic (isolate-annealing) body matches the requested isolate's curated sequence. Keyed by 'gene|application' (application implies vector: deletion -> pEXG2, expression -> pBBR1MCS2). Only the isolate-annealing body is fixed here; vector-homology tails (and, for expression, the RBS) are always derived the same way as for computationally-designed primers (vectors.derive_tails / RBS_TAIL_PART), so the tool's own tail conventions stay authoritative and self-consistent. See lib/primer_design/fixed_primers.py.",
+
+  "lasB|deletion": {
+    "p1_body": "CGCCTTCGATGCCGAAGTACG",
+    "p2_body": "GCAACGAACAACAGGTCAAGCGT",
+    "p3_body": "GTTCAGCACCGTCGGCGTGAC",
+    "p4_body": "TACGAAGGCCTGCACCAGCGC",
+    "note": "PA14 lasB in-frame deletion set. P4 anneals ~628 nt downstream of the stop codon, i.e. outside the curated 600 nt dn_flank window — matching against this isolate's genome may require widening the flank from the full genome (see fixed_primers._wide_flanks)."
+  },
+
+  "lasR|deletion": {
+    "p1_body": "CCGTTGCAGGCGCTGTTCGG",
+    "p2_body": "ACCGTCAACCAAGGCCATAGC",
+    "p3_body": "GCGGCCATTATGGCCGTTAATTTG",
+    "p4_body": "CTCGTCGATGACACTAACGTCCC",
+    "note": "PA14 lasR in-frame deletion set."
+  },
+
+  "lasI|deletion": {
+    "p1_body": "CTTCCATATGGGAAATATTCGGC",
+    "p2_body": "GCGCCGACCAATTTGTACGATC",
+    "p3_body": "CAGCGACTGGCGGTTTCATG",
+    "p4_body": "CTGCTCAAGGCGCATCCGC",
+    "note": "PA14 lasI in-frame deletion set."
+  },
+
+  "lasB|expression": {
+    "p1_body": "TGAACAAGATGAAGAAGGTTTCTA",
+    "p2_body": "TTACAACGCGCTCGGGCAGG",
+    "note": "PA14 lasB complementation set (pBBR1MCS-2). P1 body includes 8 nt of native upstream context between the RBS and the start codon (annealed from the genome, not the tool's synthetic spacer) — confirmed with the primer designer 2026-07-27."
+  }
+}

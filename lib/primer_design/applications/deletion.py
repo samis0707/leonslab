@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Callable
 
 from .. import colony_pcr as _colony_pcr
-from .. import cross_isolate_checker, gene_finder, primer_designer, storage_adapter, vectors, verification
+from .. import cross_isolate_checker, fixed_primers, gene_finder, primer_designer, storage_adapter, vectors, verification
 from ..config import (
     JUNCTION_LEN_DEFAULT,
     JUNCTION_LEN_PER_PRIMER_DEFAULT,
@@ -57,19 +57,31 @@ def run(
     loader = genome_loader or _default_genome_loader
     genome_bytes = loader(request.isolate_id)
 
+    # A pre-validated (wet-lab) primer set takes priority over a fresh design
+    # whenever its genomic bodies match this isolate's sequence; otherwise it
+    # is simply absent from `candidates` and the dynamic design below is used,
+    # same as before this fixed-primer lookup existed.
+    fixed = fixed_primers.build_fixed_deletion_set(gene, vector, convention, genome_bytes)
+    fixed_primer_set = None
+    if fixed is not None:
+        gene = fixed.gene_record
+        fixed_primer_set = fixed.primer_set
+
     # Try the top-scoring set first; if it produces an off-target product,
     # walk the top-N alternatives and pick the first that scans cleanly.
     # `alts` is already sorted ascending by score (best last). We dedupe by
     # primer-tuple identity since the search returns near-duplicates when
     # different (N, C) pairs yield the same P1/P4 bodies.
-    candidates: list = [best]
-    seen = {(best.p1.body, best.p2.body, best.p3.body, best.p4.body)}
-    for alt in alts:
-        key = (alt.p1.body, alt.p2.body, alt.p3.body, alt.p4.body)
+    candidates: list = []
+    seen: set = set()
+    for cand in [fixed_primer_set, best, *alts]:
+        if cand is None:
+            continue
+        key = (cand.p1.body, cand.p2.body, cand.p3.body, cand.p4.body)
         if key in seen:
             continue
         seen.add(key)
-        candidates.append(alt)
+        candidates.append(cand)
 
     chosen = None
     chosen_amps = None
@@ -127,6 +139,12 @@ def run(
         final_plasmid=final_plasmid,
         off_target=off_target,
     )
+    if fixed_primer_set is not None and chosen is fixed_primer_set:
+        result.warnings.append(
+            f"PRE-VALIDATED PRIMER SET: using the fixed, wet-lab-validated {gene.gene} "
+            f"deletion primers (not freshly designed) — their genomic bodies matched "
+            f"{gene.isolate_id} exactly."
+        )
     if not gene.functional:
         reason = gene.truncation_reason or "non-functional allele in this isolate"
         result.warnings.append(
