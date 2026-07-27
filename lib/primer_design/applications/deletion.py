@@ -5,6 +5,7 @@ Per skill_v2 §4 and project_plan §4.1.
 from __future__ import annotations
 
 import os
+from dataclasses import replace
 from pathlib import Path
 from typing import Callable
 
@@ -127,11 +128,22 @@ def run(
     final_plasmid = assemble(vector, insert, cut_nick, convention)
     final_plasmid.name = f"{vector.name}_{gene.gene}_delta_{gene.isolate_id}"
 
+    result_convention = convention
+    fixed_used = fixed_primer_set is not None and chosen is fixed_primer_set
+    if fixed_used and fixed.expected_recognition_count != convention.expected_recognition_count_in_final_plasmid:
+        # This gene's fixed primer set has a confirmed, accepted deviation
+        # from the usual "0 sites" convention (see fixed_primers.json) —
+        # verify against that instead of raising on it.
+        result_convention = replace(
+            convention,
+            expected_recognition_count_in_final_plasmid=fixed.expected_recognition_count,
+        )
+
     result = DesignResult(
         request=request,
         gene_record=gene,
         vector=vector,
-        convention=convention,
+        convention=result_convention,
         primer_set=best,
         up_amplicon=up_amplicon,
         dn_amplicon=dn_amplicon,
@@ -139,12 +151,20 @@ def run(
         final_plasmid=final_plasmid,
         off_target=off_target,
     )
-    if fixed_primer_set is not None and chosen is fixed_primer_set:
+    if fixed_used:
         result.warnings.append(
             f"PRE-VALIDATED PRIMER SET: using the fixed, wet-lab-validated {gene.gene} "
             f"deletion primers (not freshly designed) — their genomic bodies matched "
             f"{gene.isolate_id} exactly."
         )
+        if fixed.expected_recognition_count != convention.expected_recognition_count_in_final_plasmid:
+            result.warnings.append(
+                f"This primer set intentionally regenerates "
+                f"{fixed.expected_recognition_count} {request.enzyme} site(s) in the "
+                f"final plasmid instead of the usual "
+                f"{convention.expected_recognition_count_in_final_plasmid} — confirmed "
+                f"accepted for {gene.gene}."
+            )
     if not gene.functional:
         reason = gene.truncation_reason or "non-functional allele in this isolate"
         result.warnings.append(

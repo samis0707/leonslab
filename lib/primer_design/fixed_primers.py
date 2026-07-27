@@ -24,9 +24,10 @@ from pathlib import Path
 
 from . import config as cfg
 from . import primer_designer
+from .config import RESTRICTION_SITES
 from .primer_designer import _parse_fasta_bytes
 from .types import DeletionPrimerSet, ExpressionPrimerSet, GeneRecord, Primer
-from .vectors import derive_tails, reverse_complement
+from .vectors import derive_tails, forbidden_body_5prime_prefixes, reverse_complement
 
 
 _DATA_PATH = Path(__file__).resolve().parents[2] / "data" / "primer_design" / "fixed_primers.json"
@@ -47,8 +48,12 @@ def _load_store() -> dict:
         return json.load(f)
 
 
+def _get_entry(gene: str, application: str) -> dict | None:
+    return _load_store().get(f"{gene}|{application}")
+
+
 def _get_bodies(gene: str, application: str) -> dict | None:
-    entry = _load_store().get(f"{gene}|{application}")
+    entry = _get_entry(gene, application)
     if entry is None:
         return None
     return {k: v.strip().upper() for k, v in entry.items() if k.endswith("_body")}
@@ -70,6 +75,16 @@ def _wide_flanks(gene: GeneRecord, genome_bytes: bytes, span: int) -> tuple[str,
     """
     contigs = dict(_parse_fasta_bytes(genome_bytes))
     seq = contigs.get(gene.contig_id)
+    if seq is None:
+        # Some reference genomes (e.g. PA14) store contigs in R2 with the
+        # isolate ID prefixed onto the RefSeq accession in the FASTA header
+        # (e.g. "PA14_NZ_CP104983.1"), while the curated gene record kept the
+        # bare accession ("NZ_CP104983.1") from the original source. Fall
+        # back to a suffix match for that pattern.
+        suffix = "_" + gene.contig_id
+        matches = [s for cid, s in contigs.items() if cid.endswith(suffix)]
+        if len(matches) == 1:
+            seq = matches[0]
     if seq is None:
         return None
 
@@ -93,74 +108,95 @@ def _wide_flanks(gene: GeneRecord, genome_bytes: bytes, span: int) -> tuple[str,
 class FixedDeletionResult:
     primer_set: DeletionPrimerSet
     gene_record: GeneRecord   # == input gene, or a copy with widened flanks
+    expected_recognition_count: int   # verification target for this specific set;
+                                       # usually == convention's, occasionally overridden
+                                       # (see fixed_primers.json "expected_recognition_count")
 
 
-def _locate_deletion_junction(
+def _deletion_bodies_fit(
     gene: GeneRecord, up_flank: str, dn_flank: str,
     p1_body: str, p2_body: str, p3_body: str, p4_body: str,
-) -> tuple[int, int] | None:
-    """Return (N, C) if all four bodies anchor consistently in-frame, else None."""
-    cds = gene.cds_seq
-    L = len(cds) // 3
-    full = up_flank + cds + dn_flank
-    cds_start = len(up_flank)
-    cds_end = cds_start + len(cds)
-
+) -> bool:
+    """True iff all four bodies anneal somewhere in the expected region of this
+    isolate's sequence. P1/P4 must sit in the (possibly widened) flanks — the
+    genuinely isolate-variable, non-coding regions. P2/P3 anneal within the
+    CDS near the fixed N/C scar boundary (see ``build_fixed_deletion_set``);
+    their exact annealing offset is a primer-design choice, not something the
+    scar boundary is derived from, so this only checks they anneal somewhere
+    in the CDS-adjacent region, not at an exact position.
+    """
     if p1_body not in up_flank:
-        return None
+        return False
     if reverse_complement(p4_body) not in dn_flank:
-        return None
-
-    rc_p2 = reverse_complement(p2_body)
-    p2_idx = full.find(rc_p2)
-    if p2_idx < 0:
-        return None
-    offset_n = (p2_idx + len(rc_p2)) - cds_start
-    if offset_n < 0 or offset_n % 3 != 0:
-        return None
-    N = offset_n // 3
-
-    p3_idx = full.find(p3_body, cds_start)
-    if p3_idx < 0 or p3_idx >= cds_end:
-        return None
-    offset_c = p3_idx - cds_start
-    if offset_c % 3 != 0:
-        return None
-    C = L - 1 - offset_c // 3
-
-    if N < 0 or C < 0 or N >= L or C + 1 >= L:
-        return None
-
-    scar = primer_designer.scar_orf(cds, N, C)
-    if not primer_designer.assert_scar_valid(scar, N, C):
-        return None
-    return N, C
+        return False
+    cds = gene.cds_seq
+    if reverse_complement(p2_body) not in (up_flank + cds):
+        return False
+    if p3_body not in (cds + dn_flank):
+        return False
+    return True
 
 
 def build_fixed_deletion_set(
     gene: GeneRecord, vector, convention, genome_bytes: bytes | None = None,
 ) -> FixedDeletionResult | None:
     """Return a pre-validated DeletionPrimerSet for ``gene``, if one is on file
-    and its bodies match this isolate's sequence; otherwise None."""
-    bodies = _get_bodies(gene.gene, "deletion")
-    if bodies is None:
+    and its bodies match this isolate's sequence; otherwise None.
+
+    The retained-codon scar (N, C) is a fixed design choice (which codons
+    stay, i.e. the resulting protein scar) — it is stored directly in
+    fixed_primers.json rather than inferred from where the P2/P3 bodies
+    happen to anneal, since a hand-designed primer's body need not terminate
+    exactly at the scar boundary (only its *tail*, rebuilt below from N/C,
+    encodes the actual junction).
+    """
+    entry = _get_entry(gene.gene, "deletion")
+    if entry is None or "N" not in entry or "C" not in entry:
         return None
+    N, C = int(entry["N"]), int(entry["C"])
+    bodies = {k: v.strip().upper() for k, v in entry.items() if k.endswith("_body")}
     p1b, p2b, p3b, p4b = (bodies[k] for k in ("p1_body", "p2_body", "p3_body", "p4_body"))
 
+    L = len(gene.cds_seq) // 3
+    if N < 0 or C < 0 or N >= L or C + 1 >= L:
+        return None
+    scar = primer_designer.scar_orf(gene.cds_seq, N, C)
+    if not primer_designer.assert_scar_valid(scar, N, C):
+        return None
+
     used_gene = gene
-    junction = _locate_deletion_junction(gene, gene.up_flank, gene.dn_flank, p1b, p2b, p3b, p4b)
-    if junction is None and genome_bytes is not None:
+    fits = _deletion_bodies_fit(gene, gene.up_flank, gene.dn_flank, p1b, p2b, p3b, p4b)
+    if not fits and genome_bytes is not None:
         wide = _wide_flanks(gene, genome_bytes, _WIDE_FLANK_LEN)
         if wide is not None:
             wide_up, wide_dn = wide
-            junction = _locate_deletion_junction(gene, wide_up, wide_dn, p1b, p2b, p3b, p4b)
-            if junction is not None:
+            if _deletion_bodies_fit(gene, wide_up, wide_dn, p1b, p2b, p3b, p4b):
+                fits = True
                 used_gene = replace(gene, up_flank=wide_up, dn_flank=wide_dn)
-    if junction is None:
+    if not fits:
         return None
-    N, C = junction
 
     p1_tail, p4_tail = derive_tails(vector, convention.enzyme, "deletion")
+
+    # A body's 5' end can accidentally regenerate the enzyme's recognition
+    # site right at the vector junction once fused to the tail (e.g. a P4
+    # body starting with "T" completes "...A" + tail's leading "AGCTT" into
+    # "AAGCTT"). The dynamic search screens candidates for this; a fixed body
+    # needs the same screen, since here it wasn't chosen to avoid it — unless
+    # the JSON entry explicitly declares (and overrides the expected count
+    # for) an accepted extra site, e.g. lasB's P4.
+    expected_recognition_count = int(
+        entry.get("expected_recognition_count", convention.expected_recognition_count_in_final_plasmid)
+    )
+    motif, _ = RESTRICTION_SITES[convention.enzyme]
+    p1_forbidden, p4_forbidden = forbidden_body_5prime_prefixes(
+        p1_tail, p4_tail, motif, expected_count=expected_recognition_count,
+    )
+    if any(p1b.startswith(p) for p in p1_forbidden):
+        return None
+    if any(p4b.startswith(p) for p in p4_forbidden):
+        return None
+
     cds = used_gene.cds_seq
     L = len(cds) // 3
     up_segment = used_gene.up_flank + cds[: 3 * N]
@@ -180,7 +216,10 @@ def build_fixed_deletion_set(
         p1=p1, p2=p2, p3=p3, p4=p4, N=N, C=C, scar_dna=scar,
         score=-1.0, tm_spread=max(tms) - min(tms),
     )
-    return FixedDeletionResult(primer_set=primer_set, gene_record=used_gene)
+    return FixedDeletionResult(
+        primer_set=primer_set, gene_record=used_gene,
+        expected_recognition_count=expected_recognition_count,
+    )
 
 
 # ===========================================================================

@@ -6,7 +6,10 @@
     "p2_body": "GCAACGAACAACAGGTCAAGCGT",
     "p3_body": "GTTCAGCACCGTCGGCGTGAC",
     "p4_body": "TACGAAGGCCTGCACCAGCGC",
-    "note": "PA14 lasB in-frame deletion set. P4 anneals ~628 nt downstream of the stop codon, i.e. outside the curated 600 nt dn_flank window — matching against this isolate's genome may require widening the flank from the full genome (see fixed_primers._wide_flanks)."
+    "N": 13,
+    "C": 12,
+    "expected_recognition_count": 1,
+    "note": "PA14 lasB in-frame deletion set. Retained scar confirmed directly with the primer designer 2026-07-27: MKKVSTLDLLFVAFSTVGVTCPSAL* (N=13, C=12; scar_orf reproduces it byte-for-byte on PA14/LB001/LB019). N/C is stored directly rather than inferred from where P2/P3 anneal, since the sequence is locally repetitive right at the junction (N=13/C=12 and N=12/C=13 both reproduce the same scar) and the P2/P3 bodies don't need to terminate exactly at the boundary. P4 anneals ~628 nt downstream of the stop codon, i.e. outside the curated 600 nt dn_flank window — matching against this isolate's genome may require widening the flank from the full genome (see fixed_primers._wide_flanks). P4's body (starts with T) regenerates one HindIII site at the P3/P4 vector junction instead of the usual 0 for pEXG2|HindIII|deletion (site_destroyed) — confirmed intentional/accepted by the primer designer 2026-07-27, so expected_recognition_count is overridden to 1 for this gene only."
   },
 
   "lasR|deletion": {
@@ -14,7 +17,9 @@
     "p2_body": "ACCGTCAACCAAGGCCATAGC",
     "p3_body": "GCGGCCATTATGGCCGTTAATTTG",
     "p4_body": "CTCGTCGATGACACTAACGTCCC",
-    "note": "PA14 lasR in-frame deletion set."
+    "N": 6,
+    "C": 13,
+    "note": "PA14 lasR in-frame deletion set. N/C match the calibration already documented in lib/primer_design/config.py (PA14 lasR N=6, C=13) and were re-derived cleanly from where P2/P3 anneal (in-frame, unambiguous — unlike lasB)."
   },
 
   "lasI|deletion": {
@@ -22,7 +27,9 @@
     "p2_body": "GCGCCGACCAATTTGTACGATC",
     "p3_body": "CAGCGACTGGCGGTTTCATG",
     "p4_body": "CTGCTCAAGGCGCATCCGC",
-    "note": "PA14 lasI in-frame deletion set."
+    "N": 8,
+    "C": 6,
+    "note": "PA14 lasI in-frame deletion set. N/C re-derived cleanly from where P2/P3 anneal (in-frame, unambiguous)."
   },
 
   "lasB|expression": {

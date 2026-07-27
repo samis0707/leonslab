@@ -2,12 +2,11 @@
 
 These only exercise the local, network-free matching logic (curated gene
 records + vector GenBank files, both bundled in the repo) — no R2 genome
-fetch, so they run fast and offline. The lasB deletion set is intentionally
-not covered here: its P4 body anneals outside the curated dn_flank window and
-requires a genome-wide search, and its P2/P3 boundary is still pending
-confirmation from the primer designer (see conversation notes), so
-``build_fixed_deletion_set`` correctly returns ``None`` for it without
-genome_bytes.
+fetch, so they run fast and offline. The full lasB deletion path (which needs
+a genome-wide search for P4, ~628 nt downstream of the stop — outside the
+curated dn_flank window) is covered end-to-end by
+tests/integration/test_deletion_LB001_lasB.py instead, since that requires
+R2 access; here we only check the graceful, no-network-available fallback.
 """
 from __future__ import annotations
 
@@ -48,6 +47,7 @@ class TestFixedDeletionSet:
         assert result.primer_set.C == 13
         assert result.primer_set.p1.body == "CCGTTGCAGGCGCTGTTCGG"
         assert result.primer_set.p1.tail == "GCATAAATGTAAAGCAAGCT"
+        assert result.expected_recognition_count == 0
 
     def test_lasI_matches_LB001_with_calibrated_scar(self, all_required_files_present):
         if not all_required_files_present:

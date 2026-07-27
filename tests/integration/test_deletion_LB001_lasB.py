@@ -44,21 +44,25 @@ def request_obj() -> DesignRequest:
     )
 
 
-# Expected values — tails updated for 20-nt VECTOR_TAIL_LEN (Takara-style).
-# Final plasmid length and amplicon lengths are invariant to tail-length change.
-# insert_length_bp = +10 vs v1 (5 nt each from P1 and P4 tails).
-# N/C scar may differ from v1 due to Wallace-rule Tm recalibration; update if needed.
+# LB001 lasB now resolves to the fixed, wet-lab-validated pEXG2 deletion
+# primer set (lib/primer_design/fixed_primers.py / data/primer_design/
+# fixed_primers.json), confirmed directly with the primer designer
+# 2026-07-27 — this *is* the true v1 empirical primer set the docstring
+# above refers to (N=13, C=12; earlier values here were an approximation
+# that drifted from the dynamic search's own recalibration, not the actual
+# empirical set). P4's body intentionally regenerates one HindIII site at
+# the P3/P4 vector junction — confirmed accepted, not a bug.
 EXPECTED = {
-    "N": 16,
-    "C": 2,
-    "scar_protein": "MKKVSTLDLLFVAIMGAL*",
+    "N": 13,
+    "C": 12,
+    "scar_protein": "MKKVSTLDLLFVAFSTVGVTCPSAL*",
     "p1_tail": "GCATAAATGTAAAGCAAGCT",
     "p4_tail": "AGAGTCGACCTGCAGAAGCT",
-    "final_plasmid_length_bp": 6159,
-    "up_amplicon_length_bp": 593,
-    "dn_amplicon_length_bp": 538,
-    "insert_length_bp": 1111,
-    "AAGCTT_count_in_final_plasmid": 0,
+    "final_plasmid_length_bp": 6494,
+    "up_amplicon_length_bp": 749,
+    "dn_amplicon_length_bp": 717,
+    "insert_length_bp": 1446,
+    "AAGCTT_count_in_final_plasmid": 1,
 }
 
 
