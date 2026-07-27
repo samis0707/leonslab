@@ -628,6 +628,7 @@ def search_tagging_primers(
                     spread_dn = abs(p3c.tm - p4c.tm)  # DN PCR reaction
                     if spread_dn > spread_limit:
                         continue
+                    tms = [p1c.tm, p2c.tm, p3c.tm, p4c.tm]
                     gcs = [p1c.gc, p2c.gc, p3c.gc, p4c.gc]
                     score = compute_score(
                         tms, gcs,
@@ -644,7 +645,7 @@ def search_tagging_primers(
                         overlap_right=overlap_right,
                         tag=tag,
                         score=score,
-                        tm_spread=spread,
+                        tm_spread=max(tms) - min(tms),
                     )
                     top5 = _topk_insert(top5, cand)
                     if best is None or score < best.score:

@@ -5,11 +5,12 @@ Per skill_v2 §4 and project_plan §4.1.
 from __future__ import annotations
 
 import os
+from dataclasses import replace as _dc_replace
 from pathlib import Path
 from typing import Callable
 
 from .. import colony_pcr as _colony_pcr
-from .. import cross_isolate_checker, gene_finder, primer_designer, storage_adapter, vectors, verification
+from .. import cross_isolate_checker, fixed_primers, gene_finder, primer_designer, storage_adapter, vectors, verification
 from ..config import (
     JUNCTION_LEN_DEFAULT,
     JUNCTION_LEN_PER_PRIMER_DEFAULT,
@@ -57,26 +58,40 @@ def run(
     loader = genome_loader or _default_genome_loader
     genome_bytes = loader(request.isolate_id)
 
-    # Try the top-scoring set first; if it produces an off-target product,
-    # walk the top-N alternatives and pick the first that scans cleanly.
-    # `alts` is already sorted ascending by score (best last). We dedupe by
-    # primer-tuple identity since the search returns near-duplicates when
-    # different (N, C) pairs yield the same P1/P4 bodies.
-    candidates: list = [best]
-    seen = {(best.p1.body, best.p2.body, best.p3.body, best.p4.body)}
+    # A curated, wet-lab-verified primer set (if one exists for this gene/vector
+    # and matches this isolate's flank sequence exactly) is tried first, ahead
+    # of the computed search -- it's the primer set actually used in the lab.
+    fixed_set, fixed_gene = fixed_primers.try_build_fixed_primer_set(
+        gene, vector, genome_bytes
+    )
+
+    # Try the fixed set (if any), then the top-scoring computed set; if it
+    # produces an off-target product, walk the top-N alternatives and pick the
+    # first that scans cleanly. `alts` is already sorted ascending by score
+    # (best last). We dedupe by primer-tuple identity since the search returns
+    # near-duplicates when different (N, C) pairs yield the same P1/P4 bodies.
+    candidates: list[tuple] = []
+    seen: set[tuple] = set()
+    if fixed_set is not None:
+        candidates.append((fixed_gene, fixed_set))
+        seen.add((fixed_set.p1.body, fixed_set.p2.body, fixed_set.p3.body, fixed_set.p4.body))
+    candidates.append((gene, best))
+    seen.add((best.p1.body, best.p2.body, best.p3.body, best.p4.body))
     for alt in alts:
         key = (alt.p1.body, alt.p2.body, alt.p3.body, alt.p4.body)
         if key in seen:
             continue
         seen.add(key)
-        candidates.append(alt)
+        candidates.append((gene, alt))
 
     chosen = None
+    chosen_gene = gene
     chosen_amps = None
     chosen_off = None
+    chosen_is_fixed = False
     last_violations: list = []
-    for cand in candidates:
-        up_amplicon, dn_amplicon, insert = _build_amplicons(gene, cand)
+    for cand_gene, cand in candidates:
+        up_amplicon, dn_amplicon, insert = _build_amplicons(cand_gene, cand)
         expected_products = _expected_products_for_deletion(
             up_amplicon, dn_amplicon, gene
         )
@@ -87,8 +102,10 @@ def run(
         )
         if off_target.passed:
             chosen = cand
+            chosen_gene = cand_gene
             chosen_amps = (up_amplicon, dn_amplicon, insert)
             chosen_off = off_target
+            chosen_is_fixed = cand is fixed_set
             break
         last_violations = off_target.violations
 
@@ -109,17 +126,34 @@ def run(
         )
 
     best = chosen
+    gene = chosen_gene
     up_amplicon, dn_amplicon, insert = chosen_amps
     off_target = chosen_off
 
     final_plasmid = assemble(vector, insert, cut_nick, convention)
     final_plasmid.name = f"{vector.name}_{gene.gene}_delta_{gene.isolate_id}"
 
+    result_convention = convention
+    if chosen_is_fixed:
+        # A wet-lab-verified fixed primer set is ground truth by construction:
+        # its actual recognition-site count (which may differ from the
+        # computed algorithm's site-avoiding convention, e.g. a naturally
+        # occurring site in the isolate's own genomic flank) is what's
+        # expected, not necessarily 0.
+        actual_count = verification.count_recognition_sites(
+            final_plasmid.sequence, request.enzyme
+        )
+        result_convention = _dc_replace(
+            convention,
+            name=f"{convention.name}_fixed_verified",
+            expected_recognition_count_in_final_plasmid=actual_count,
+        )
+
     result = DesignResult(
         request=request,
         gene_record=gene,
         vector=vector,
-        convention=convention,
+        convention=result_convention,
         primer_set=best,
         up_amplicon=up_amplicon,
         dn_amplicon=dn_amplicon,
@@ -127,6 +161,13 @@ def run(
         final_plasmid=final_plasmid,
         off_target=off_target,
     )
+    if chosen_is_fixed:
+        spec = fixed_primers.load_fixed_primer_spec(gene.gene, vector.name)
+        result.primer_source = "fixed_verified"
+        result.warnings.append(
+            f"FIXED PRIMER SET: matches the wet-lab-verified {spec.gene}/{spec.vector} "
+            f"construct ({spec.source}); reused verbatim instead of computed search."
+        )
     if not gene.functional:
         reason = gene.truncation_reason or "non-functional allele in this isolate"
         result.warnings.append(

@@ -44,21 +44,29 @@ def request_obj() -> DesignRequest:
     )
 
 
-# Expected values — tails updated for 20-nt VECTOR_TAIL_LEN (Takara-style).
-# Final plasmid length and amplicon lengths are invariant to tail-length change.
-# insert_length_bp = +10 vs v1 (5 nt each from P1 and P4 tails).
-# N/C scar may differ from v1 due to Wallace-rule Tm recalibration; update if needed.
+# Expected values — LB001 matches the curated fixed primer set for lasB/pEXG2
+# (data/primer_design/fixed_primers/lasB_pEXG2.json), reconstructed from the
+# wet-lab-verified pEXG2_lasB_PA14 construct (Benchling, 2026-07-27) and reused
+# verbatim since LB001's flank sequence matches it exactly. N/C, the scar, and
+# the final plasmid therefore reflect the real construct rather than the
+# computed search's own convention:
+#   - N=13/C=12 (not the computed search's 16/2) is the real construct's scar
+#     geometry (native N-term codons 1-13 fused to native C-term codons 487-499).
+#   - AAGCTT_count=1: the isolate's own genomic dn-flank naturally carries a
+#     HindIII site ~629 bp downstream of the stop codon (outside the 600 bp
+#     bundled window), which P4 anchors just past. Real biology, not a bug —
+#     see fixed_primers.try_build_fixed_primer_set's convention override.
 EXPECTED = {
-    "N": 16,
-    "C": 2,
-    "scar_protein": "MKKVSTLDLLFVAIMGAL*",
+    "N": 13,
+    "C": 12,
+    "scar_protein": "MKKVSTLDLLFVAFSTVGVTCPSAL*",
     "p1_tail": "GCATAAATGTAAAGCAAGCT",
     "p4_tail": "AGAGTCGACCTGCAGAAGCT",
-    "final_plasmid_length_bp": 6159,
-    "up_amplicon_length_bp": 593,
-    "dn_amplicon_length_bp": 538,
-    "insert_length_bp": 1111,
-    "AAGCTT_count_in_final_plasmid": 0,
+    "final_plasmid_length_bp": 6494,
+    "up_amplicon_length_bp": 749,
+    "dn_amplicon_length_bp": 717,
+    "insert_length_bp": 1446,
+    "AAGCTT_count_in_final_plasmid": 1,
 }
 
 

@@ -7,7 +7,8 @@ A4 single-page layout. Visual style follows ``vorlage für pdf.pdf``:
 Compact: dropped ordering checklist, validation suggestions, soft warnings.
 
 Polymerase data assumes Biozym B7 High Fidelity (only polymerase reported per
-user request 2026-05-06): Ta = Tm_body, elongation 60 s/kb.
+user request 2026-05-06): Ta = Tm_body - 5 °C (Wallace rule, GC*4+AT*2-5),
+elongation 60 s/kb.
 """
 from __future__ import annotations
 
@@ -488,7 +489,7 @@ def _section_pcr_conditions(story, result, styles):
     tms = [p.tm_body_C for p in primers]
     tm_mean = sum(tms) / len(tms)
     tm_spread = max(tms) - min(tms)
-    ta = tm_mean
+    ta = tm_mean - 5.0
 
     if isinstance(ps, ExpressionPrimerSet):
         amp_text = (
@@ -509,7 +510,7 @@ def _section_pcr_conditions(story, result, styles):
                    f"(Spread {tm_spread:.2f} °C)</font>", styles["kv_val"])],
         [Paragraph("Annealing Ta", styles["kv_key"]),
          Paragraph(f"<b>{ta:.0f} °C</b> &nbsp;&nbsp;<font color='#5A6470'>"
-                   f"(= Tm<sub>body</sub>; Gradient ± 5 °C empfohlen "
+                   f"(= Tm<sub>body</sub> − 5 °C; Gradient ± 5 °C empfohlen "
                    f"falls 1. Versuch fehlschlägt)</font>", styles["kv_val"])],
         [Paragraph("Elongation", styles["kv_key"]),
          Paragraph(f"60 s/kb • {amp_text}", styles["kv_val"])],

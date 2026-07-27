@@ -29,7 +29,12 @@ def write_manifest(result: DesignResult) -> dict:
     else:
         raise TypeError(type(ps).__name__)
 
-    annealing_temp = min(p.tm_body_C for p in primers) + cfg.POLYMERASE_OFFSETS_C[result.request.polymerase]
+    # Wallace-rule annealing temp: Ta = Tm_body - 5 (GC*4 + AT*2 - 5), lowest-Tm
+    # primer governs so every primer in the set anneals at the reported Ta.
+    annealing_temp = (
+        min(p.tm_body_C for p in primers) - 5.0
+        + cfg.POLYMERASE_OFFSETS_C[result.request.polymerase]
+    )
 
     manifest: dict = {
         "tool_version": cfg.TOOL_VERSION,

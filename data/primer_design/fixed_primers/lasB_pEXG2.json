@@ -1,0 +1,12 @@
+{
+  "gene": "lasB",
+  "vector": "pEXG2",
+  "N": 13,
+  "C": 12,
+  "p1": {"tail": "GCATAAATGTAAAGCAAGCT", "body": "CGCCTTCGATGCCGAAGTACG"},
+  "p2": {"tail": "GGTGCTGAA", "body": "CGCAACGAACAACAGGTCAAGCGT"},
+  "p3": {"tail": "TGTTCGTTGCG", "body": "TTCAGCACCGTCGGCGTGAC"},
+  "p4": {"tail": "AGAGTCGACCTGCAGAAGCT", "body": "TACGAAGGCCTGCACCAGCGC"},
+  "source": "pEXG2_lasB_PA14, 6495 bp (Benchling, leonroesch/lib_ARgJtIG0LL, seq_LXIFozH3F1), wet-lab-verified construct provided by user 2026-07-27",
+  "note": "P1 body anchors 680 bp upstream of the lasB ATG (outside the tool's default 200-350 bp P1 search window). P4 body anchors 629 bp downstream of the stop codon, i.e. OUTSIDE the bundled 600 bp dn_flank -- applying this set requires an extended/whole-genome lookup for the P4 site. Scar = N=13 native N-terminal codons + C=12 native C-terminal codons + stop (MKKVSTLDLLFVAFSTVGVTCPSAL*), confirmed against the plasmid map's translated scar annotation (5714-5791)."
+}

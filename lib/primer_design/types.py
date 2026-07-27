@@ -260,3 +260,4 @@ class DesignResult:
     warnings: list[str] = field(default_factory=list)
     colony_pcr_primers: ColonyPCRPrimerSet | None = None
     compatible_isolates: list[str] = field(default_factory=list)
+    primer_source: str = "computed"       # "computed" | "fixed_verified"
