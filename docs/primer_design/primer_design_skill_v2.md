@@ -667,12 +667,14 @@ def primer_body_tm(body: str) -> float:
 
 Allawi & SantaLucia 1997 nearest-neighbor parameters with Na+ correction (SantaLucia 1998), as implemented by Biopython. This gives ±0.5 °C accuracy for primers in 18–28 nt range under In-Fusion buffer conditions (D5.1).
 
-**Annealing temperature recommendation in PDF:**
+**Annealing temperature recommendation in PDF** (corrected 2026-07-27 — previously
+omitted the base −5 °C, so B7 showed Ta = Tm_body with no offset):
 ```python
-T_anneal_C = min(p.tm for p in primers) + POLYMERASE_OFFSETS_C[polymerase]
+T_anneal_C = min(p.tm for p in primers) - 5.0 + POLYMERASE_OFFSETS_C[polymerase]
 ```
 
-For B7 the offset is 0; Phusion / Q5 +3; Taq −5 (D5.2).
+Base rule of thumb is Tm − 5 °C; POLYMERASE_OFFSETS_C then adjusts further per
+enzyme. For B7 the offset is 0; Phusion / Q5 +3; Taq −5 (D5.2).
 
 PDF additionally suggests gradient ±5 °C around the recommended Ta if first attempt fails.
 

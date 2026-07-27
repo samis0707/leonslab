@@ -29,7 +29,10 @@ def write_manifest(result: DesignResult) -> dict:
     else:
         raise TypeError(type(ps).__name__)
 
-    annealing_temp = min(p.tm_body_C for p in primers) + cfg.POLYMERASE_OFFSETS_C[result.request.polymerase]
+    annealing_temp = (
+        min(p.tm_body_C for p in primers) - 5.0
+        + cfg.POLYMERASE_OFFSETS_C[result.request.polymerase]
+    )
 
     manifest: dict = {
         "tool_version": cfg.TOOL_VERSION,

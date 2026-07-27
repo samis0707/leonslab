@@ -7,7 +7,9 @@ A4 single-page layout. Visual style follows ``vorlage für pdf.pdf``:
 Compact: dropped ordering checklist, validation suggestions, soft warnings.
 
 Polymerase data assumes Biozym B7 High Fidelity (only polymerase reported per
-user request 2026-05-06): Ta = Tm_body, elongation 60 s/kb.
+user request 2026-05-06): Ta = min(Tm_body) - 5 °C + polymerase offset
+(standard rule of thumb, corrected 2026-07-27 — previously Ta = Tm_body with
+no offset), elongation 60 s/kb.
 """
 from __future__ import annotations
 
@@ -30,6 +32,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from . import config as cfg
 from .types import DeletionPrimerSet, DesignResult, ExpressionPrimerSet, TaggingPrimerSet
 from .verification import count_recognition_sites
 
@@ -488,7 +491,7 @@ def _section_pcr_conditions(story, result, styles):
     tms = [p.tm_body_C for p in primers]
     tm_mean = sum(tms) / len(tms)
     tm_spread = max(tms) - min(tms)
-    ta = tm_mean
+    ta = min(tms) - 5.0 + cfg.POLYMERASE_OFFSETS_C[result.request.polymerase]
 
     if isinstance(ps, ExpressionPrimerSet):
         amp_text = (
@@ -509,7 +512,7 @@ def _section_pcr_conditions(story, result, styles):
                    f"(Spread {tm_spread:.2f} °C)</font>", styles["kv_val"])],
         [Paragraph("Annealing Ta", styles["kv_key"]),
          Paragraph(f"<b>{ta:.0f} °C</b> &nbsp;&nbsp;<font color='#5A6470'>"
-                   f"(= Tm<sub>body</sub>; Gradient ± 5 °C empfohlen "
+                   f"(= min Tm<sub>body</sub> − 5 °C; Gradient ± 5 °C empfohlen "
                    f"falls 1. Versuch fehlschlägt)</font>", styles["kv_val"])],
         [Paragraph("Elongation", styles["kv_key"]),
          Paragraph(f"60 s/kb • {amp_text}", styles["kv_val"])],
